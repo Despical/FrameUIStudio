@@ -1,0 +1,502 @@
+[
+  {
+    "id": "loading",
+    "name": "Original loading",
+    "category": "Classic",
+    "shaderId": 0,
+    "fadeIn": 8,
+    "minimum": 50,
+    "fadeOut": 12,
+    "captions": true
+  },
+  {
+    "id": "fade-in",
+    "name": "Fade In",
+    "category": "Minimal",
+    "shaderId": 1,
+    "fadeIn": 0,
+    "minimum": 0,
+    "fadeOut": 70,
+    "captions": false
+  },
+  {
+    "id": "fade-out",
+    "name": "Fade Out",
+    "category": "Minimal",
+    "shaderId": 2,
+    "fadeIn": 54,
+    "minimum": 68,
+    "fadeOut": 20,
+    "captions": false
+  },
+  {
+    "id": "color-wipe",
+    "name": "Color Wipe",
+    "category": "Geometric",
+    "shaderId": 3,
+    "fadeIn": 20,
+    "minimum": 36,
+    "fadeOut": 20,
+    "captions": false
+  },
+  {
+    "id": "iris",
+    "name": "Cinema Iris",
+    "category": "Geometric",
+    "shaderId": 4,
+    "fadeIn": 26,
+    "minimum": 42,
+    "fadeOut": 30,
+    "captions": false
+  },
+  {
+    "id": "aurora",
+    "name": "Aurora",
+    "category": "Nature",
+    "shaderId": 5,
+    "fadeIn": 16,
+    "minimum": 86,
+    "fadeOut": 18,
+    "captions": true
+  },
+  {
+    "id": "fade-black",
+    "name": "Black Fade",
+    "category": "Minimal",
+    "shaderId": 6,
+    "fadeIn": 30,
+    "minimum": 64,
+    "fadeOut": 32,
+    "captions": false
+  },
+  {
+    "id": "fade-rose",
+    "name": "Rose Fade",
+    "category": "Minimal",
+    "shaderId": 7,
+    "fadeIn": 24,
+    "minimum": 50,
+    "fadeOut": 30,
+    "captions": false
+  },
+  {
+    "id": "wipe-right",
+    "name": "Reverse Curtain",
+    "category": "Geometric",
+    "shaderId": 8,
+    "fadeIn": 18,
+    "minimum": 34,
+    "fadeOut": 18,
+    "captions": false
+  },
+  {
+    "id": "wipe-down",
+    "name": "Blue Waterfall",
+    "category": "Geometric",
+    "shaderId": 9,
+    "fadeIn": 22,
+    "minimum": 46,
+    "fadeOut": 24,
+    "captions": false
+  },
+  {
+    "id": "wipe-up",
+    "name": "Amber Rise",
+    "category": "Geometric",
+    "shaderId": 10,
+    "fadeIn": 26,
+    "minimum": 40,
+    "fadeOut": 26,
+    "captions": false
+  },
+  {
+    "id": "diagonal-wipe",
+    "name": "Diagonal Sweep",
+    "category": "Geometric",
+    "shaderId": 11,
+    "fadeIn": 28,
+    "minimum": 52,
+    "fadeOut": 24,
+    "captions": false
+  },
+  {
+    "id": "blinds",
+    "name": "Horizontal Blinds",
+    "category": "Geometric",
+    "shaderId": 12,
+    "fadeIn": 18,
+    "minimum": 36,
+    "fadeOut": 22,
+    "captions": false
+  },
+  {
+    "id": "vertical-blinds",
+    "name": "Vertical Blinds",
+    "category": "Geometric",
+    "shaderId": 13,
+    "fadeIn": 24,
+    "minimum": 44,
+    "fadeOut": 26,
+    "captions": false
+  },
+  {
+    "id": "checkerboard",
+    "name": "Checkerboard",
+    "category": "Geometric",
+    "shaderId": 14,
+    "fadeIn": 26,
+    "minimum": 54,
+    "fadeOut": 28,
+    "captions": false
+  },
+  {
+    "id": "mosaic",
+    "name": "Ocean Mosaic",
+    "category": "Geometric",
+    "shaderId": 15,
+    "fadeIn": 32,
+    "minimum": 62,
+    "fadeOut": 30,
+    "captions": false
+  },
+  {
+    "id": "diamond",
+    "name": "Diamond Bloom",
+    "category": "Geometric",
+    "shaderId": 16,
+    "fadeIn": 28,
+    "minimum": 48,
+    "fadeOut": 28,
+    "captions": false
+  },
+  {
+    "id": "hexagon",
+    "name": "Honeycomb",
+    "category": "Geometric",
+    "shaderId": 17,
+    "fadeIn": 24,
+    "minimum": 46,
+    "fadeOut": 24,
+    "captions": false
+  },
+  {
+    "id": "split-horizontal",
+    "name": "Side Curtains",
+    "category": "Geometric",
+    "shaderId": 18,
+    "fadeIn": 22,
+    "minimum": 42,
+    "fadeOut": 24,
+    "captions": false
+  },
+  {
+    "id": "split-vertical",
+    "name": "Cinema Curtains",
+    "category": "Geometric",
+    "shaderId": 19,
+    "fadeIn": 28,
+    "minimum": 58,
+    "fadeOut": 30,
+    "captions": false
+  },
+  {
+    "id": "zoom-square",
+    "name": "Square Zoom",
+    "category": "Geometric",
+    "shaderId": 20,
+    "fadeIn": 20,
+    "minimum": 40,
+    "fadeOut": 26,
+    "captions": false
+  },
+  {
+    "id": "shutter",
+    "name": "Camera Shutter",
+    "category": "Geometric",
+    "shaderId": 21,
+    "fadeIn": 26,
+    "minimum": 52,
+    "fadeOut": 28,
+    "captions": false
+  },
+  {
+    "id": "ripple",
+    "name": "Ripple Reveal",
+    "category": "Geometric",
+    "shaderId": 22,
+    "fadeIn": 32,
+    "minimum": 60,
+    "fadeOut": 36,
+    "captions": false
+  },
+  {
+    "id": "radar",
+    "name": "Emerald Radar",
+    "category": "Space",
+    "shaderId": 23,
+    "fadeIn": 20,
+    "minimum": 92,
+    "fadeOut": 26,
+    "captions": true
+  },
+  {
+    "id": "sonar",
+    "name": "Deep Sonar",
+    "category": "Space",
+    "shaderId": 24,
+    "fadeIn": 26,
+    "minimum": 84,
+    "fadeOut": 32,
+    "captions": false
+  },
+  {
+    "id": "starfield",
+    "name": "Starlit Sky",
+    "category": "Space",
+    "shaderId": 25,
+    "fadeIn": 28,
+    "minimum": 98,
+    "fadeOut": 28,
+    "captions": false
+  },
+  {
+    "id": "warp",
+    "name": "Warp Drive",
+    "category": "Space",
+    "shaderId": 26,
+    "fadeIn": 18,
+    "minimum": 78,
+    "fadeOut": 24,
+    "captions": false
+  },
+  {
+    "id": "nebula",
+    "name": "Violet Nebula",
+    "category": "Space",
+    "shaderId": 27,
+    "fadeIn": 32,
+    "minimum": 102,
+    "fadeOut": 30,
+    "captions": false
+  },
+  {
+    "id": "eclipse",
+    "name": "Solar Eclipse",
+    "category": "Space",
+    "shaderId": 28,
+    "fadeIn": 26,
+    "minimum": 82,
+    "fadeOut": 34,
+    "captions": false
+  },
+  {
+    "id": "solar-flare",
+    "name": "Solar Flare",
+    "category": "Space",
+    "shaderId": 29,
+    "fadeIn": 24,
+    "minimum": 72,
+    "fadeOut": 28,
+    "captions": false
+  },
+  {
+    "id": "ocean",
+    "name": "Ocean Waves",
+    "category": "Nature",
+    "shaderId": 30,
+    "fadeIn": 28,
+    "minimum": 88,
+    "fadeOut": 32,
+    "captions": false
+  },
+  {
+    "id": "lava",
+    "name": "Molten Lava",
+    "category": "Nature",
+    "shaderId": 31,
+    "fadeIn": 26,
+    "minimum": 76,
+    "fadeOut": 30,
+    "captions": false
+  },
+  {
+    "id": "snowflakes",
+    "name": "Winter Snow",
+    "category": "Nature",
+    "shaderId": 32,
+    "fadeIn": 32,
+    "minimum": 100,
+    "fadeOut": 32,
+    "captions": false
+  },
+  {
+    "id": "rain",
+    "name": "Midnight Rain",
+    "category": "Nature",
+    "shaderId": 33,
+    "fadeIn": 24,
+    "minimum": 80,
+    "fadeOut": 28,
+    "captions": false
+  },
+  {
+    "id": "sakura",
+    "name": "Sakura Petals",
+    "category": "Nature",
+    "shaderId": 34,
+    "fadeIn": 30,
+    "minimum": 96,
+    "fadeOut": 34,
+    "captions": false
+  },
+  {
+    "id": "fireflies",
+    "name": "Forest Fireflies",
+    "category": "Nature",
+    "shaderId": 35,
+    "fadeIn": 32,
+    "minimum": 106,
+    "fadeOut": 30,
+    "captions": false
+  },
+  {
+    "id": "matrix",
+    "name": "Digital Rain",
+    "category": "Retro",
+    "shaderId": 36,
+    "fadeIn": 18,
+    "minimum": 74,
+    "fadeOut": 24,
+    "captions": false
+  },
+  {
+    "id": "scanlines",
+    "name": "Retro CRT",
+    "category": "Retro",
+    "shaderId": 37,
+    "fadeIn": 22,
+    "minimum": 60,
+    "fadeOut": 26,
+    "captions": false
+  },
+  {
+    "id": "glitch",
+    "name": "Signal Glitch",
+    "category": "Retro",
+    "shaderId": 38,
+    "fadeIn": 16,
+    "minimum": 48,
+    "fadeOut": 20,
+    "captions": false
+  },
+  {
+    "id": "pixel-dissolve",
+    "name": "Pixel Dissolve",
+    "category": "Retro",
+    "shaderId": 39,
+    "fadeIn": 30,
+    "minimum": 58,
+    "fadeOut": 32,
+    "captions": false
+  },
+  {
+    "id": "ink",
+    "name": "Ink Flood",
+    "category": "Atmosphere",
+    "shaderId": 40,
+    "fadeIn": 34,
+    "minimum": 64,
+    "fadeOut": 34,
+    "captions": false
+  },
+  {
+    "id": "paper",
+    "name": "Paper Fold",
+    "category": "Atmosphere",
+    "shaderId": 41,
+    "fadeIn": 26,
+    "minimum": 50,
+    "fadeOut": 28,
+    "captions": false
+  },
+  {
+    "id": "film-grain",
+    "name": "Old Film",
+    "category": "Retro",
+    "shaderId": 42,
+    "fadeIn": 26,
+    "minimum": 68,
+    "fadeOut": 26,
+    "captions": false
+  },
+  {
+    "id": "prism",
+    "name": "Glass Prism",
+    "category": "Atmosphere",
+    "shaderId": 43,
+    "fadeIn": 28,
+    "minimum": 84,
+    "fadeOut": 28,
+    "captions": false
+  },
+  {
+    "id": "gradient-sunset",
+    "name": "Sunset Gradient",
+    "category": "Atmosphere",
+    "shaderId": 44,
+    "fadeIn": 30,
+    "minimum": 94,
+    "fadeOut": 30,
+    "captions": false
+  },
+  {
+    "id": "gradient-ocean",
+    "name": "Ocean Gradient",
+    "category": "Atmosphere",
+    "shaderId": 45,
+    "fadeIn": 28,
+    "minimum": 86,
+    "fadeOut": 28,
+    "captions": false
+  },
+  {
+    "id": "monochrome",
+    "name": "Silver Monochrome",
+    "category": "Minimal",
+    "shaderId": 46,
+    "fadeIn": 24,
+    "minimum": 56,
+    "fadeOut": 28,
+    "captions": false
+  },
+  {
+    "id": "pulse",
+    "name": "Soft Pulse",
+    "category": "Atmosphere",
+    "shaderId": 47,
+    "fadeIn": 20,
+    "minimum": 70,
+    "fadeOut": 28,
+    "captions": false
+  },
+  {
+    "id": "ribbon",
+    "name": "Silk Ribbons",
+    "category": "Atmosphere",
+    "shaderId": 48,
+    "fadeIn": 26,
+    "minimum": 90,
+    "fadeOut": 32,
+    "captions": false
+  },
+  {
+    "id": "spiral",
+    "name": "Golden Spiral",
+    "category": "Geometric",
+    "shaderId": 49,
+    "fadeIn": 30,
+    "minimum": 62,
+    "fadeOut": 30,
+    "captions": false
+  }
+]

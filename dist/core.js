@@ -1,0 +1,230 @@
+/* FrameUI Studio — Copyright (C) 2026 Berke Akçen. GPL-3.0-or-later. */
+(function (scope) {
+    'use strict';
+    const VERSION = 1;
+    const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+    const MAX_IMAGE_SIZE = 2048;
+    const utf8 = new TextEncoder();
+    const decoder = new TextDecoder('utf-8', { fatal: true });
+    const clone = value => JSON.parse(JSON.stringify(value));
+    const catalog = [];
+    const modes = ['SURVIVAL', 'CREATIVE', 'ADVENTURE', 'SPECTATOR'];
+    const triggers = ['join', 'teleport', 'world-change', 'command'];
+    const causes = ['ENDER_PEARL', 'COMMAND', 'PLUGIN', 'NETHER_PORTAL', 'END_PORTAL', 'SPECTATE', 'END_GATEWAY', 'CONSUMABLE_EFFECT', 'CHORUS_FRUIT', 'DISMOUNT', 'EXIT_BED', 'UNKNOWN'];
+    function configureCatalog(templates) { catalog.splice(0, catalog.length, ...templates); }
+    function createEffect(templateId = 'aurora') {
+        const template = catalog.find(entry => entry.id === templateId) || catalog[0];
+        if (!template) throw new Error('The template catalog is unavailable.');
+        return {
+            id: template.id, name: template.name, category: template.category, template: template.id,
+            enabled: true, weight: 1, priority: 0,
+            timing: { 'fade-in-ticks': template.fadeIn, 'minimum-ticks': template.minimum, 'maximum-ticks': template.id === 'loading' ? 200 : template.minimum, 'fade-out-ticks': template.fadeOut },
+            captions: { enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
+            presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
+            appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1 },
+            filters: { permission: '', 'deny-permissions': [], worlds: { include: [], exclude: [] }, 'source-worlds': { include: [], exclude: [] }, 'game-modes': { include: [], exclude: [] }, 'teleport-causes': [], triggers: [...triggers], distance: { min: 0, max: -1 }, height: { min: -30000000, max: 30000000 }, time: { min: 0, max: 23999 }, weather: [], 'cooldown-ticks': 0 }
+        };
+    }
+    function merge(defaults, input, path = '') {
+        if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error(`${path || 'Effect'} must be a mapping.`);
+        const result = clone(defaults);
+        for (const key of Object.keys(input)) {
+            if (!Object.hasOwn(defaults, key)) throw new Error(`Unknown setting: ${path}${key}.`);
+            const value = input[key], base = defaults[key];
+            result[key] = base && typeof base === 'object' && !Array.isArray(base) ? merge(base, value, `${path}${key}.`) : value;
+        }
+        return result;
+    }
+    function normalize(input) {
+        if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('The effect must be a YAML mapping.');
+        const template = input.template || input.id || 'aurora';
+        if (!catalog.some(entry => entry.id === template)) throw new Error(`Unknown template: ${template}. Choose one of the 50 built-in templates.`);
+        const result = merge(createEffect(template), input);
+        for (const key of ['include', 'exclude']) {
+            if (!Array.isArray(result.filters['game-modes'][key])) throw new Error(`Game modes ${key} must be a list.`);
+            result.filters['game-modes'][key] = result.filters['game-modes'][key].map(value => typeof value === 'string' ? value.toUpperCase() : value);
+        }
+        for (const key of ['teleport-causes', 'triggers', 'weather']) {
+            if (!Array.isArray(result.filters[key])) throw new Error(`${key} must be a list.`);
+            result.filters[key] = result.filters[key].map(value => typeof value === 'string' ? key === 'teleport-causes' ? value.toUpperCase().replaceAll('-', '_') : value.toLowerCase().replaceAll('_', '-') : value);
+        }
+        validate(result);
+        return result;
+    }
+    function validate(effect) {
+        const fail = message => { throw new Error(message); };
+        const string = (value, label, max = 128) => { if (typeof value !== 'string' || value.length > max || /[\u0000-\u001f\u007f-\u009f]/.test(value)) fail(`${label} must be text of at most ${max} characters, without control characters.`); };
+        const number = (value, label, min, max, integer = true) => { if (typeof value !== 'number' || !Number.isFinite(value) || (integer && !Number.isInteger(value)) || value < min || value > max) fail(`${label} must be ${integer ? 'an integer' : 'a number'} from ${min} to ${max}.`); };
+        const list = (value, label, allowed) => { if (!Array.isArray(value) || value.length > 128 || value.some(item => typeof item !== 'string' || item.length > (allowed ? 64 : 128) || !item.trim() || /[\u0000-\u001f\u007f-\u009f]/.test(item) || (allowed && !allowed.includes(item)))) fail(`${label} contains an invalid value.`); };
+        if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(effect.id) || effect.id.length > 48) fail('ID must contain up to 48 lowercase letters, numbers and single hyphens.');
+        string(effect.name, 'Name', 64); if (!effect.name.trim()) fail('Name cannot be empty.');
+        string(effect.category, 'Category', 40); if (!effect.category.trim()) fail('Category cannot be empty.');
+        if (!catalog.some(entry => entry.id === effect.template)) fail('Select a built-in template.');
+        if (typeof effect.enabled !== 'boolean') fail('Enabled must be true or false.');
+        number(effect.weight, 'Weight', 1, 10000); number(effect.priority, 'Priority', -10000, 10000);
+        const t = effect.timing;
+        number(t['fade-in-ticks'], 'Fade in', 0, 1200); number(t['minimum-ticks'], 'Minimum duration', 0, 1200); number(t['maximum-ticks'], 'Maximum duration', 0, 1200); number(t['fade-out-ticks'], 'Fade out', 1, 1200);
+        if (t['minimum-ticks'] < t['fade-in-ticks']) fail('Minimum duration must be at least the fade-in duration.');
+        if (t['maximum-ticks'] < t['minimum-ticks']) fail('Maximum duration must be at least the minimum duration.');
+        for (const key of ['title', 'subtitle', 'join-detail', 'teleport-detail', 'preview-detail']) string(effect.captions[key], `Caption ${key}`, key === 'title' ? 64 : key === 'subtitle' ? 96 : 128);
+        if (typeof effect.captions.enabled !== 'boolean') fail('Captions enabled must be true or false.');
+        for (const [key, value] of Object.entries(effect.presentation)) if (typeof value !== 'boolean') fail(`${key} must be true or false.`);
+        if (effect.presentation['show-hands'] && effect.presentation['hide-hud']) fail('Show hands requires hide HUD to be disabled.');
+        const a = effect.appearance;
+        if (!['original', 'custom'].includes(a.palette)) fail('Palette must be original or custom.');
+        for (const key of ['background', 'primary', 'secondary']) if (!/^#[0-9a-f]{6}$/i.test(a[key])) fail(`${key} must be a six-digit hexadecimal color.`);
+        number(a.speed, 'Animation speed', 0.05, 8, false); number(a.intensity, 'Intensity', 0, 4, false); number(a['image-opacity'], 'Image opacity', 0, 1, false);
+        if (!['cover', 'contain'].includes(a['image-fit'])) fail('Image fit must be cover or contain.');
+        string(a.image, 'Image path', 180);
+        if (a.image && (!a.image.startsWith('images/') || !/\.png$/i.test(a.image) || /[\\:\u0000]/.test(a.image) || a.image.split('/').some(part => !part.trim() || part === '.' || part === '..'))) fail('Image must be a safe PNG path inside images/, such as images/my-effect.png.');
+        const f = effect.filters;
+        string(f.permission, 'Permission', 128); list(f['deny-permissions'], 'Denied permissions');
+        if (f.permission && !/^[a-zA-Z0-9_.:*\-]+$/.test(f.permission)) fail('Permission contains an invalid node.');
+        if (f['deny-permissions'].some(permission => !/^[a-zA-Z0-9_.:*\-]+$/.test(permission))) fail('Denied permissions contain an invalid node.');
+        for (const group of ['worlds', 'source-worlds']) { list(f[group].include, `${group} include`); list(f[group].exclude, `${group} exclude`); }
+        list(f['game-modes'].include, 'Included game modes', modes); list(f['game-modes'].exclude, 'Excluded game modes', modes); list(f['teleport-causes'], 'Teleport causes', causes); list(f.triggers, 'Triggers', triggers); list(f.weather, 'Weather', ['clear', 'rain', 'thunder']);
+        number(f.distance.min, 'Minimum distance', 0, 100000000, false); number(f.distance.max, 'Maximum distance', -1, 100000000, false);
+        if (f.distance.max < 0 && f.distance.max !== -1) fail('Maximum distance uses -1 for no upper limit.');
+        if (f.distance.max !== -1 && f.distance.max < f.distance.min) fail('Maximum distance must be -1 or at least the minimum distance.');
+        for (const key of ['min', 'max']) number(f.height[key], `Height ${key}`, -30000000, 30000000, false);
+        if (f.height.max < f.height.min) fail('Maximum height must be at least the minimum height.');
+        for (const key of ['min', 'max']) number(f.time[key], `Time ${key}`, 0, 23999);
+        number(f['cooldown-ticks'], 'Cooldown', 0, 1728000);
+        return effect;
+    }
+    function toYaml(effect) {
+        validate(effect);
+        function mapping(value, indent) {
+            return Object.entries(value).map(([key, entry]) => {
+                const prefix = ' '.repeat(indent) + key + ':';
+                if (entry && typeof entry === 'object' && !Array.isArray(entry)) return prefix + '\n' + mapping(entry, indent + 2);
+                return prefix + ' ' + JSON.stringify(entry);
+            }).join('\n');
+        }
+        return '# FrameUI effect · generated by FrameUI Studio\n# Install in plugins/FrameUI/effects/ and run /frameui reload\n' + mapping(effect, 0) + '\n';
+    }
+    function stripComment(line) {
+        let quote = '', escaped = false;
+        for (let i = 0; i < line.length; i++) {
+            const c = line[i];
+            if (escaped) { escaped = false; continue; }
+            if (c === '\\' && quote === '"') { escaped = true; continue; }
+            if (quote) { if (c === quote) quote = ''; }
+            else if (c === '"' || c === "'") quote = c;
+            else if (c === '#' && (i === 0 || /\s/.test(line[i - 1]))) return line.slice(0, i).trimEnd();
+        }
+        return line.trimEnd();
+    }
+    function parseScalar(text, line) {
+        const error = () => { throw new Error(`Unsupported YAML value on line ${line}. Use plain values, quoted text or inline lists.`); };
+        if (/^[&*!|>]/.test(text)) error();
+        if (text === 'true') return true; if (text === 'false') return false;
+        if (text === 'null' || text === '~') return null;
+        if (/^-?(?:\d+\.?\d*|\d*\.\d+)$/.test(text)) return Number(text);
+        if (text.startsWith('"')) { try { return JSON.parse(text); } catch { error(); } }
+        if (text.startsWith("'")) { if (!text.endsWith("'")) error(); return text.slice(1, -1).replace(/''/g, "'"); }
+        if (text.startsWith('[')) {
+            if (!text.endsWith(']')) error();
+            const body = text.slice(1, -1).trim(); if (!body) return [];
+            const parts = []; let part = '', quote = '', escaped = false;
+            for (const c of body) {
+                if (escaped) { part += c; escaped = false; continue; }
+                if (c === '\\' && quote === '"') { part += c; escaped = true; continue; }
+                if (quote) { if (c === quote) quote = ''; part += c; }
+                else if (c === '"' || c === "'") { quote = c; part += c; }
+                else if (c === ',') { parts.push(parseScalar(part.trim(), line)); part = ''; }
+                else part += c;
+            }
+            if (quote || !part.trim()) error(); parts.push(parseScalar(part.trim(), line)); return parts;
+        }
+        if (!text || /[\[\]{}]|:\s/.test(text)) error();
+        return text;
+    }
+    function fromYaml(text) {
+        if (typeof text !== 'string' || text.length > 256000) throw new Error('YAML must be smaller than 256 KB.');
+        const lines = text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').split('\n').map((source, index) => ({ text: stripComment(source), line: index + 1 })).filter(entry => entry.text.trim() && !['---', '...'].includes(entry.text.trim()));
+        for (const entry of lines) { if (/\t/.test(entry.text)) throw new Error(`Use spaces instead of tabs on line ${entry.line}.`); entry.indent = entry.text.length - entry.text.trimStart().length; entry.body = entry.text.trimStart(); }
+        let index = 0;
+        function block(indent, depth = 0) {
+            if (depth > 8) throw new Error('YAML nesting is too deep.');
+            const array = lines[index]?.body.startsWith('- '), result = array ? [] : {};
+            while (index < lines.length && lines[index].indent === indent) {
+                if (array && !lines[index].body.startsWith('- ')) break;
+                const entry = lines[index++];
+                if (array) {
+                    if (!entry.body.startsWith('- ')) throw new Error(`Invalid list on line ${entry.line}.`);
+                    result.push(parseScalar(entry.body.slice(2).trim(), entry.line));
+                } else {
+                    const match = /^([a-zA-Z0-9_-]+):(?:\s+(.*))?$/.exec(entry.body);
+                    if (!match || ['__proto__', 'prototype', 'constructor'].includes(match[1])) throw new Error(`Invalid setting on line ${entry.line}.`);
+                    const key = match[1]; if (Object.hasOwn(result, key)) throw new Error(`Duplicate setting ${key} on line ${entry.line}.`);
+                    if (match[2] !== undefined) result[key] = parseScalar(match[2].trim(), entry.line);
+                    else if (index < lines.length && lines[index].indent > indent) result[key] = block(lines[index].indent, depth + 1);
+                    else if (index < lines.length && lines[index].indent === indent && lines[index].body.startsWith('- ')) result[key] = block(indent, depth + 1);
+                    else result[key] = {};
+                }
+                if (index < lines.length && lines[index].indent > indent) throw new Error(`Unexpected indentation on line ${lines[index].line}.`);
+            }
+            return result;
+        }
+        if (!lines.length || lines[0].indent !== 0) throw new Error('YAML must start with a setting at the left edge.');
+        const parsed = block(0); if (index !== lines.length) throw new Error(`Invalid indentation on line ${lines[index].line}.`);
+        return normalize(parsed);
+    }
+    const crcTable = Uint32Array.from({ length: 256 }, (_, n) => { for (let k = 0; k < 8; k++) n = (n & 1) ? 0xedb88320 ^ (n >>> 1) : n >>> 1; return n >>> 0; });
+    function crc32(bytes) { let crc = 0xffffffff; for (const byte of bytes) crc = crcTable[(crc ^ byte) & 255] ^ (crc >>> 8); return (crc ^ 0xffffffff) >>> 0; }
+    function safeEntry(name) { return /^(?:effects\/[a-z0-9]+(?:-[a-z0-9]+)*\.ya?ml|images\/[^\\:\u0000]+\.png|INSTALL\.txt)$/i.test(name) && name.length <= 180 && name.split('/').every(part => part.trim() && part !== '.' && part !== '..'); }
+    function zip(entries) {
+        const localParts = [], centralParts = []; let offset = 0, centralSize = 0;
+        for (const [name, data] of Object.entries(entries)) {
+            if (!safeEntry(name)) throw new Error(`Unsafe ZIP entry: ${name}.`);
+            const path = utf8.encode(name), bytes = typeof data === 'string' ? utf8.encode(data) : data, crc = crc32(bytes);
+            const local = new Uint8Array(30 + path.length), lv = new DataView(local.buffer);
+            lv.setUint32(0, 0x04034b50, true); lv.setUint16(4, 20, true); lv.setUint16(6, 0x0800, true); lv.setUint32(14, crc, true); lv.setUint32(18, bytes.length, true); lv.setUint32(22, bytes.length, true); lv.setUint16(26, path.length, true); local.set(path, 30);
+            localParts.push(local, bytes);
+            const central = new Uint8Array(46 + path.length), cv = new DataView(central.buffer);
+            cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true); cv.setUint16(8, 0x0800, true); cv.setUint32(16, crc, true); cv.setUint32(20, bytes.length, true); cv.setUint32(24, bytes.length, true); cv.setUint16(28, path.length, true); cv.setUint32(42, offset, true); central.set(path, 46);
+            centralParts.push(central); offset += local.length + bytes.length; centralSize += central.length;
+        }
+        const footer = new Uint8Array(22), fv = new DataView(footer.buffer);
+        fv.setUint32(0, 0x06054b50, true); fv.setUint16(8, centralParts.length, true); fv.setUint16(10, centralParts.length, true); fv.setUint32(12, centralSize, true); fv.setUint32(16, offset, true);
+        const result = new Uint8Array(offset + centralSize + 22); let cursor = 0;
+        for (const part of [...localParts, ...centralParts, footer]) { result.set(part, cursor); cursor += part.length; }
+        return result;
+    }
+    async function unzip(bytes) {
+        if (!(bytes instanceof Uint8Array) || bytes.length > 10 * 1024 * 1024) throw new Error('ZIP must be smaller than 10 MB.');
+        const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength), entries = {}; let offset = 0, count = 0, totalSize = 0;
+        while (offset + 4 <= bytes.length && view.getUint32(offset, true) === 0x04034b50) {
+            if (offset + 30 > bytes.length || ++count > 128) throw new Error('Invalid ZIP archive.');
+            const flags = view.getUint16(offset + 6, true), method = view.getUint16(offset + 8, true), crc = view.getUint32(offset + 14, true), compressed = view.getUint32(offset + 18, true), size = view.getUint32(offset + 22, true), nameLength = view.getUint16(offset + 26, true), extra = view.getUint16(offset + 28, true);
+            if (flags & 9) throw new Error('Use an unencrypted ZIP without data descriptors, or import the YAML directly.');
+            totalSize += size; if (totalSize > 12 * 1024 * 1024) throw new Error('ZIP contents are too large.');
+            const start = offset + 30 + nameLength + extra, end = start + compressed;
+            if (end > bytes.length) throw new Error('ZIP archive is incomplete.');
+            const name = decoder.decode(bytes.slice(offset + 30, offset + 30 + nameLength));
+            if (!safeEntry(name) || Object.hasOwn(entries, name)) throw new Error(`Unsafe or duplicate ZIP entry: ${name}.`);
+            let data = bytes.slice(start, end);
+            if (method === 8) {
+                try {
+                    const reader = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw')).getReader(), chunks = []; let length = 0;
+                    while (true) { const next = await reader.read(); if (next.done) break; length += next.value.length; if (length > size || length > 12 * 1024 * 1024) { await reader.cancel(); throw new Error('ZIP data exceeds its declared size.'); } chunks.push(next.value); }
+                    data = new Uint8Array(length); let position = 0; for (const chunk of chunks) { data.set(chunk, position); position += chunk.length; }
+                } catch (error) { if (/declared size/.test(error.message)) throw error; throw new Error('This browser cannot read compressed ZIP files. Import YAML, or a ZIP exported by Studio.'); }
+            } else if (method !== 0) throw new Error('Unsupported ZIP compression. Import the YAML file directly.');
+            if (data.length !== size || crc32(data) !== crc) throw new Error(`ZIP integrity check failed for ${name}.`);
+            entries[name] = data; offset = end;
+        }
+        if (!count || offset + 4 > bytes.length || ![0x02014b50, 0x06054b50].includes(view.getUint32(offset, true))) throw new Error('Invalid ZIP archive.');
+        return entries;
+    }
+    function validatePng(bytes) {
+        if (bytes.length > MAX_IMAGE_BYTES || bytes.length < 33 || ![137, 80, 78, 71, 13, 10, 26, 10].every((value, index) => bytes[index] === value)) throw new Error('The image must be a PNG smaller than 8 MB.');
+        const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength), width = v.getUint32(16), height = v.getUint32(20);
+        if (v.getUint32(8) !== 13 || v.getUint32(12) !== 0x49484452) throw new Error('The image has an invalid PNG header.');
+        if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1–2048 pixels.');
+        return { width, height };
+    }
+    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, modes, triggers, causes, configureCatalog, clone, createEffect, normalize, validate, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
+})(typeof window !== 'undefined' ? window : globalThis);
