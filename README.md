@@ -35,3 +35,5 @@ Regenerate `dist/shaders.js`, `test/catalog.json` and the reference YAML fixture
 Copyright (C) 2026 Berke Akçen. GPL-3.0-or-later, matching FrameUI.
 
 Ready-made layouts include the generated 3D FrameUI logo, six reusable text/indicator layouts, two new landscapes and Overworld. The Design tab edits background style, image entrance/motion/size/position/delay, caption animation/position/scale, loading indicator and decoration. Indicators animate continuously rather than reporting a server loading percentage. The preset artwork is included in complete effect exports; replacing a logo or photo preserves its configurable animation. Run the local HTTP server to load bundled preset images reliably.
+
+Direct layout editing: drag the logo/image, text group or loading indicator on the preview. Pull a corner to resize proportionally. Use the element toolbar when objects overlap. Every gesture is one Undo entry; Escape cancels. Focused objects and corner handles support arrows (Shift for 10px steps). Text X and indicator thickness are exported along with the existing positions/scales. The paused canvas shows stable placement while arranging.

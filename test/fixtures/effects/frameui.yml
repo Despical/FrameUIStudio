@@ -26,7 +26,7 @@ presentation:
 appearance:
   palette: "custom"
   background: "#151820"
-  primary: "#A9D8AC"
+  primary: "#D4C6A2"
   secondary: "#E8EFE5"
   speed: 1.0
   intensity: 1.0

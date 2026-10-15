@@ -39,6 +39,8 @@ uniform int uImageMotion;
 uniform vec4 uPlacement;
 uniform vec4 uIndicator;
 uniform int uDecoration;
+uniform float uProgressScale;
+vec4 frameTextPlacement(int effect) { return vec4(0.64, 1.0, 0.5, uProgressScale); }
 int frameBackgroundStyle(int effect) { return uBackgroundStyle; }
 int frameDecoration(int effect) { return uDecoration; }
 vec4 frameIndicator(int effect) { return uIndicator; }

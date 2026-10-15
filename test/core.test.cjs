@@ -127,3 +127,32 @@ test('ready-made compositions preserve image animation, editable elements and pa
     bad.elements.progress = 'unknown';
     assert.throws(() => core.validate(bad), /progress/);
 });
+
+
+test('canvas movement uses the exported coordinates and respects bounds', () => {
+    const original = core.createEffect('clean-loader').elements;
+    const moved = core.transformElement(original, 'image', .2, -.1);
+    assert.equal(moved['image-x'], .7); assert.equal(moved['image-y'], .4);
+    assert.equal(original['image-x'], .5);
+    const text = core.transformElement(original, 'text', .2, -.1);
+    assert.equal(text['text-x'], .7); assert.equal(text['text-y'], .34);
+    const bounded = core.transformElement(original, 'progress', 100, -100);
+    assert.equal(bounded['progress-x'], .9); assert.equal(bounded['progress-y'], .1);
+    assert.throws(() => core.transformElement(original,'unknown',0,0));
+    assert.throws(() => core.transformElement(original,'image',NaN,0));
+});
+
+test('corner resizing preserves aspect and fixes the opposite corner', () => {
+    const original = core.createEffect('clean-loader').elements;
+    const resized = core.transformElement(original,'image',.2,.1,'se',{x:.3,y:.4,width:.4,height:.2});
+    assert.equal(resized['image-scale'],1.5);
+    assert.equal(resized['image-x'],.6); assert.equal(resized['image-y'],.55);
+    assert.equal(Math.round((resized['image-x']-.4*1.5/2)*1e4)/1e4,.3);
+    const text = core.transformElement(original,'text',.1,.05,'se',{x:.4,y:original['text-y'],width:.2,height:.1});
+    assert.equal(text['text-scale'],1.5); assert.equal(text['text-y'],original['text-y']);
+    const bar = core.transformElement(original,'progress',.17,.02,'se',{x:.33,y:.64,width:.34,height:.04});
+    assert.equal(bar['progress-width'],.51); assert.equal(bar['progress-scale'],1.5);
+    const bounded = core.transformElement(original,'image',100,100,'se',{x:.3,y:.4,width:.4,height:.2});
+    assert.equal(bounded['image-scale'],2);
+    assert.throws(() => core.transformElement(original,'text',1,1,'bad',{x:0,y:0,width:1,height:1}));
+});

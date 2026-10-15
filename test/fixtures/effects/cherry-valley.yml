@@ -32,7 +32,7 @@ appearance:
   intensity: 1.0
   image: "images/cherry-valley.png"
   image-fit: "cover"
-  image-motion: "panorama"
+  image-motion: "still"
 elements:
   background: "solid"
   text-animation: "slide-up"
@@ -40,7 +40,7 @@ elements:
   progress: "dots"
   progress-y: 0.82
   progress-width: 0.16
-  image-animation: "slide-up"
+  image-animation: "page"
   decoration: "petals"
 filters:
   triggers: ["command"]

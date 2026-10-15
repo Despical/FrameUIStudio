@@ -39,7 +39,7 @@
       "appearance": {
         "palette": "custom",
         "background": "#151820",
-        "primary": "#A9D8AC",
+        "primary": "#D4C6A2",
         "secondary": "#E8EFE5",
         "speed": 1,
         "intensity": 1,
@@ -63,7 +63,9 @@
         "progress-x": 0.5,
         "progress-y": 0.81,
         "progress-width": 0.28,
-        "decoration": "none"
+        "decoration": "none",
+        "text-x": 0.5,
+        "progress-scale": 1
       },
       "filters": {
         "permission": "",
@@ -149,12 +151,12 @@
         "image": "images/cherry-valley.png",
         "image-fit": "cover",
         "image-opacity": 1,
-        "image-motion": "panorama",
+        "image-motion": "still",
         "title-motion": "still"
       },
       "elements": {
         "background": "solid",
-        "image-animation": "slide-up",
+        "image-animation": "page",
         "image-scale": 1,
         "image-x": 0.5,
         "image-y": 0.5,
@@ -166,7 +168,9 @@
         "progress-x": 0.5,
         "progress-y": 0.82,
         "progress-width": 0.16,
-        "decoration": "petals"
+        "decoration": "petals",
+        "text-x": 0.5,
+        "progress-scale": 1
       },
       "filters": {
         "permission": "",
@@ -269,7 +273,9 @@
         "progress-x": 0.5,
         "progress-y": 0.66,
         "progress-width": 0.34,
-        "decoration": "none"
+        "decoration": "none",
+        "text-x": 0.5,
+        "progress-scale": 1
       },
       "filters": {
         "permission": "",
@@ -354,12 +360,12 @@
         "image": "images/nether-forge.png",
         "image-fit": "cover",
         "image-opacity": 1,
-        "image-motion": "panorama",
+        "image-motion": "still",
         "title-motion": "still"
       },
       "elements": {
         "background": "solid",
-        "image-animation": "wipe",
+        "image-animation": "fade",
         "image-scale": 1,
         "image-x": 0.5,
         "image-y": 0.5,
@@ -371,7 +377,9 @@
         "progress-x": 0.5,
         "progress-y": 0.82,
         "progress-width": 0.34,
-        "decoration": "embers"
+        "decoration": "embers",
+        "text-x": 0.5,
+        "progress-scale": 1
       },
       "filters": {
         "permission": "",
@@ -474,7 +482,9 @@
         "progress-x": 0.5,
         "progress-y": 0.3,
         "progress-width": 0.11,
-        "decoration": "none"
+        "decoration": "none",
+        "text-x": 0.5,
+        "progress-scale": 1
       },
       "filters": {
         "permission": "",
@@ -576,7 +586,9 @@
         "progress-x": 0.5,
         "progress-y": 0.8,
         "progress-width": 0.34,
-        "decoration": "none"
+        "decoration": "none",
+        "text-x": 0.5,
+        "progress-scale": 1
       },
       "filters": {
         "permission": "",
@@ -679,7 +691,9 @@
         "progress-x": 0.5,
         "progress-y": 0.66,
         "progress-width": 0.18,
-        "decoration": "pulse"
+        "decoration": "pulse",
+        "text-x": 0.5,
+        "progress-scale": 1
       },
       "filters": {
         "permission": "",
@@ -781,7 +795,9 @@
         "progress-x": 0.5,
         "progress-y": 0.66,
         "progress-width": 0.42,
-        "decoration": "scan"
+        "decoration": "scan",
+        "text-x": 0.5,
+        "progress-scale": 1
       },
       "filters": {
         "permission": "",
@@ -883,7 +899,9 @@
         "progress-x": 0.5,
         "progress-y": 0.66,
         "progress-width": 0.28,
-        "decoration": "none"
+        "decoration": "none",
+        "text-x": 0.5,
+        "progress-scale": 1
       },
       "filters": {
         "permission": "",
@@ -985,7 +1003,9 @@
         "progress-x": 0.5,
         "progress-y": 0.66,
         "progress-width": 0.46,
-        "decoration": "scan"
+        "decoration": "scan",
+        "text-x": 0.5,
+        "progress-scale": 1
       },
       "filters": {
         "permission": "",

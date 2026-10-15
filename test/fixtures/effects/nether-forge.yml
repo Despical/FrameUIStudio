@@ -32,7 +32,7 @@ appearance:
   intensity: 1.0
   image: "images/nether-forge.png"
   image-fit: "cover"
-  image-motion: "panorama"
+  image-motion: "still"
 elements:
   background: "solid"
   text-animation: "slide-up"
@@ -40,7 +40,7 @@ elements:
   progress: "segments"
   progress-y: 0.82
   progress-width: 0.34
-  image-animation: "wipe"
+  image-animation: "fade"
   decoration: "embers"
 filters:
   triggers: ["command"]

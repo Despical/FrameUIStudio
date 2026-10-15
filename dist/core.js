@@ -23,7 +23,7 @@
             captions: { enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
             presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
             appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1, 'image-motion': 'still', 'title-motion': 'still' },
-            elements: { background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none' },
+            elements: { background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1 },
             filters: { permission: '', 'deny-permissions': [], worlds: { include: [], exclude: [] }, 'source-worlds': { include: [], exclude: [] }, 'game-modes': { include: [], exclude: [] }, 'teleport-causes': [], triggers: [...triggers], distance: { min: 0, max: -1 }, height: { min: -30000000, max: 30000000 }, time: { min: 0, max: 23999 }, weather: [], 'cooldown-ticks': 0 }
         };
     }
@@ -86,9 +86,10 @@
         choice('text-animation', ['still', 'grow', 'slide-up']);
         choice('progress', ['none', 'bar', 'segments', 'dots', 'ring']);
         choice('decoration', ['none', 'embers', 'petals', 'scan', 'pulse']);
-        for (const key of ['image-x', 'image-y']) number(e[key], key, 0, 1, false);
+        for (const key of ['image-x', 'image-y', 'text-x']) number(e[key], key, 0, 1, false);
         for (const key of ['text-y', 'progress-x', 'progress-y']) number(e[key], key, 0.1, 0.9, false);
         number(e['image-scale'], 'Image scale', 0.1, 2, false); number(e['image-delay'], 'Image delay', 0, 0.8, false);
+        number(e['progress-scale'], 'Indicator scale', 0.5, 3, false);
         number(e['text-scale'], 'Text scale', 0.5, 2, false); number(e['progress-width'], 'Indicator width', 0.08, 0.8, false);
         string(a.image, 'Image path', 180);
         if (a.image && (!a.image.startsWith('images/') || !/\.png$/i.test(a.image) || /[\\:\u0000]/.test(a.image) || a.image.split('/').some(part => !part.trim() || part === '.' || part === '..'))) fail('Image must be a safe PNG path inside images/, such as images/my-effect.png.');
@@ -107,6 +108,38 @@
         number(f['cooldown-ticks'], 'Cooldown', 0, 1728000);
         return effect;
     }
+    // The same normalized coordinates are exported to the plugin. One transform can be committed
+    // as one history entry by any input surface (pointer, touch or keyboard).
+    function transformElement(elements, kind, dx, dy, corner = '', rect = null) {
+        if (!['image', 'text', 'progress'].includes(kind)) throw new Error('Unknown canvas element.');
+        if (![dx, dy].every(Number.isFinite)) throw new Error('Invalid canvas movement.');
+        const next = clone(elements);
+        const xKey = kind + '-x', yKey = kind + '-y';
+        const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+        if (!corner) { next[xKey] += dx; next[yKey] += dy; }
+        else {
+            if (!['nw','ne','sw','se'].includes(corner) || !rect || rect.width <= 0 || rect.height <= 0) throw new Error('Invalid resize handle.');
+            const sx = corner.endsWith('e') ? 1 : -1, sy = corner.startsWith('s') ? 1 : -1;
+            let ratio = (rect.width * (rect.width + sx * dx) + rect.height * (rect.height + sy * dy)) / (rect.width ** 2 + rect.height ** 2);
+            const scaleKey = kind === 'progress' ? 'progress-scale' : kind + '-scale';
+            const min = kind === 'image' ? .1 : .5, max = kind === 'progress' ? 3 : 2;
+            let lower = min / elements[scaleKey], upper = max / elements[scaleKey];
+            if (kind === 'progress') { lower = Math.max(lower, .08 / elements['progress-width']); upper = Math.min(upper, .8 / elements['progress-width']); }
+            ratio = clamp(ratio, lower, upper);
+            next[scaleKey] *= ratio;
+            if (kind === 'progress') next['progress-width'] *= ratio;
+            const anchorX = rect.x + (sx < 0 ? rect.width : 0), anchorY = rect.y + (sy < 0 ? rect.height : 0);
+            const centerX = anchorX + sx * rect.width * ratio / 2, centerY = anchorY + sy * rect.height * ratio / 2;
+            next[xKey] = centerX - (rect.x + rect.width / 2 - elements[xKey]) * ratio;
+            next[yKey] = centerY - (rect.y + rect.height / 2 - elements[yKey]) * ratio;
+        }
+        const minPosition = kind === 'progress' ? .1 : 0;
+        next[xKey] = clamp(next[xKey], minPosition, kind === 'progress' ? .9 : 1);
+        next[yKey] = clamp(next[yKey], kind === 'image' ? 0 : .1, kind === 'image' ? 1 : .9);
+        for (const key of Object.keys(next)) if (typeof next[key] === 'number') next[key] = Math.round(next[key] * 10000) / 10000;
+        return next;
+    }
+
     function toYaml(effect) {
         validate(effect);
         function mapping(value, indent) {
@@ -240,6 +273,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1–2048 pixels.');
         return { width, height };
     }
-    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, modes, triggers, causes, configureCatalog, clone, createEffect, normalize, validate, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, modes, triggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -340,3 +340,24 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 }
 
 .caption-preview>div:empty{display:none}
+
+.canvas-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:0 0 12px;padding:0 2px}
+.canvas-toolbar button{border:1px solid #283746;background:#131d28;color:#b7c7d4;padding:7px 10px;border-radius:7px;font:inherit;font-size:11px;cursor:pointer}
+.canvas-toolbar button[aria-pressed="true"]{color:#91e3d7;border-color:#4f9a92;background:#193c3b}
+.canvas-toolbar button:disabled{opacity:.35;cursor:default}
+.canvas-hint{font-size:10px;color:#8394a5;margin-left:auto}
+.canvas-editor{position:absolute;inset:0;z-index:5;pointer-events:none}
+.canvas-object{position:absolute;box-sizing:border-box;border:1px solid transparent;pointer-events:auto;cursor:move;touch-action:none;outline:0}
+.canvas-object[data-canvas-object="image"]{z-index:1}
+.canvas-object[data-canvas-object="text"]{z-index:2}
+.canvas-object[data-canvas-object="progress"]{z-index:3}
+.canvas-object:hover{border-color:#80d4c980;background:#80d4c906}
+.canvas-object.selected,.canvas-object:focus-visible{border-color:#8bdace;box-shadow:0 0 0 1px #06191599}
+.canvas-object-label{display:none;position:absolute;left:0;top:-21px;padding:3px 6px;white-space:nowrap;background:#173d3b;color:#d7fff7;font:10px "Segoe UI",sans-serif;border-radius:4px;pointer-events:none}
+.canvas-object.selected>.canvas-object-label{display:block}
+.canvas-handle{display:none;position:absolute;width:12px;height:12px;padding:0;border:2px solid #163c37;border-radius:3px;background:#bbfff1;z-index:10;touch-action:none}
+.canvas-object.selected>.canvas-handle,.canvas-object:focus-within>.canvas-handle{display:block}
+.canvas-handle-nw{left:-6px;top:-6px;cursor:nwse-resize}.canvas-handle-ne{right:-6px;top:-6px;cursor:nesw-resize}
+.canvas-handle-sw{left:-6px;bottom:-6px;cursor:nesw-resize}.canvas-handle-se{right:-6px;bottom:-6px;cursor:nwse-resize}
+.canvas-transforming .canvas-object{transition:none!important}.canvas-transforming{user-select:none}
+@media(max-width:900px){.canvas-hint{width:100%;margin-left:0;font-size:9px}.canvas-toolbar button{font-size:10px;padding:6px 8px}}
