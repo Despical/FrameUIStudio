@@ -3,9 +3,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Create Minecraft loading transitions with FrameUI Studio. Preview 50 shaders, customize colors and images, and export ready-to-install effects.">
+    <meta name="description" content="Create Minecraft loading transitions with FrameUI Studio. Customize ready-made loading screens with 3D logos, editable text, animated indicators and image entrances.">
     <meta name="theme-color" content="#0b1019">
-    <title>FrameUI Studio — Effect editor</title>
+    <title>FrameUI Studio | Effect editor</title>
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -23,42 +24,73 @@
         <symbol id="icon-undo" viewBox="0 0 24 24"><path d="m8 3-5 5 5 5M3 8h10a7 7 0 0 1 0 14"/></symbol>
     </defs></svg>
     <header class="app-header">
-        <a class="brand" href="#" aria-label="FrameUI Studio home"><span class="brand-mark"><svg><use href="#icon-frame"/></svg></span><span>FrameUI <b>Studio</b><small>TRANSITION EDITOR</small></span></a>
-        <div class="header-status"><span class="status-dot"></span><span id="save-status">Saved in this browser</span><span class="version-tag">LOCAL WORKSPACE</span></div>
+        <a class="brand" href="#" aria-label="FrameUI Studio home"><img class="brand-mark" src="icon.svg" width="43" height="43" alt=""><span>FrameUI <b>Studio</b></span></a>
         <div class="header-actions"><button id="undo-button" class="icon-button" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><svg><use href="#icon-undo"/></svg></button><button id="redo-button" class="icon-button redo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled><svg><use href="#icon-undo"/></svg></button><span class="header-divider"></span><button id="import-button" class="button button-quiet"><svg><use href="#icon-upload"/></svg>Import</button><button id="export-button" class="button button-primary"><svg><use href="#icon-download"/></svg>Export effect</button></div>
     </header>
     <main class="workspace">
         <aside class="catalog-panel" aria-label="Effect templates">
-            <div class="panel-heading"><div><span class="eyebrow">START WITH A TEMPLATE</span><h1>Effect library <span>50</span></h1></div></div>
+            <div class="panel-heading"><h1>Effect library <span>60</span></h1></div>
             <label class="search-field"><svg><use href="#icon-search"/></svg><input id="search" type="search" placeholder="Search effects…" aria-label="Search effects"><kbd>/</kbd></label>
-            <label class="category-field"><span>Collection</span><select id="category-filter" aria-label="Filter by collection"><option value="">All collections</option></select></label>
+            <div class="category-field"><span>Collection</span><select id="category-filter" aria-label="Filter by collection"><option value="">All collections</option></select></div>
             <div id="template-list" class="template-list" role="list" aria-label="Available effect templates"></div>
-            <div class="catalog-footer"><span class="mini-dot"></span>50 shaders. Infinite possibilities.<button id="new-button" class="text-button">New custom effect <span>↗</span></button></div>
+            <div class="catalog-footer"><button id="new-button" class="text-button">New custom effect <span>↗</span></button></div>
         </aside>
+        <div class="center-scroll" id="workspace-content" tabindex="0" role="region" aria-label="Effect preview">
         <section class="preview-panel" aria-label="Effect preview">
-            <div class="preview-heading"><div><span class="eyebrow">YOUR CANVAS</span><h2 id="effect-heading">Aurora</h2><p id="effect-subheading">Nature collection · Built-in template</p></div><div class="preview-meta"><span class="live-badge"><span></span>LIVE PREVIEW</span><button id="guide-button" class="text-button">Install guide ↗</button></div></div>
+            <div class="preview-heading"><div><h2 id="effect-heading">Aurora</h2><p id="effect-subheading">Nature collection · Built-in template</p></div></div>
             <div class="stage-wrap"><div class="stage" id="stage">
                 <div class="world-scene" aria-hidden="true"><div class="world-sky"></div><div class="world-sun"></div><div class="world-mountain mountain-back"></div><div class="world-mountain mountain-front"></div><div class="world-ground"></div><span class="world-caption">Minecraft scene placeholder</span></div>
                 <canvas id="preview-canvas" width="960" height="540" aria-label="Animated shader preview"></canvas>
                 <div class="game-hud" id="game-hud" aria-hidden="true"><span class="crosshair">+</span><div class="hotbar">▣ ▣ ▣ ▣ ▣ ▣ ▣ ▣ ▣</div></div><div class="game-hands" id="game-hands" aria-hidden="true"><span></span><span></span></div>
                 <div id="caption-preview" class="caption-preview"><div id="preview-title">Loading</div><div id="preview-subtitle">Please wait a moment</div><div id="preview-detail">FrameUI preview</div></div>
-                <div class="stage-top"><span class="stage-chip" id="stage-template">AURORA</span><span class="stage-chip">16:9</span></div>
-                <div class="stage-bottom"><span class="stage-chip" id="render-status">PLUGIN SHADER</span><span class="stage-chip" id="stage-phase">HOLD</span></div>
+                <div class="stage-bottom"><span class="stage-chip" id="stage-phase">HOLD</span></div>
                 <div id="renderer-error" class="renderer-error" hidden></div>
             </div></div>
             <div class="playback-bar"><button id="play-button" class="round-button" aria-label="Pause preview"><svg><use href="#icon-pause"/></svg></button><button id="restart-button" class="icon-button" aria-label="Restart preview" title="Restart preview"><svg><use href="#icon-restart"/></svg></button><div class="timeline-control"><div class="timeline-labels"><span id="time-label">00:00.0</span><span id="duration-label">5.2 s</span></div><input id="timeline" type="range" min="0" max="1000" value="160" aria-label="Preview position"></div><label class="loop-toggle"><input id="loop" type="checkbox" checked><span>Loop</span></label></div>
             <div class="timing-strip"><div><span>FADE IN</span><b id="summary-in">0.8 s</b></div><div><span>MINIMUM</span><b id="summary-hold">4.3 s</b></div><div><span>FADE OUT</span><b id="summary-out">0.9 s</b></div><div><span>TRIGGERS</span><b id="summary-triggers">4 events</b></div></div>
-            <div class="preview-note"><svg><use href="#icon-frame"/></svg><p>Rendered with the plugin’s shader. Captions, HUD and scene are illustrative; verify final placement in Minecraft.</p><button id="yaml-download" class="text-button"><svg><use href="#icon-code"/></svg>Download YAML</button></div>
-            <div class="install-card"><div class="install-icon"><svg><use href="#icon-download"/></svg></div><div><h3>From your canvas to your server.</h3><p>Export, drop into <code>plugins/FrameUI/</code>, then run <code>/frameui reload</code>.</p></div><span class="local-pill">No account needed</span></div>
+            <div class="preview-note"><svg><use href="#icon-frame"/></svg><p>Rendered with the plugin’s shader. Captions, HUD and scene are illustrative; verify final placement in Minecraft.</p></div>
         </section>
-        <aside class="inspector-panel" aria-label="Effect settings"><div class="inspector-heading"><span class="eyebrow">MAKE IT YOURS</span><h2>Properties <span id="custom-badge">TEMPLATE</span></h2></div><div class="inspector-tabs" role="tablist" aria-label="Setting groups"><button id="tab-visual" class="active" role="tab" aria-selected="true" aria-controls="settings-visual" data-tab="visual">Design</button><button id="tab-behavior" role="tab" aria-selected="false" aria-controls="settings-behavior" data-tab="behavior">Behavior</button><button id="tab-rules" role="tab" aria-selected="false" aria-controls="settings-rules" data-tab="rules">Rules</button><button id="tab-yaml" role="tab" aria-selected="false" aria-controls="settings-yaml" data-tab="yaml">YAML</button></div>
+            <div class="footer-scroll-space" aria-hidden="true"></div>
+
+        </div>
+        <aside class="inspector-panel" aria-label="Effect settings"><div class="inspector-heading"><h2>Properties</h2></div><div class="inspector-tabs" role="tablist" aria-label="Setting groups"><button id="tab-visual" class="active" role="tab" aria-selected="true" aria-controls="settings-visual" data-tab="visual">Design</button><button id="tab-behavior" role="tab" aria-selected="false" aria-controls="settings-behavior" data-tab="behavior">Behavior</button><button id="tab-rules" role="tab" aria-selected="false" aria-controls="settings-rules" data-tab="rules">Rules</button><button id="tab-yaml" role="tab" aria-selected="false" aria-controls="settings-yaml" data-tab="yaml">YAML</button></div>
             <div class="inspector-scroll"><div id="settings-visual" class="settings-pane" role="tabpanel" aria-labelledby="tab-visual"></div><div id="settings-behavior" class="settings-pane" role="tabpanel" aria-labelledby="tab-behavior" hidden></div><div id="settings-rules" class="settings-pane" role="tabpanel" aria-labelledby="tab-rules" hidden></div><div id="settings-yaml" class="settings-pane" role="tabpanel" aria-labelledby="tab-yaml" hidden><div class="section-heading"><h3>Effect source</h3><span>YAML</span></div><p class="field-note">Edit the complete definition. Apply validates the file before replacing your draft.</p><label for="yaml-editor" class="sr-only">Effect YAML</label><textarea id="yaml-editor" spellcheck="false" class="yaml-editor"></textarea><button id="apply-yaml" class="button button-primary full-width">Apply YAML</button><p class="field-note">Studio supports mappings, lists and quoted values. YAML anchors and multiline blocks are not supported.</p></div></div>
             <div class="inspector-footer"><span id="validation-dot" class="status-dot"></span><span id="validation-status">Ready to export</span><button id="reset-button" class="text-button">Reset</button></div>
         </aside>
     </main>
+    <footer class="site-footer">
+        <div class="footer-container footer-top">
+            <div class="footer-identity">
+                <a class="brand" href="#" aria-label="FrameUI Studio home"><img class="brand-mark" src="icon.svg" width="30" height="30" alt=""><span>FrameUI <b>Studio</b></span></a>
+                <p>Make every transition your own.</p>
+            </div>
+            <nav class="footer-links" aria-label="Footer navigation">
+                <div class="footer-link-group" role="group" aria-label="Resources">
+                    <h2>Resources</h2>
+                    <button id="guide-button" type="button">Install guide</button>
+                    <button id="yaml-download" type="button">Download YAML</button>
+                </div>
+                <div class="footer-link-group" role="group" aria-label="Plugins">
+                    <h2>Plugins</h2>
+                    <a href="https://hub.despical.dev/" target="_blank" rel="noopener noreferrer"><img class="community-icon" src="brands/hub.svg" width="20" height="20" alt=""><span>Hub</span></a>
+                    <a href="https://www.spigotmc.org/resources/authors/despical.615094/" target="_blank" rel="noopener noreferrer"><img class="community-icon" src="brands/spigot.svg" width="20" height="20" alt=""><span>SpigotMC</span></a>
+                    <a href="https://builtbybit.com/creators/despical.257098/" target="_blank" rel="noopener noreferrer"><img class="community-icon" src="brands/builtbybit.svg" width="20" height="20" alt=""><span>BuiltByBit</span></a>
+                </div>
+                <div class="footer-link-group" role="group" aria-label="Community">
+                    <h2>Community</h2>
+                    <a href="https://github.com/Despical" target="_blank" rel="noopener noreferrer"><svg class="community-icon github-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .75a11.25 11.25 0 0 0-3.56 21.92c.56.1.77-.24.77-.54v-2.1c-3.14.68-3.8-1.33-3.8-1.33-.51-1.3-1.26-1.64-1.26-1.64-1.03-.7.08-.69.08-.69 1.14.08 1.74 1.17 1.74 1.17 1.01 1.73 2.66 1.23 3.31.94.1-.73.39-1.23.72-1.51-2.51-.29-5.15-1.26-5.15-5.59 0-1.23.44-2.24 1.16-3.03-.12-.29-.51-1.43.11-2.98 0 0 .95-.3 3.1 1.16A10.8 10.8 0 0 1 12 6.15c.96 0 1.92.13 2.82.38 2.15-1.46 3.1-1.16 3.1-1.16.62 1.55.23 2.69.11 2.98.72.79 1.16 1.8 1.16 3.03 0 4.34-2.65 5.3-5.17 5.58.41.35.77 1.03.77 2.08v3.09c0 .3.2.65.78.54A11.25 11.25 0 0 0 12 .75Z"/></svg><span>GitHub</span></a>
+                    <a href="https://discord.gg/uXVU8jmtpU" target="_blank" rel="noopener noreferrer"><svg class="community-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="#5865f2" stroke="none" d="M20.3 4.6a19.4 19.4 0 0 0-4.8-1.5l-.6 1.2a18.1 18.1 0 0 0-5.8 0l-.6-1.2a19.4 19.4 0 0 0-4.8 1.5C.7 9.1-.2 13.4.3 17.6a19.6 19.6 0 0 0 5.9 3l1.2-1.9-1.8-.9.4-.3a14 14 0 0 0 12 0l.4.3-1.8.9 1.2 1.9a19.6 19.6 0 0 0 5.9-3c.6-4.8-1-9.1-3.4-13ZM8.2 15.3c-1.2 0-2.1-1.1-2.1-2.4s.9-2.4 2.1-2.4 2.1 1.1 2.1 2.4-.9 2.4-2.1 2.4Zm7.6 0c-1.2 0-2.1-1.1-2.1-2.4s.9-2.4 2.1-2.4 2.1 1.1 2.1 2.4-.9 2.4-2.1 2.4Z"/></svg><span>Discord</span></a>
+                </div>
+            </nav>
+        </div>
+        <div class="footer-container footer-bottom">
+            <p>© 2026 FrameUI Studio. All trademarks belong to their respective owners. This site is not affiliated with or endorsed by any games or platforms unless stated otherwise.</p>
+        </div>
+    </footer>
+
     <input id="import-file" type="file" accept=".yml,.yaml,.zip" hidden><input id="image-file" type="file" accept="image/png,image/jpeg" hidden>
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-    <dialog id="guide-dialog"><div class="dialog-heading"><span class="eyebrow">READY FOR MINECRAFT</span><button class="icon-button" id="close-guide" aria-label="Close install guide">×</button></div><h2>Install your effect.</h2><p>Your ZIP contains a complete effect definition and its image, when used.</p><ol><li><b>Export effect</b><span>Download your ready-to-install ZIP.</span></li><li><b>Extract into plugins/FrameUI/</b><span>Merge the <code>effects/</code> and <code>images/</code> folders. Keep your other files.</span></li><li><b>Run /frameui reload</b><span>FrameUI validates definitions and rebuilds its resource pack.</span></li><li><b>Test in game</b><span>Accept the refreshed pack, then run <code>/frameui preview &lt;id&gt;</code>.</span></li></ol><p class="dialog-note">A new ID creates a separate effect. An existing ID replaces that definition. Your drafts and photos stay in this browser until you export.</p><button class="button button-primary full-width" id="guide-export"><svg><use href="#icon-download"/></svg>Export effect ZIP</button></dialog>
-    <script src="core.js"></script><script src="shaders.js"></script><script src="app.js"></script>
+    <dialog id="guide-dialog"><div class="dialog-heading"><button class="icon-button" id="close-guide" aria-label="Close install guide">×</button></div><h2>Install your effect.</h2><p>Your ZIP contains a complete effect definition and its image, when used.</p><ol><li><b>Export effect</b><span>Download your ready-to-install ZIP.</span></li><li><b>Extract into plugins/FrameUI/</b><span>Merge the <code>effects/</code> and <code>images/</code> folders. Keep your other files.</span></li><li><b>Run /frameui reload</b><span>FrameUI validates definitions and rebuilds its resource pack.</span></li><li><b>Test in game</b><span>Accept the refreshed pack, then run <code>/frameui preview &lt;id&gt;</code>.</span></li></ol><p class="dialog-note">A new ID creates a separate effect. An existing ID replaces that definition. Your drafts and photos stay in this browser until you export.</p><button class="button button-primary full-width" id="guide-export"><svg><use href="#icon-download"/></svg>Export effect ZIP</button></dialog>
+    <script src="core.js"></script><script src="shaders.js"></script><script src="dropdowns.js"></script><script src="footer.js"></script><script src="app.js"></script>
 </body>
 </html>

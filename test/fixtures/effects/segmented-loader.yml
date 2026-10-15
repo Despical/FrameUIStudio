@@ -1,0 +1,42 @@
+# Ready-to-customize example. Change text, colors, image and elements in Studio.
+id: "segmented-loader"
+name: "Segmented Loader"
+category: "Loading Templates"
+template: "fade-black"
+enabled: true
+weight: 1
+priority: 0
+timing:
+  fade-in-ticks: 18
+  minimum-ticks: 70
+  maximum-ticks: 70
+  fade-out-ticks: 16
+captions:
+  enabled: true
+  title: "YOUR SERVER"
+  subtitle: "Your next adventure is almost ready"
+  join-detail: ""
+  teleport-detail: ""
+  preview-detail: ""
+presentation:
+  show-hands: false
+  hide-hud: true
+  block-movement: true
+  block-interactions: true
+appearance:
+  palette: "custom"
+  background: "#0B1324"
+  primary: "#65C7F7"
+  secondary: "#B8D5E8"
+  speed: 1.0
+  intensity: 1.0
+elements:
+  background: "grid"
+  text-animation: "slide-up"
+  text-y: 0.44
+  progress: "segments"
+  progress-y: 0.66
+  progress-width: 0.42
+  decoration: "scan"
+filters:
+  triggers: ["command"]

@@ -1,0 +1,33 @@
+# GreenLauncher's original Overworld artwork, revealed like a page from top-left to bottom-right.
+id: 'overworld'
+name: 'Overworld Panorama'
+category: 'Landscape'
+template: 'fade-black'
+enabled: true
+weight: 1
+priority: 0
+timing:
+  fade-in-ticks: 20
+  minimum-ticks: 80
+  maximum-ticks: 80
+  fade-out-ticks: 20
+captions:
+  enabled: false
+presentation:
+  show-hands: false
+  hide-hud: true
+  block-movement: true
+  block-interactions: true
+appearance:
+  palette: 'original'
+  background: '#081221'
+  primary: '#A6C88B'
+  secondary: '#F0CD91'
+  speed: 1.0
+  intensity: 1.0
+  image: 'images/overworld.png'
+  image-fit: 'cover'
+  image-opacity: 1.0
+  image-motion: 'page'
+filters:
+  triggers: ['command']

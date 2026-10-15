@@ -1,0 +1,46 @@
+# Ready-to-customize example. Change text, colors, image and elements in Studio.
+id: "cherry-valley"
+name: "Cherry Valley"
+category: "Photo Templates"
+template: "fade-black"
+enabled: true
+weight: 1
+priority: 0
+timing:
+  fade-in-ticks: 18
+  minimum-ticks: 82
+  maximum-ticks: 82
+  fade-out-ticks: 16
+captions:
+  enabled: true
+  title: "YOUR NEXT ADVENTURE"
+  subtitle: "A new world is waiting"
+  join-detail: ""
+  teleport-detail: ""
+  preview-detail: ""
+presentation:
+  show-hands: false
+  hide-hud: true
+  block-movement: true
+  block-interactions: true
+appearance:
+  palette: "custom"
+  background: "#201622"
+  primary: "#F8B3CB"
+  secondary: "#FFF1DD"
+  speed: 1.0
+  intensity: 1.0
+  image: "images/cherry-valley.png"
+  image-fit: "cover"
+  image-motion: "panorama"
+elements:
+  background: "solid"
+  text-animation: "slide-up"
+  text-y: 0.63
+  progress: "dots"
+  progress-y: 0.82
+  progress-width: 0.16
+  image-animation: "slide-up"
+  decoration: "petals"
+filters:
+  triggers: ["command"]

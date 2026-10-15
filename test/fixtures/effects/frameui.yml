@@ -1,0 +1,47 @@
+# Signature logo artwork is replaceable. Subtitle, indicator and all motion stay editable.
+id: "frameui"
+name: "FrameUI Signature"
+category: "Signature"
+template: "fade-black"
+enabled: true
+weight: 1
+priority: 0
+timing:
+  fade-in-ticks: 28
+  minimum-ticks: 80
+  maximum-ticks: 80
+  fade-out-ticks: 16
+captions:
+  enabled: true
+  title: ""
+  subtitle: "YOUR WORLD. YOUR STYLE."
+  join-detail: "Preparing your next adventure"
+  teleport-detail: "Preparing your next adventure"
+  preview-detail: "Preparing your next adventure"
+presentation:
+  show-hands: false
+  hide-hud: true
+  block-movement: true
+  block-interactions: true
+appearance:
+  palette: "custom"
+  background: "#151820"
+  primary: "#A9D8AC"
+  secondary: "#E8EFE5"
+  speed: 1.0
+  intensity: 1.0
+  image: "images/frameui-logo.png"
+  image-fit: "contain"
+elements:
+  background: "solid"
+  text-animation: "slide-up"
+  text-y: 0.64
+  progress: "segments"
+  progress-y: 0.81
+  progress-width: 0.28
+  image-animation: "grow"
+  image-scale: 0.72
+  image-y: 0.5
+  image-delay: 0.38
+filters:
+  triggers: ["command"]

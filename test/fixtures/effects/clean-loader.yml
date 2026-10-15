@@ -1,0 +1,41 @@
+# Ready-to-customize example. Change text, colors, image and elements in Studio.
+id: "clean-loader"
+name: "Clean Loader"
+category: "Loading Templates"
+template: "fade-black"
+enabled: true
+weight: 1
+priority: 0
+timing:
+  fade-in-ticks: 18
+  minimum-ticks: 64
+  maximum-ticks: 64
+  fade-out-ticks: 16
+captions:
+  enabled: true
+  title: "YOUR SERVER"
+  subtitle: "Your next adventure is almost ready"
+  join-detail: ""
+  teleport-detail: ""
+  preview-detail: ""
+presentation:
+  show-hands: false
+  hide-hud: true
+  block-movement: true
+  block-interactions: true
+appearance:
+  palette: "custom"
+  background: "#10161E"
+  primary: "#A3D9BE"
+  secondary: "#D4DDD8"
+  speed: 1.0
+  intensity: 1.0
+elements:
+  background: "solid"
+  text-animation: "slide-up"
+  text-y: 0.44
+  progress: "bar"
+  progress-y: 0.66
+  progress-width: 0.34
+filters:
+  triggers: ["command"]

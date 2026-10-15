@@ -15,13 +15,15 @@
     function createEffect(templateId = 'aurora') {
         const template = catalog.find(entry => entry.id === templateId) || catalog[0];
         if (!template) throw new Error('The template catalog is unavailable.');
+        if (template.definition) return normalize(template.definition);
         return {
             id: template.id, name: template.name, category: template.category, template: template.id,
             enabled: true, weight: 1, priority: 0,
             timing: { 'fade-in-ticks': template.fadeIn, 'minimum-ticks': template.minimum, 'maximum-ticks': template.id === 'loading' ? 200 : template.minimum, 'fade-out-ticks': template.fadeOut },
             captions: { enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
             presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
-            appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1 },
+            appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1, 'image-motion': 'still', 'title-motion': 'still' },
+            elements: { background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none' },
             filters: { permission: '', 'deny-permissions': [], worlds: { include: [], exclude: [] }, 'source-worlds': { include: [], exclude: [] }, 'game-modes': { include: [], exclude: [] }, 'teleport-causes': [], triggers: [...triggers], distance: { min: 0, max: -1 }, height: { min: -30000000, max: 30000000 }, time: { min: 0, max: 23999 }, weather: [], 'cooldown-ticks': 0 }
         };
     }
@@ -38,7 +40,7 @@
     function normalize(input) {
         if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('The effect must be a YAML mapping.');
         const template = input.template || input.id || 'aurora';
-        if (!catalog.some(entry => entry.id === template)) throw new Error(`Unknown template: ${template}. Choose one of the 50 built-in templates.`);
+        if (!catalog.some(entry => entry.id === template && !entry.definition)) throw new Error(`Unknown template: ${template}. Choose one of the 50 built-in templates.`);
         const result = merge(createEffect(template), input);
         for (const key of ['include', 'exclude']) {
             if (!Array.isArray(result.filters['game-modes'][key])) throw new Error(`Game modes ${key} must be a list.`);
@@ -59,7 +61,7 @@
         if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(effect.id) || effect.id.length > 48) fail('ID must contain up to 48 lowercase letters, numbers and single hyphens.');
         string(effect.name, 'Name', 64); if (!effect.name.trim()) fail('Name cannot be empty.');
         string(effect.category, 'Category', 40); if (!effect.category.trim()) fail('Category cannot be empty.');
-        if (!catalog.some(entry => entry.id === effect.template)) fail('Select a built-in template.');
+        if (!catalog.some(entry => entry.id === effect.template && !entry.definition)) fail('Select a built-in template.');
         if (typeof effect.enabled !== 'boolean') fail('Enabled must be true or false.');
         number(effect.weight, 'Weight', 1, 10000); number(effect.priority, 'Priority', -10000, 10000);
         const t = effect.timing;
@@ -75,6 +77,19 @@
         for (const key of ['background', 'primary', 'secondary']) if (!/^#[0-9a-f]{6}$/i.test(a[key])) fail(`${key} must be a six-digit hexadecimal color.`);
         number(a.speed, 'Animation speed', 0.05, 8, false); number(a.intensity, 'Intensity', 0, 4, false); number(a['image-opacity'], 'Image opacity', 0, 1, false);
         if (!['cover', 'contain'].includes(a['image-fit'])) fail('Image fit must be cover or contain.');
+        if (!['still', 'panorama', 'page'].includes(a['image-motion'])) fail('Invalid image motion.');
+        if (!['still', 'grow'].includes(a['title-motion'])) fail('Invalid title motion.');
+        const e = effect.elements;
+        const choice = (key, values) => { if (!values.includes(e[key])) fail(`Invalid element ${key}.`); };
+        choice('background', ['template', 'solid', 'split', 'grid', 'terminal', 'pulse']);
+        choice('image-animation', ['inherit', 'fade', 'grow', 'slide-up', 'slide-left', 'wipe', 'page']);
+        choice('text-animation', ['still', 'grow', 'slide-up']);
+        choice('progress', ['none', 'bar', 'segments', 'dots', 'ring']);
+        choice('decoration', ['none', 'embers', 'petals', 'scan', 'pulse']);
+        for (const key of ['image-x', 'image-y']) number(e[key], key, 0, 1, false);
+        for (const key of ['text-y', 'progress-x', 'progress-y']) number(e[key], key, 0.1, 0.9, false);
+        number(e['image-scale'], 'Image scale', 0.1, 2, false); number(e['image-delay'], 'Image delay', 0, 0.8, false);
+        number(e['text-scale'], 'Text scale', 0.5, 2, false); number(e['progress-width'], 'Indicator width', 0.08, 0.8, false);
         string(a.image, 'Image path', 180);
         if (a.image && (!a.image.startsWith('images/') || !/\.png$/i.test(a.image) || /[\\:\u0000]/.test(a.image) || a.image.split('/').some(part => !part.trim() || part === '.' || part === '..'))) fail('Image must be a safe PNG path inside images/, such as images/my-effect.png.');
         const f = effect.filters;

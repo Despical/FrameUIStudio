@@ -1,0 +1,80 @@
+# FrameUI effect: Warp Drive. Copy this file with a new filename and matching ID to create a variation.
+# IDs: lowercase letters, numbers, single hyphens; maximum 48 characters.
+id: 'warp'
+name: 'Warp Drive'
+category: 'Space'
+# Reuse any of the 50 built-in animation templates; your variation gets its own shader slot.
+template: 'warp'
+enabled: true
+# Automatic selection first uses the highest eligible priority, then random weighted selection.
+weight: 1
+priority: 0
+
+timing:
+  # 20 ticks = 1 second. Fade-in may be 0; each timing is bounded to 1200 ticks.
+  fade-in-ticks: 18
+  minimum-ticks: 78
+  # Wait for world readiness up to this point, then fade out.
+  maximum-ticks: 78
+  fade-out-ticks: 24
+
+captions:
+  enabled: false
+  title: 'Warp Drive'
+  subtitle: 'Searching the horizon'
+  # Placeholders: {player}, {world}, {source-world}, {effect}.
+  join-detail: 'Joining the server'
+  teleport-detail: 'Travelling to {world}'
+  preview-detail: '{effect} preview'
+
+presentation:
+  # Showing hands requires hide-hud: false. Hiding the HUD uses a private client view.
+  show-hands: false
+  hide-hud: true
+  block-movement: true
+  block-interactions: true
+
+appearance:
+  # original preserves this template's palette; custom applies the three colors below.
+  palette: 'original'
+  background: '#081221'
+  primary: '#7FAEFF'
+  secondary: '#C2D6FF'
+  speed: 1.0 # 0.05..8.0
+  intensity: 1.0 # 0.0..4.0
+  # Optional PNG in plugins/FrameUI/images/, for example images/logo.png.
+  image: ''
+  image-fit: 'cover' # cover or contain
+  image-opacity: 1.0 # 0.0..1.0
+
+filters:
+  # Empty permission allows everyone. Deny permissions always win, including for previews.
+  permission: ''
+  deny-permissions: []
+  # World names support case-insensitive * and ? wildcards. Excludes always win.
+  worlds:
+    include: [] # Empty means all destination worlds; example: ['lobby', 'survival-*']
+    exclude: [] # Example: ['minigame-*']
+  source-worlds:
+    include: []
+    exclude: []
+  game-modes:
+    include: [] # survival, creative, adventure, spectator; empty means all
+    exclude: []
+  # Only checked for teleport/world-change requests; use Bukkit teleport cause names.
+  teleport-causes: [] # Example: ['command', 'plugin', 'nether-portal']
+  triggers: ['join', 'teleport', 'world-change', 'command']
+  # Distance applies only to travel. Cross-world travel has infinite distance.
+  distance:
+    min: 0
+    max: -1 # -1 means unlimited; a finite maximum excludes cross-world travel.
+  # Destination Y coordinate.
+  height:
+    min: -30000000
+    max: 30000000
+  # Destination world time, inclusive. min > max wraps through midnight.
+  time:
+    min: 0
+    max: 23999
+  weather: [] # Empty means all; clear, rain, thunder are separate states.
+  cooldown-ticks: 0 # Per player and effect; 0 disables the cooldown.

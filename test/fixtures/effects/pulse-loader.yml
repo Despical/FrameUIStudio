@@ -1,0 +1,42 @@
+# Ready-to-customize example. Change text, colors, image and elements in Studio.
+id: "pulse-loader"
+name: "Pulse Loader"
+category: "Loading Templates"
+template: "fade-black"
+enabled: true
+weight: 1
+priority: 0
+timing:
+  fade-in-ticks: 18
+  minimum-ticks: 70
+  maximum-ticks: 70
+  fade-out-ticks: 16
+captions:
+  enabled: true
+  title: "YOUR SERVER"
+  subtitle: "Your next adventure is almost ready"
+  join-detail: ""
+  teleport-detail: ""
+  preview-detail: ""
+presentation:
+  show-hands: false
+  hide-hud: true
+  block-movement: true
+  block-interactions: true
+appearance:
+  palette: "custom"
+  background: "#1D1120"
+  primary: "#ED93BA"
+  secondary: "#D7C4D1"
+  speed: 1.0
+  intensity: 1.0
+elements:
+  background: "pulse"
+  text-animation: "slide-up"
+  text-y: 0.48
+  progress: "dots"
+  progress-y: 0.66
+  progress-width: 0.18
+  decoration: "pulse"
+filters:
+  triggers: ["command"]

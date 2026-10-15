@@ -6,7 +6,7 @@ const core = require('../dist/core.js');
 core.configureCatalog(require('./catalog.json'));
 
 test('all 50 templates round-trip through complete plugin YAML', () => {
-    assert.equal(core.catalog.length, 50);
+    assert.equal(core.catalog.filter(entry => !entry.definition).length, 50);
     for (const template of core.catalog) {
         const definition = core.createEffect(template.id);
         assert.deepEqual(core.fromYaml(core.toYaml(definition)), definition, template.id);
@@ -14,9 +14,9 @@ test('all 50 templates round-trip through complete plugin YAML', () => {
 });
 
 test('backend effect definitions load without unsupported fields or altered behavior', () => {
-    const directory = path.resolve(__dirname, '../../src/main/resources/effects');
+    const directory = path.resolve(__dirname, 'fixtures/effects');
     const files = fs.existsSync(directory) ? fs.readdirSync(directory).filter(name => name.endsWith('.yml')) : [];
-    assert.equal(files.length, 50);
+    assert.equal(files.length, 60);
     for (const file of files) {
         const effect = core.fromYaml(fs.readFileSync(path.join(directory, file), 'utf8'));
         assert.equal(effect.id, file.replace(/\.yml$/, ''));
@@ -101,4 +101,29 @@ test('oversized and malformed PNG files are rejected before decoding', () => {
 
 test('CRC32 matches ZIP standard reference', () => {
     assert.equal(core.crc32(core.utf8.encode('123456789')), 0xcbf43926);
+});
+
+
+test('ready-made compositions preserve image animation, editable elements and packaged assets', async () => {
+    const presets = core.catalog.filter(entry => entry.definition);
+    assert.equal(presets.length, 10);
+    for (const preset of presets) {
+        const effect = core.createEffect(preset.id);
+        assert.deepEqual(core.fromYaml(core.toYaml(effect)), effect);
+        assert.ok(effect.timing['maximum-ticks'] + effect.timing['fade-out-ticks'] <= 100);
+        if (preset.image) {
+            const image = fs.readFileSync(path.resolve(__dirname, '../dist', preset.image));
+            core.validatePng(image);
+            const zip = core.zip({['effects/' + effect.id + '.yml']:core.toYaml(effect), [effect.appearance.image]:image});
+            const entries = await core.unzip(zip);
+            assert.deepEqual(Buffer.from(entries[effect.appearance.image]), image);
+        }
+    }
+    assert.throws(() => core.normalize({id:'bad',template:'frameui'}), /Unknown template/);
+    const bad = core.createEffect('clean-loader');
+    bad.elements['image-delay'] = 2;
+    assert.throws(() => core.validate(bad), /delay/);
+    bad.elements['image-delay'] = 0;
+    bad.elements.progress = 'unknown';
+    assert.throws(() => core.validate(bad), /progress/);
 });

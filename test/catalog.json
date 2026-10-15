@@ -1,5 +1,1029 @@
 [
   {
+    "id": "frameui",
+    "name": "FrameUI Signature",
+    "category": "Signature",
+    "template": "fade-black",
+    "fadeIn": 28,
+    "minimum": 80,
+    "fadeOut": 16,
+    "captions": true,
+    "definition": {
+      "id": "frameui",
+      "name": "FrameUI Signature",
+      "category": "Signature",
+      "template": "fade-black",
+      "enabled": true,
+      "weight": 1,
+      "priority": 0,
+      "timing": {
+        "fade-in-ticks": 28,
+        "minimum-ticks": 80,
+        "maximum-ticks": 80,
+        "fade-out-ticks": 16
+      },
+      "captions": {
+        "enabled": true,
+        "title": "",
+        "subtitle": "YOUR WORLD. YOUR STYLE.",
+        "join-detail": "Preparing your next adventure",
+        "teleport-detail": "Preparing your next adventure",
+        "preview-detail": "Preparing your next adventure"
+      },
+      "presentation": {
+        "show-hands": false,
+        "hide-hud": true,
+        "block-movement": true,
+        "block-interactions": true
+      },
+      "appearance": {
+        "palette": "custom",
+        "background": "#151820",
+        "primary": "#A9D8AC",
+        "secondary": "#E8EFE5",
+        "speed": 1,
+        "intensity": 1,
+        "image": "images/frameui-logo.png",
+        "image-fit": "contain",
+        "image-opacity": 1,
+        "image-motion": "still",
+        "title-motion": "still"
+      },
+      "elements": {
+        "background": "solid",
+        "image-animation": "grow",
+        "image-scale": 0.72,
+        "image-x": 0.5,
+        "image-y": 0.5,
+        "image-delay": 0.38,
+        "text-animation": "slide-up",
+        "text-y": 0.64,
+        "text-scale": 1,
+        "progress": "segments",
+        "progress-x": 0.5,
+        "progress-y": 0.81,
+        "progress-width": 0.28,
+        "decoration": "none"
+      },
+      "filters": {
+        "permission": "",
+        "deny-permissions": [],
+        "worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "game-modes": {
+          "include": [],
+          "exclude": []
+        },
+        "teleport-causes": [],
+        "triggers": [
+          "command"
+        ],
+        "distance": {
+          "min": 0,
+          "max": -1
+        },
+        "height": {
+          "min": -30000000,
+          "max": 30000000
+        },
+        "time": {
+          "min": 0,
+          "max": 23999
+        },
+        "weather": [],
+        "cooldown-ticks": 0
+      }
+    },
+    "image": "assets/frameui-logo.png"
+  },
+  {
+    "id": "cherry-valley",
+    "name": "Cherry Valley",
+    "category": "Photo Templates",
+    "template": "fade-black",
+    "fadeIn": 18,
+    "minimum": 82,
+    "fadeOut": 16,
+    "captions": true,
+    "definition": {
+      "id": "cherry-valley",
+      "name": "Cherry Valley",
+      "category": "Photo Templates",
+      "template": "fade-black",
+      "enabled": true,
+      "weight": 1,
+      "priority": 0,
+      "timing": {
+        "fade-in-ticks": 18,
+        "minimum-ticks": 82,
+        "maximum-ticks": 82,
+        "fade-out-ticks": 16
+      },
+      "captions": {
+        "enabled": true,
+        "title": "YOUR NEXT ADVENTURE",
+        "subtitle": "A new world is waiting",
+        "join-detail": "",
+        "teleport-detail": "",
+        "preview-detail": ""
+      },
+      "presentation": {
+        "show-hands": false,
+        "hide-hud": true,
+        "block-movement": true,
+        "block-interactions": true
+      },
+      "appearance": {
+        "palette": "custom",
+        "background": "#201622",
+        "primary": "#F8B3CB",
+        "secondary": "#FFF1DD",
+        "speed": 1,
+        "intensity": 1,
+        "image": "images/cherry-valley.png",
+        "image-fit": "cover",
+        "image-opacity": 1,
+        "image-motion": "panorama",
+        "title-motion": "still"
+      },
+      "elements": {
+        "background": "solid",
+        "image-animation": "slide-up",
+        "image-scale": 1,
+        "image-x": 0.5,
+        "image-y": 0.5,
+        "image-delay": 0,
+        "text-animation": "slide-up",
+        "text-y": 0.63,
+        "text-scale": 1,
+        "progress": "dots",
+        "progress-x": 0.5,
+        "progress-y": 0.82,
+        "progress-width": 0.16,
+        "decoration": "petals"
+      },
+      "filters": {
+        "permission": "",
+        "deny-permissions": [],
+        "worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "game-modes": {
+          "include": [],
+          "exclude": []
+        },
+        "teleport-causes": [],
+        "triggers": [
+          "command"
+        ],
+        "distance": {
+          "min": 0,
+          "max": -1
+        },
+        "height": {
+          "min": -30000000,
+          "max": 30000000
+        },
+        "time": {
+          "min": 0,
+          "max": 23999
+        },
+        "weather": [],
+        "cooldown-ticks": 0
+      }
+    },
+    "image": "assets/cherry-valley.png"
+  },
+  {
+    "id": "clean-loader",
+    "name": "Clean Loader",
+    "category": "Loading Templates",
+    "template": "fade-black",
+    "fadeIn": 18,
+    "minimum": 64,
+    "fadeOut": 16,
+    "captions": true,
+    "definition": {
+      "id": "clean-loader",
+      "name": "Clean Loader",
+      "category": "Loading Templates",
+      "template": "fade-black",
+      "enabled": true,
+      "weight": 1,
+      "priority": 0,
+      "timing": {
+        "fade-in-ticks": 18,
+        "minimum-ticks": 64,
+        "maximum-ticks": 64,
+        "fade-out-ticks": 16
+      },
+      "captions": {
+        "enabled": true,
+        "title": "YOUR SERVER",
+        "subtitle": "Your next adventure is almost ready",
+        "join-detail": "",
+        "teleport-detail": "",
+        "preview-detail": ""
+      },
+      "presentation": {
+        "show-hands": false,
+        "hide-hud": true,
+        "block-movement": true,
+        "block-interactions": true
+      },
+      "appearance": {
+        "palette": "custom",
+        "background": "#10161E",
+        "primary": "#A3D9BE",
+        "secondary": "#D4DDD8",
+        "speed": 1,
+        "intensity": 1,
+        "image": "",
+        "image-fit": "cover",
+        "image-opacity": 1,
+        "image-motion": "still",
+        "title-motion": "still"
+      },
+      "elements": {
+        "background": "solid",
+        "image-animation": "inherit",
+        "image-scale": 1,
+        "image-x": 0.5,
+        "image-y": 0.5,
+        "image-delay": 0,
+        "text-animation": "slide-up",
+        "text-y": 0.44,
+        "text-scale": 1,
+        "progress": "bar",
+        "progress-x": 0.5,
+        "progress-y": 0.66,
+        "progress-width": 0.34,
+        "decoration": "none"
+      },
+      "filters": {
+        "permission": "",
+        "deny-permissions": [],
+        "worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "game-modes": {
+          "include": [],
+          "exclude": []
+        },
+        "teleport-causes": [],
+        "triggers": [
+          "command"
+        ],
+        "distance": {
+          "min": 0,
+          "max": -1
+        },
+        "height": {
+          "min": -30000000,
+          "max": 30000000
+        },
+        "time": {
+          "min": 0,
+          "max": 23999
+        },
+        "weather": [],
+        "cooldown-ticks": 0
+      }
+    }
+  },
+  {
+    "id": "nether-forge",
+    "name": "Nether Forge",
+    "category": "Photo Templates",
+    "template": "fade-black",
+    "fadeIn": 18,
+    "minimum": 76,
+    "fadeOut": 16,
+    "captions": true,
+    "definition": {
+      "id": "nether-forge",
+      "name": "Nether Forge",
+      "category": "Photo Templates",
+      "template": "fade-black",
+      "enabled": true,
+      "weight": 1,
+      "priority": 0,
+      "timing": {
+        "fade-in-ticks": 18,
+        "minimum-ticks": 76,
+        "maximum-ticks": 76,
+        "fade-out-ticks": 16
+      },
+      "captions": {
+        "enabled": true,
+        "title": "YOUR NEXT ADVENTURE",
+        "subtitle": "A new world is waiting",
+        "join-detail": "",
+        "teleport-detail": "",
+        "preview-detail": ""
+      },
+      "presentation": {
+        "show-hands": false,
+        "hide-hud": true,
+        "block-movement": true,
+        "block-interactions": true
+      },
+      "appearance": {
+        "palette": "custom",
+        "background": "#1F0908",
+        "primary": "#FFB35B",
+        "secondary": "#F5CCAB",
+        "speed": 1,
+        "intensity": 1,
+        "image": "images/nether-forge.png",
+        "image-fit": "cover",
+        "image-opacity": 1,
+        "image-motion": "panorama",
+        "title-motion": "still"
+      },
+      "elements": {
+        "background": "solid",
+        "image-animation": "wipe",
+        "image-scale": 1,
+        "image-x": 0.5,
+        "image-y": 0.5,
+        "image-delay": 0,
+        "text-animation": "slide-up",
+        "text-y": 0.63,
+        "text-scale": 1,
+        "progress": "segments",
+        "progress-x": 0.5,
+        "progress-y": 0.82,
+        "progress-width": 0.34,
+        "decoration": "embers"
+      },
+      "filters": {
+        "permission": "",
+        "deny-permissions": [],
+        "worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "game-modes": {
+          "include": [],
+          "exclude": []
+        },
+        "teleport-causes": [],
+        "triggers": [
+          "command"
+        ],
+        "distance": {
+          "min": 0,
+          "max": -1
+        },
+        "height": {
+          "min": -30000000,
+          "max": 30000000
+        },
+        "time": {
+          "min": 0,
+          "max": 23999
+        },
+        "weather": [],
+        "cooldown-ticks": 0
+      }
+    },
+    "image": "assets/nether-forge.png"
+  },
+  {
+    "id": "orbit-loader",
+    "name": "Orbit Loader",
+    "category": "Loading Templates",
+    "template": "fade-black",
+    "fadeIn": 18,
+    "minimum": 76,
+    "fadeOut": 16,
+    "captions": true,
+    "definition": {
+      "id": "orbit-loader",
+      "name": "Orbit Loader",
+      "category": "Loading Templates",
+      "template": "fade-black",
+      "enabled": true,
+      "weight": 1,
+      "priority": 0,
+      "timing": {
+        "fade-in-ticks": 18,
+        "minimum-ticks": 76,
+        "maximum-ticks": 76,
+        "fade-out-ticks": 16
+      },
+      "captions": {
+        "enabled": true,
+        "title": "YOUR SERVER",
+        "subtitle": "Your next adventure is almost ready",
+        "join-detail": "",
+        "teleport-detail": "",
+        "preview-detail": ""
+      },
+      "presentation": {
+        "show-hands": false,
+        "hide-hud": true,
+        "block-movement": true,
+        "block-interactions": true
+      },
+      "appearance": {
+        "palette": "custom",
+        "background": "#171125",
+        "primary": "#C0A0FF",
+        "secondary": "#DAD0E8",
+        "speed": 1,
+        "intensity": 1,
+        "image": "",
+        "image-fit": "cover",
+        "image-opacity": 1,
+        "image-motion": "still",
+        "title-motion": "still"
+      },
+      "elements": {
+        "background": "solid",
+        "image-animation": "inherit",
+        "image-scale": 1,
+        "image-x": 0.5,
+        "image-y": 0.5,
+        "image-delay": 0,
+        "text-animation": "grow",
+        "text-y": 0.55,
+        "text-scale": 1,
+        "progress": "ring",
+        "progress-x": 0.5,
+        "progress-y": 0.3,
+        "progress-width": 0.11,
+        "decoration": "none"
+      },
+      "filters": {
+        "permission": "",
+        "deny-permissions": [],
+        "worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "game-modes": {
+          "include": [],
+          "exclude": []
+        },
+        "teleport-causes": [],
+        "triggers": [
+          "command"
+        ],
+        "distance": {
+          "min": 0,
+          "max": -1
+        },
+        "height": {
+          "min": -30000000,
+          "max": 30000000
+        },
+        "time": {
+          "min": 0,
+          "max": 23999
+        },
+        "weather": [],
+        "cooldown-ticks": 0
+      }
+    }
+  },
+  {
+    "id": "overworld",
+    "name": "Overworld Panorama",
+    "category": "Landscape",
+    "template": "fade-black",
+    "fadeIn": 20,
+    "minimum": 80,
+    "fadeOut": 20,
+    "captions": false,
+    "definition": {
+      "id": "overworld",
+      "name": "Overworld Panorama",
+      "category": "Landscape",
+      "template": "fade-black",
+      "enabled": true,
+      "weight": 1,
+      "priority": 0,
+      "timing": {
+        "fade-in-ticks": 20,
+        "minimum-ticks": 80,
+        "maximum-ticks": 80,
+        "fade-out-ticks": 20
+      },
+      "captions": {
+        "enabled": false,
+        "title": "Black Fade",
+        "subtitle": "Searching the horizon",
+        "join-detail": "Joining the server",
+        "teleport-detail": "Travelling to {world}",
+        "preview-detail": "{effect} preview"
+      },
+      "presentation": {
+        "show-hands": false,
+        "hide-hud": true,
+        "block-movement": true,
+        "block-interactions": true
+      },
+      "appearance": {
+        "palette": "original",
+        "background": "#081221",
+        "primary": "#A6C88B",
+        "secondary": "#F0CD91",
+        "speed": 1,
+        "intensity": 1,
+        "image": "images/overworld.png",
+        "image-fit": "cover",
+        "image-opacity": 1,
+        "image-motion": "page",
+        "title-motion": "still"
+      },
+      "elements": {
+        "background": "template",
+        "image-animation": "inherit",
+        "image-scale": 1,
+        "image-x": 0.5,
+        "image-y": 0.5,
+        "image-delay": 0,
+        "text-animation": "still",
+        "text-y": 0.64,
+        "text-scale": 1,
+        "progress": "none",
+        "progress-x": 0.5,
+        "progress-y": 0.8,
+        "progress-width": 0.34,
+        "decoration": "none"
+      },
+      "filters": {
+        "permission": "",
+        "deny-permissions": [],
+        "worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "game-modes": {
+          "include": [],
+          "exclude": []
+        },
+        "teleport-causes": [],
+        "triggers": [
+          "command"
+        ],
+        "distance": {
+          "min": 0,
+          "max": -1
+        },
+        "height": {
+          "min": -30000000,
+          "max": 30000000
+        },
+        "time": {
+          "min": 0,
+          "max": 23999
+        },
+        "weather": [],
+        "cooldown-ticks": 0
+      }
+    },
+    "image": "assets/overworld.png"
+  },
+  {
+    "id": "pulse-loader",
+    "name": "Pulse Loader",
+    "category": "Loading Templates",
+    "template": "fade-black",
+    "fadeIn": 18,
+    "minimum": 70,
+    "fadeOut": 16,
+    "captions": true,
+    "definition": {
+      "id": "pulse-loader",
+      "name": "Pulse Loader",
+      "category": "Loading Templates",
+      "template": "fade-black",
+      "enabled": true,
+      "weight": 1,
+      "priority": 0,
+      "timing": {
+        "fade-in-ticks": 18,
+        "minimum-ticks": 70,
+        "maximum-ticks": 70,
+        "fade-out-ticks": 16
+      },
+      "captions": {
+        "enabled": true,
+        "title": "YOUR SERVER",
+        "subtitle": "Your next adventure is almost ready",
+        "join-detail": "",
+        "teleport-detail": "",
+        "preview-detail": ""
+      },
+      "presentation": {
+        "show-hands": false,
+        "hide-hud": true,
+        "block-movement": true,
+        "block-interactions": true
+      },
+      "appearance": {
+        "palette": "custom",
+        "background": "#1D1120",
+        "primary": "#ED93BA",
+        "secondary": "#D7C4D1",
+        "speed": 1,
+        "intensity": 1,
+        "image": "",
+        "image-fit": "cover",
+        "image-opacity": 1,
+        "image-motion": "still",
+        "title-motion": "still"
+      },
+      "elements": {
+        "background": "pulse",
+        "image-animation": "inherit",
+        "image-scale": 1,
+        "image-x": 0.5,
+        "image-y": 0.5,
+        "image-delay": 0,
+        "text-animation": "slide-up",
+        "text-y": 0.48,
+        "text-scale": 1,
+        "progress": "dots",
+        "progress-x": 0.5,
+        "progress-y": 0.66,
+        "progress-width": 0.18,
+        "decoration": "pulse"
+      },
+      "filters": {
+        "permission": "",
+        "deny-permissions": [],
+        "worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "game-modes": {
+          "include": [],
+          "exclude": []
+        },
+        "teleport-causes": [],
+        "triggers": [
+          "command"
+        ],
+        "distance": {
+          "min": 0,
+          "max": -1
+        },
+        "height": {
+          "min": -30000000,
+          "max": 30000000
+        },
+        "time": {
+          "min": 0,
+          "max": 23999
+        },
+        "weather": [],
+        "cooldown-ticks": 0
+      }
+    }
+  },
+  {
+    "id": "segmented-loader",
+    "name": "Segmented Loader",
+    "category": "Loading Templates",
+    "template": "fade-black",
+    "fadeIn": 18,
+    "minimum": 70,
+    "fadeOut": 16,
+    "captions": true,
+    "definition": {
+      "id": "segmented-loader",
+      "name": "Segmented Loader",
+      "category": "Loading Templates",
+      "template": "fade-black",
+      "enabled": true,
+      "weight": 1,
+      "priority": 0,
+      "timing": {
+        "fade-in-ticks": 18,
+        "minimum-ticks": 70,
+        "maximum-ticks": 70,
+        "fade-out-ticks": 16
+      },
+      "captions": {
+        "enabled": true,
+        "title": "YOUR SERVER",
+        "subtitle": "Your next adventure is almost ready",
+        "join-detail": "",
+        "teleport-detail": "",
+        "preview-detail": ""
+      },
+      "presentation": {
+        "show-hands": false,
+        "hide-hud": true,
+        "block-movement": true,
+        "block-interactions": true
+      },
+      "appearance": {
+        "palette": "custom",
+        "background": "#0B1324",
+        "primary": "#65C7F7",
+        "secondary": "#B8D5E8",
+        "speed": 1,
+        "intensity": 1,
+        "image": "",
+        "image-fit": "cover",
+        "image-opacity": 1,
+        "image-motion": "still",
+        "title-motion": "still"
+      },
+      "elements": {
+        "background": "grid",
+        "image-animation": "inherit",
+        "image-scale": 1,
+        "image-x": 0.5,
+        "image-y": 0.5,
+        "image-delay": 0,
+        "text-animation": "slide-up",
+        "text-y": 0.44,
+        "text-scale": 1,
+        "progress": "segments",
+        "progress-x": 0.5,
+        "progress-y": 0.66,
+        "progress-width": 0.42,
+        "decoration": "scan"
+      },
+      "filters": {
+        "permission": "",
+        "deny-permissions": [],
+        "worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "game-modes": {
+          "include": [],
+          "exclude": []
+        },
+        "teleport-causes": [],
+        "triggers": [
+          "command"
+        ],
+        "distance": {
+          "min": 0,
+          "max": -1
+        },
+        "height": {
+          "min": -30000000,
+          "max": 30000000
+        },
+        "time": {
+          "min": 0,
+          "max": 23999
+        },
+        "weather": [],
+        "cooldown-ticks": 0
+      }
+    }
+  },
+  {
+    "id": "split-loader",
+    "name": "Split Loader",
+    "category": "Loading Templates",
+    "template": "fade-black",
+    "fadeIn": 18,
+    "minimum": 64,
+    "fadeOut": 16,
+    "captions": true,
+    "definition": {
+      "id": "split-loader",
+      "name": "Split Loader",
+      "category": "Loading Templates",
+      "template": "fade-black",
+      "enabled": true,
+      "weight": 1,
+      "priority": 0,
+      "timing": {
+        "fade-in-ticks": 18,
+        "minimum-ticks": 64,
+        "maximum-ticks": 64,
+        "fade-out-ticks": 16
+      },
+      "captions": {
+        "enabled": true,
+        "title": "YOUR SERVER",
+        "subtitle": "Your next adventure is almost ready",
+        "join-detail": "",
+        "teleport-detail": "",
+        "preview-detail": ""
+      },
+      "presentation": {
+        "show-hands": false,
+        "hide-hud": true,
+        "block-movement": true,
+        "block-interactions": true
+      },
+      "appearance": {
+        "palette": "custom",
+        "background": "#121A29",
+        "primary": "#EDAA75",
+        "secondary": "#E2D4C5",
+        "speed": 1,
+        "intensity": 1,
+        "image": "",
+        "image-fit": "cover",
+        "image-opacity": 1,
+        "image-motion": "still",
+        "title-motion": "still"
+      },
+      "elements": {
+        "background": "split",
+        "image-animation": "inherit",
+        "image-scale": 1,
+        "image-x": 0.5,
+        "image-y": 0.5,
+        "image-delay": 0,
+        "text-animation": "grow",
+        "text-y": 0.44,
+        "text-scale": 1,
+        "progress": "bar",
+        "progress-x": 0.5,
+        "progress-y": 0.66,
+        "progress-width": 0.28,
+        "decoration": "none"
+      },
+      "filters": {
+        "permission": "",
+        "deny-permissions": [],
+        "worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "game-modes": {
+          "include": [],
+          "exclude": []
+        },
+        "teleport-causes": [],
+        "triggers": [
+          "command"
+        ],
+        "distance": {
+          "min": 0,
+          "max": -1
+        },
+        "height": {
+          "min": -30000000,
+          "max": 30000000
+        },
+        "time": {
+          "min": 0,
+          "max": 23999
+        },
+        "weather": [],
+        "cooldown-ticks": 0
+      }
+    }
+  },
+  {
+    "id": "terminal-loader",
+    "name": "Terminal Loader",
+    "category": "Loading Templates",
+    "template": "fade-black",
+    "fadeIn": 18,
+    "minimum": 82,
+    "fadeOut": 16,
+    "captions": true,
+    "definition": {
+      "id": "terminal-loader",
+      "name": "Terminal Loader",
+      "category": "Loading Templates",
+      "template": "fade-black",
+      "enabled": true,
+      "weight": 1,
+      "priority": 0,
+      "timing": {
+        "fade-in-ticks": 18,
+        "minimum-ticks": 82,
+        "maximum-ticks": 82,
+        "fade-out-ticks": 16
+      },
+      "captions": {
+        "enabled": true,
+        "title": "INITIALIZING",
+        "subtitle": "Preparing the next session",
+        "join-detail": "",
+        "teleport-detail": "",
+        "preview-detail": ""
+      },
+      "presentation": {
+        "show-hands": false,
+        "hide-hud": true,
+        "block-movement": true,
+        "block-interactions": true
+      },
+      "appearance": {
+        "palette": "custom",
+        "background": "#06120E",
+        "primary": "#75EDB7",
+        "secondary": "#8BB8A2",
+        "speed": 1,
+        "intensity": 1,
+        "image": "",
+        "image-fit": "cover",
+        "image-opacity": 1,
+        "image-motion": "still",
+        "title-motion": "still"
+      },
+      "elements": {
+        "background": "terminal",
+        "image-animation": "inherit",
+        "image-scale": 1,
+        "image-x": 0.5,
+        "image-y": 0.5,
+        "image-delay": 0,
+        "text-animation": "slide-up",
+        "text-y": 0.44,
+        "text-scale": 1,
+        "progress": "segments",
+        "progress-x": 0.5,
+        "progress-y": 0.66,
+        "progress-width": 0.46,
+        "decoration": "scan"
+      },
+      "filters": {
+        "permission": "",
+        "deny-permissions": [],
+        "worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "game-modes": {
+          "include": [],
+          "exclude": []
+        },
+        "teleport-causes": [],
+        "triggers": [
+          "command"
+        ],
+        "distance": {
+          "min": 0,
+          "max": -1
+        },
+        "height": {
+          "min": -30000000,
+          "max": 30000000
+        },
+        "time": {
+          "min": 0,
+          "max": 23999
+        },
+        "weather": [],
+        "cooldown-ticks": 0
+      }
+    }
+  },
+  {
     "id": "loading",
     "name": "Original loading",
     "category": "Classic",

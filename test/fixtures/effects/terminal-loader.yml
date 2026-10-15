@@ -1,0 +1,42 @@
+# Ready-to-customize example. Change text, colors, image and elements in Studio.
+id: "terminal-loader"
+name: "Terminal Loader"
+category: "Loading Templates"
+template: "fade-black"
+enabled: true
+weight: 1
+priority: 0
+timing:
+  fade-in-ticks: 18
+  minimum-ticks: 82
+  maximum-ticks: 82
+  fade-out-ticks: 16
+captions:
+  enabled: true
+  title: "INITIALIZING"
+  subtitle: "Preparing the next session"
+  join-detail: ""
+  teleport-detail: ""
+  preview-detail: ""
+presentation:
+  show-hands: false
+  hide-hud: true
+  block-movement: true
+  block-interactions: true
+appearance:
+  palette: "custom"
+  background: "#06120E"
+  primary: "#75EDB7"
+  secondary: "#8BB8A2"
+  speed: 1.0
+  intensity: 1.0
+elements:
+  background: "terminal"
+  text-animation: "slide-up"
+  text-y: 0.44
+  progress: "segments"
+  progress-y: 0.66
+  progress-width: 0.46
+  decoration: "scan"
+filters:
+  triggers: ["command"]

@@ -1,0 +1,46 @@
+# Ready-to-customize example. Change text, colors, image and elements in Studio.
+id: "nether-forge"
+name: "Nether Forge"
+category: "Photo Templates"
+template: "fade-black"
+enabled: true
+weight: 1
+priority: 0
+timing:
+  fade-in-ticks: 18
+  minimum-ticks: 76
+  maximum-ticks: 76
+  fade-out-ticks: 16
+captions:
+  enabled: true
+  title: "YOUR NEXT ADVENTURE"
+  subtitle: "A new world is waiting"
+  join-detail: ""
+  teleport-detail: ""
+  preview-detail: ""
+presentation:
+  show-hands: false
+  hide-hud: true
+  block-movement: true
+  block-interactions: true
+appearance:
+  palette: "custom"
+  background: "#1F0908"
+  primary: "#FFB35B"
+  secondary: "#F5CCAB"
+  speed: 1.0
+  intensity: 1.0
+  image: "images/nether-forge.png"
+  image-fit: "cover"
+  image-motion: "panorama"
+elements:
+  background: "solid"
+  text-animation: "slide-up"
+  text-y: 0.63
+  progress: "segments"
+  progress-y: 0.82
+  progress-width: 0.34
+  image-animation: "wipe"
+  decoration: "embers"
+filters:
+  triggers: ["command"]
