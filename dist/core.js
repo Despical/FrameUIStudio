@@ -53,6 +53,18 @@
     }
     const modes = ['SURVIVAL', 'CREATIVE', 'ADVENTURE', 'SPECTATOR'];
     const triggers = ['join', 'teleport', 'world-change', 'command'];
+    const addons = [
+        { id: 'essentialsx', name: 'EssentialsX', events: { 'essentials-teleport': 'Any teleport', 'essentials-home': 'Home', 'essentials-warp': 'Warp', 'essentials-spawn': 'Spawn', 'essentials-back': 'Back', 'essentials-tpa': 'Accepted TPA' } },
+        { id: 'huskhomes', name: 'HuskHomes', events: { 'huskhomes-teleport': 'Any teleport', 'huskhomes-home': 'Home', 'huskhomes-warp': 'Warp', 'huskhomes-spawn': 'Spawn', 'huskhomes-back': 'Back', 'huskhomes-tpa': 'Accepted TPA', 'huskhomes-rtp': 'Random teleport' } },
+        { id: 'cmi', name: 'CMI', events: { 'cmi-teleport': 'Any teleport', 'cmi-home': 'Home', 'cmi-warp': 'Warp', 'cmi-spawn': 'Spawn', 'cmi-back': 'Back', 'cmi-tpa': 'Accepted TPA', 'cmi-rtp': 'Random teleport' } },
+        { id: 'betterrtp', name: 'BetterRTP', events: { 'betterrtp-teleport': 'Random teleport' } },
+        { id: 'multiverse-core', name: 'Multiverse-Core', events: { 'multiverse-teleport': 'World / destination teleport' } },
+        { id: 'multiverse-portals', name: 'Multiverse-Portals', events: { 'multiverse-portal': 'Portal travel' } },
+        { id: 'towny', name: 'Towny', events: { 'towny-town-spawn': 'Town spawn', 'towny-nation-spawn': 'Nation spawn', 'towny-outpost': 'Outpost' } },
+        { id: 'lands', name: 'Lands', events: { 'lands-spawn': 'Land spawn' } },
+        { id: 'superiorskyblock2', name: 'SuperiorSkyblock2', events: { 'superiorskyblock-create': 'Create island', 'superiorskyblock-home': 'Island home', 'superiorskyblock-visit': 'Visit island', 'superiorskyblock-warp': 'Island warp' } }
+    ];
+    const automaticTriggers = ['join', 'teleport', 'world-change', ...addons.flatMap(addon => Object.keys(addon.events))];
     const causes = ['ENDER_PEARL', 'COMMAND', 'PLUGIN', 'NETHER_PORTAL', 'END_PORTAL', 'SPECTATE', 'END_GATEWAY', 'CONSUMABLE_EFFECT', 'CHORUS_FRUIT', 'DISMOUNT', 'EXIT_BED', 'UNKNOWN'];
     function configureCatalog(templates) { catalog.splice(0, catalog.length, ...templates); }
     function createEffect(templateId = 'aurora') {
@@ -67,7 +79,7 @@
             presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
             appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1, 'image-motion': 'still', 'title-motion': 'still' },
             elements: { background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1 },
-            filters: { permission: '', 'deny-permissions': [], worlds: { include: [], exclude: [] }, 'source-worlds': { include: [], exclude: [] }, 'game-modes': { include: [], exclude: [] }, 'teleport-causes': [], triggers: [...triggers], distance: { min: 0, max: -1 }, height: { min: -30000000, max: 30000000 }, time: { min: 0, max: 23999 }, weather: [], 'cooldown-ticks': 0 }
+            filters: { permission: '', 'deny-permissions': [], worlds: { include: [], exclude: [] }, 'source-worlds': { include: [], exclude: [] }, 'addon-targets': { include: [], exclude: [] }, 'game-modes': { include: [], exclude: [] }, 'teleport-causes': [], triggers: [...triggers], distance: { min: 0, max: -1 }, height: { min: -30000000, max: 30000000 }, time: { min: 0, max: 23999 }, weather: [], 'cooldown-ticks': 0 }
         };
     }
     function merge(defaults, input, path = '') {
@@ -109,7 +121,7 @@
         string(effect.category, 'Category', 40); if (!categories.includes(effect.category)) fail('Choose one of the three library categories.');
         if (!catalog.some(entry => entry.id === effect.template && !entry.definition)) fail('Select a built-in template.');
         if (typeof effect.enabled !== 'boolean') fail('Enabled must be true or false.');
-        list(effect['play-on'], 'Automatic playback', ['join', 'teleport', 'world-change']);
+        list(effect['play-on'], 'Automatic playback', automaticTriggers);
         if (new Set(effect['play-on']).size !== effect['play-on'].length) fail('Automatic playback contains duplicate events.');
         number(effect.weight, 'Weight', 1, 10000); number(effect.priority, 'Priority', -10000, 10000);
         const t = effect.timing;
@@ -146,7 +158,8 @@
         if (f.permission && !/^[a-zA-Z0-9_.:*\-]+$/.test(f.permission)) fail('Permission contains an invalid node.');
         if (f['deny-permissions'].some(permission => !/^[a-zA-Z0-9_.:*\-]+$/.test(permission))) fail('Denied permissions contain an invalid node.');
         for (const group of ['worlds', 'source-worlds']) { list(f[group].include, `${group} include`); list(f[group].exclude, `${group} exclude`); }
-        list(f['game-modes'].include, 'Included game modes', modes); list(f['game-modes'].exclude, 'Excluded game modes', modes); list(f['teleport-causes'], 'Teleport causes', causes); list(f.triggers, 'Triggers', triggers); list(f.weather, 'Weather', ['clear', 'rain', 'thunder']);
+        list(f['addon-targets'].include, 'Included addon destinations'); list(f['addon-targets'].exclude, 'Excluded addon destinations');
+        list(f['game-modes'].include, 'Included game modes', modes); list(f['game-modes'].exclude, 'Excluded game modes', modes); list(f['teleport-causes'], 'Teleport causes', causes); list(f.triggers, 'Triggers', [...triggers, ...automaticTriggers]); list(f.weather, 'Weather', ['clear', 'rain', 'thunder']);
         number(f.distance.min, 'Minimum distance', 0, 100000000, false); number(f.distance.max, 'Maximum distance', -1, 100000000, false);
         if (f.distance.max < 0 && f.distance.max !== -1) fail('Maximum distance uses -1 for no upper limit.');
         if (f.distance.max !== -1 && f.distance.max < f.distance.min) fail('Maximum distance must be -1 or at least the minimum distance.');
@@ -321,6 +334,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1–2048 pixels.');
         return { width, height };
     }
-    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, modes, triggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

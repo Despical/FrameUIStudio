@@ -133,6 +133,20 @@
         durationField.append(durationInput); durationSection.append(durationField, note('Scales the entrance, hold and exit together. Fine-tune each phase in Behavior.')); visual.append(durationSection);
         const playback = section('When to play');
         playback.append(checkboxList('play-on', ['join', 'teleport', 'world-change'], { join: 'Join', teleport: 'Teleport', 'world-change': 'World change' }), note('Choose where this effect runs automatically. Your selection applies when imported to your server. Leave all unchecked for manual previews only.')); visual.append(playback);
+        const integrations = section('Plugin events', 'ADDONS');
+        integrations.append(note('Choose an installed plugin and its events. One effect plays per teleport.'));
+        for (const addon of core.addons) {
+            const group = details(addon.name, checkboxList('play-on', Object.keys(addon.events), addon.events));
+            group.dataset.addon = addon.id;
+            const state = server.session?.addons?.[addon.id];
+            group.querySelector('summary').append(element('span', 'addon-state' + (state === 'active' ? ' active' : ''), state === 'active' ? 'Active' : state === 'disabled' ? 'Disabled' : state === 'unsupported-api' ? 'Unsupported API' : state ? 'Not installed' : 'Optional'));
+            integrations.append(group);
+        }
+        if (!server.session) integrations.append(note('Connect your server to see which addons are installed.'));
+        const placeholderState = server.session?.addons?.placeholderapi;
+        integrations.append(note('PlaceholderAPI · ' + (placeholderState === 'active' ? 'Active' : placeholderState === 'disabled' ? 'Disabled' : placeholderState === 'not-installed' ? 'Not installed' : placeholderState === 'unsupported-api' ? 'Unsupported API' : 'Optional') + '. Use %placeholders% in captions for dynamic text.'));
+        visual.append(integrations);
+        integrations.append(details('Destination filters', field('Include addon destinations', 'filters.addon-targets.include', { list: true, placeholder: 'spawn, town-*, survival_portal' }), field('Exclude addon destinations', 'filters.addon-targets.exclude', { list: true, placeholder: 'staff-*' }), note('Match portal, home, warp, town, nation, land or island names. Multiverse-Core uses the destination world. Empty allows all; * and ? are wildcards.')));
         const composition = section('Loading screen elements');
         composition.append(field('Background layout', 'elements.background', { options: [['none','None'],['template','Shader template'],['solid','Solid color'],['split','Split panels'],['grid','Technical grid'],['terminal','Terminal'],['pulse','Expanding pulse']] }), field('Loading indicator', 'elements.progress', { options: [['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']] }), field('Ambient decoration', 'elements.decoration', { options: [['none','None'],['embers','Embers'],['petals','Petals'],['scan','Scan line'],['pulse','Pulse emblem']] }), row(field('Indicator X', 'elements.progress-x', { type: 'range', min: .1, max: .9, step: .01 }), field('Indicator Y', 'elements.progress-y', { type: 'range', min: .1, max: .9, step: .01 })), field('Indicator width', 'elements.progress-width', { type: 'range', min: .08, max: .8, step: .01 }), field('Text entrance', 'elements.text-animation', { options: [['still','Fade'],['grow','Grow'],['slide-up','Slide up']] }), field('Text horizontal position', 'elements.text-x', { type: 'range', min: 0, max: 1, step: .01 }), field('Indicator thickness', 'elements.progress-scale', { type: 'range', min: .5, max: 3, step: .01 }), field('Text position', 'elements.text-y', { type: 'range', min: .1, max: .9, step: .01 }), field('Text size', 'elements.text-scale', { type: 'range', min: .5, max: 2, step: .01 }), note('Start with a ready-made layout, then replace its words, colors or logo. Loading indicators animate continuously; they do not claim a server loading percentage.'));
         visual.append(composition);
@@ -351,6 +365,13 @@
         if ($('duration-seconds') && document.activeElement !== $('duration-seconds')) $('duration-seconds').value = duration() / 20;
         for (const input of document.querySelectorAll('[data-path]')) { if (document.activeElement === input) continue; const value = pathGet(input.dataset.path); if (input.type === 'checkbox') input.checked = value; else input.value = Array.isArray(value) ? value.join(', ') : value; }
         for (const input of document.querySelectorAll('[data-check-path]')) input.checked = pathGet(input.dataset.checkPath).includes(input.value);
+        for (const addon of core.addons) {
+            const group = document.querySelector(`[data-addon="${addon.id}"]`);
+            if (group) {
+                const count = Object.keys(addon.events).filter(key => effect['play-on'].includes(key)).length;
+                group.querySelector('summary').setAttribute('aria-label', addon.name + (count ? ` · ${count} selected` : ''));
+            }
+        }
         dropdowns.refresh();
         for (const output of document.querySelectorAll('[data-output]')) { const value = pathGet(output.dataset.output); output.textContent = output.dataset.output.endsWith('image-opacity') ? `${Math.round(value * 100)}%` : `${value.toFixed(2).replace(/0$/, '')}×`; }
         for (const button of document.querySelectorAll('[data-palette]')) button.classList.toggle('active', button.dataset.palette === effect.appearance.palette);
@@ -460,7 +481,7 @@
                 rawDirty = false; renderSettings();
             }
             if (serverEffects.size || serverTrash.size) activeCategory = core.categories[2];
-            renderCatalog();
+            renderSettings(); renderCatalog();
             serverStatus(`Connected as ${session.player} · Link expires at ${new Date(session.expires).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
         } catch (error) { serverStatus(error.message, true); }
         sync();

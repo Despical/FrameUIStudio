@@ -5,6 +5,22 @@ const path = require('node:path');
 const core = require('../dist/core.js');
 core.configureCatalog(require('./catalog.json'));
 
+test('every addon event survives YAML and ZIP without enabling unrelated events', async () => {
+    assert.equal(core.addons.length, 9);
+    for (const addon of core.addons) {
+        const effect = core.userCopy(core.createEffect('fade-out'), [], []);
+        effect['play-on'] = Object.keys(addon.events);
+        effect.filters['addon-targets'] = { include: ['vip-*'], exclude: ['vip-staff'] };
+        const archive = core.zip({ ['effects/' + effect.id + '.yml']: core.toYaml(effect) });
+        const entries = await core.unzip(archive);
+        const restored = core.fromYaml(core.decoder.decode(entries['effects/' + effect.id + '.yml']));
+        assert.deepEqual(restored, effect, addon.name);
+        assert(!restored['play-on'].includes('teleport'));
+    }
+    const invalid = core.createEffect('fade-out'); invalid['play-on'] = ['towny-typo'];
+    assert.throws(() => core.validate(invalid), /Automatic playback/);
+});
+
 test('all 50 templates round-trip through complete plugin YAML', () => {
     assert.equal(core.catalog.filter(entry => !entry.definition).length, 50);
     for (const template of core.catalog) {

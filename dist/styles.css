@@ -188,6 +188,8 @@ code{font-family:"Cascadia Code",Consolas,monospace;color:#9bb1c9;font-size:.95e
 .advanced-details{border-top:1px solid var(--border);margin-top:15px;padding-top:15px}
 .advanced-details summary{cursor:pointer;font-size:14px;color:#becbdb;padding:2px 0 12px}
 .advanced-details summary::marker{color:var(--subtle);font-size:12px}
+.addon-state{float:right;margin:1px 0 0 8px;color:var(--subtle);font-size:11px;font-weight:400;letter-spacing:.2px}
+.addon-state.active{color:var(--accent)}
 .chip-note{font-size:11px;letter-spacing:.3px;color:var(--subtle)}
 .yaml-editor{width:100%;min-height:440px;padding:12px 10px;border:1px solid var(--border);border-radius:6px;background:#080e18;font:13px/1.75 "Cascadia Code",Consolas,monospace;color:#b7d8d1;resize:vertical;margin-bottom:12px;white-space:pre;tab-size:2}
 .full-width{width:100%}
