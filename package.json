@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node scripts/serve.cjs",
     "start": "node scripts/serve.cjs",
-    "test": "node --test test/core.test.cjs",
+    "test": "node --test test/core.test.cjs test/library.test.cjs",
     "refresh": "node scripts/generate-preview.cjs"
   }
 }

@@ -10,7 +10,7 @@
     let effect = core.createEffect('frameui'), imageBytes = null, imageUrl = '', imageElement = null;
     let undo = [], redo = [], playing = !reducedMotion, playTick = 24, lastFrame = 0, saveTimer, toastTimer, rawDirty = false;
     const thumbs = new Map(), savedEffects = new Map(), deletedEffects = new Map(), savedThumbnails = new Map();
-    let activeCategory = core.categories[1], selectionVersion = 0, libraryBusy = false;
+    let activeCategory = core.categories[1], selectionVersion = 0, libraryBusy = false, pendingPurge = [];
     function element(tag, classes, text) { const node = document.createElement(tag); if (classes) node.className = classes; if (text !== undefined) node.textContent = text; return node; }
     function icon(id) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', `#icon-${id}`); svg.append(use); return svg; }
     function toast(message, error = false) { clearTimeout(toastTimer); $('toast').textContent = message; $('toast').classList.toggle('error', error); $('toast').hidden = false; toastTimer = setTimeout(() => { $('toast').hidden = true; }, error ? 6500 : 3500); }
@@ -113,11 +113,11 @@
     function renderSettings() {
         dropdowns.close();
         const visual = $('settings-visual'), behavior = $('settings-behavior'), rules = $('settings-rules'); visual.replaceChildren(); behavior.replaceChildren(); rules.replaceChildren();
-        const durationSection = section('Duration', 'SECONDS'), durationField = element('label', 'field');
+        const durationSection = section('Duration'), durationField = element('label', 'field');
         durationField.append(element('span', 'field-label', 'Total duration · seconds'));
         const durationInput = element('input'); durationInput.id = 'duration-seconds'; durationInput.type = 'number'; durationInput.min = .05; durationInput.max = 60; durationInput.step = .05; durationInput.value = duration() / 20;
         durationInput.addEventListener('change', () => { try { const previous = snapshot(); effect.timing = core.durationTiming(effect.timing, Number(durationInput.value)); commitChange(previous); durationInput.value = duration() / 20; } catch (error) { toast(error.message, true); durationInput.value = duration() / 20; } });
-        durationField.append(durationInput); durationSection.append(durationField, note('Scales the entrance, hold and exit together. Fine-tune each phase in Behavior. Editing an animation or preset creates a copy in My Effects.')); visual.append(durationSection);
+        durationField.append(durationInput); durationSection.append(durationField, note('Scales the entrance, hold and exit together. Fine-tune each phase in Behavior.')); visual.append(durationSection);
         const composition = section('Loading screen elements');
         composition.append(field('Background layout', 'elements.background', { options: [['template','Shader template'],['solid','Solid color'],['split','Split panels'],['grid','Technical grid'],['terminal','Terminal'],['pulse','Expanding pulse']] }), field('Loading indicator', 'elements.progress', { options: [['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']] }), field('Ambient decoration', 'elements.decoration', { options: [['none','None'],['embers','Embers'],['petals','Petals'],['scan','Scan line'],['pulse','Pulse emblem']] }), row(field('Indicator X', 'elements.progress-x', { type: 'range', min: .1, max: .9, step: .01 }), field('Indicator Y', 'elements.progress-y', { type: 'range', min: .1, max: .9, step: .01 })), field('Indicator width', 'elements.progress-width', { type: 'range', min: .08, max: .8, step: .01 }), field('Text entrance', 'elements.text-animation', { options: [['still','Fade'],['grow','Grow'],['slide-up','Slide up']] }), field('Text horizontal position', 'elements.text-x', { type: 'range', min: 0, max: 1, step: .01 }), field('Indicator thickness', 'elements.progress-scale', { type: 'range', min: .5, max: 3, step: .01 }), field('Text position', 'elements.text-y', { type: 'range', min: .1, max: .9, step: .01 }), field('Text size', 'elements.text-scale', { type: 'range', min: .5, max: 2, step: .01 }), note('Start with a ready-made layout, then replace its words, colors or logo. Loading indicators animate continuously; they do not claim a server loading percentage.'));
         visual.append(composition);
@@ -152,7 +152,7 @@
         select.value = activeCategory;
         dropdowns.refresh();
         document.querySelector('.panel-heading h1 span').textContent = core.catalog.length + savedEffects.size;
-        $('trash-button').hidden = activeCategory !== core.categories[2];
+        $('catalog-footer').hidden = activeCategory !== core.categories[2];
         $('trash-button').textContent = `Trash (${deletedEffects.size})`;
     }
     async function openLibraryItem(item, saved) {
@@ -232,6 +232,7 @@
     }
     function renderTrash() {
         const list = $('trash-list'); list.replaceChildren();
+        $('empty-trash').disabled = !deletedEffects.size || libraryBusy;
         for (const entry of deletedEffects.values()) {
             const row = element('div', 'trash-row'), copy = element('div', 'template-copy');
             copy.append(element('b', '', entry.effect.name), element('small', '', entry.id));
@@ -245,17 +246,42 @@
                     deletedEffects.delete(entry.id); savedEffects.set(entry.id, restored);
                     renderCatalog(); renderTrash(); sync(); toast('Effect restored to My Effects.');
                 } catch { restore.disabled = false; toast('Could not restore this effect. It is still in Trash.', true); }
-                finally { libraryBusy = false; }
+                finally { libraryBusy = false; $('empty-trash').disabled = !deletedEffects.size; }
             });
-            row.append(copy, restore); list.append(row);
+            const remove = element('button', 'button button-danger', 'Delete permanently'); remove.setAttribute('aria-label', `Delete permanently ${entry.effect.name}`);
+            remove.addEventListener('click', () => requestPurge([entry.id]));
+            const actions = element('div', 'trash-row-actions'); actions.append(restore, remove);
+            row.append(copy, actions); list.append(row);
         }
         if (!list.children.length) list.append(element('p', 'empty-state', 'Trash is empty.'));
+    }
+    function requestPurge(ids) {
+        if (libraryBusy) return;
+        pendingPurge = ids.filter(id => deletedEffects.has(id)); if (!pendingPurge.length) return;
+        $('purge-description').textContent = pendingPurge.length === 1
+            ? `“${deletedEffects.get(pendingPurge[0]).effect.name}” and its image will be deleted. This cannot be undone.`
+            : `All ${pendingPurge.length} effects in Trash and their images will be deleted. This cannot be undone.`;
+        $('confirm-purge').textContent = ids.length > 1 ? 'Empty Trash' : 'Delete permanently';
+        $('purge-dialog').showModal();
+    }
+    async function confirmPurge() {
+        if (libraryBusy || !pendingPurge.length) return;
+        libraryBusy = true; $('confirm-purge').disabled = true; $('cancel-purge').disabled = true;
+        try {
+            const removed = await window.FrameStudioLibrary.purgeDeleted(pendingPurge);
+            for (const id of removed) deletedEffects.delete(id);
+            pendingPurge = []; $('purge-dialog').close(); renderCatalog();
+            toast(removed.length === 1 ? 'Effect permanently deleted.' : `${removed.length} effects permanently deleted.`);
+        } catch { toast('Could not empty Trash. Your effects are still available.', true); }
+        finally {
+            libraryBusy = false; $('confirm-purge').disabled = false; $('cancel-purge').disabled = false; renderTrash();
+        }
     }
     function validState() { try { core.validate(effect); if (effect.category === core.categories[2] && deletedEffects.has(effect.id)) return 'This ID is in Trash. Restore it or choose another ID.'; return ''; } catch (error) { return error.message; } }
     function sync() {
         const error = validState(); $('validation-status').textContent = error || (effect.appearance.image && !imageBytes ? 'Image file needs to be supplied' : 'Ready to export'); document.querySelector('.inspector-footer').classList.toggle('invalid', !!error || !!(effect.appearance.image && !imageBytes));
         $('export-button').disabled = !!error; $('yaml-download').disabled = !!error; $('guide-export').disabled = !!error;
-        $('effect-heading').textContent = effect.name || 'Untitled effect'; $('effect-subheading').textContent = effect.category + (effect.category === core.categories[2] ? ' · Saved automatically' : ' · Editable starting point');
+        $('effect-heading').textContent = effect.name || 'Untitled effect';
         $('summary-in').textContent = `${(effect.timing['fade-in-ticks'] / 20).toFixed(1)} s`; $('summary-hold').textContent = `${(effect.timing['minimum-ticks'] / 20).toFixed(1)} s`; $('summary-out').textContent = `${(effect.timing['fade-out-ticks'] / 20).toFixed(1)} s`; $('summary-triggers').textContent = `${effect.filters.triggers.length} events`;
         $('duration-label').textContent = `${(duration() / 20).toFixed(1)} s`; $('undo-button').disabled = !undo.length; $('redo-button').disabled = !redo.length;
         if ($('duration-seconds') && document.activeElement !== $('duration-seconds')) $('duration-seconds').value = duration() / 20;
@@ -270,7 +296,6 @@
         $('play-button').setAttribute('aria-label', playing ? 'Pause preview' : 'Play preview'); $('play-button').replaceChildren(icon(playing ? 'pause' : 'play'));
         for (const button of document.querySelectorAll('[data-template]')) { const selected = button.dataset.template === effect.id && button.dataset.libraryGroup === effect.category; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected)); }
         if (document.querySelector('.category-readonly')) document.querySelector('.category-readonly').textContent = 'Category: ' + effect.category;
-        $('new-button').innerHTML = (effect.category === core.categories[2] ? 'Create a new copy' : 'Save to My Effects') + ' <span>↗</span>';
         directEditor?.render();
     }
     function duration() { return Math.max(1, effect.timing['minimum-ticks'] + effect.timing['fade-out-ticks']); }
@@ -379,6 +404,10 @@
     $('search').addEventListener('input', renderCatalog);
     $('trash-button').addEventListener('click', () => { renderTrash(); $('trash-dialog').showModal(); });
     $('close-trash').addEventListener('click', () => $('trash-dialog').close());
+    $('empty-trash').addEventListener('click', () => requestPurge([...deletedEffects.keys()]));
+    $('cancel-purge').addEventListener('click', () => { pendingPurge = []; $('purge-dialog').close(); });
+    $('confirm-purge').addEventListener('click', confirmPurge);
+    $('purge-dialog').addEventListener('cancel', event => { if (libraryBusy) event.preventDefault(); else pendingPurge = []; });
     $('category-filter').addEventListener('change', () => { activeCategory = $('category-filter').value; renderCatalog(); });
     $('undo-button').addEventListener('click', () => historyStep(false)); $('redo-button').addEventListener('click', () => historyStep(true));
     $('play-button').addEventListener('click', () => { playing = !playing; if (playing && playTick >= duration()) playTick = 0; sync(); }); $('restart-button').addEventListener('click', () => { playTick = 0; });
@@ -386,12 +415,6 @@
     $('import-button').addEventListener('click', () => $('import-file').click()); $('import-file').addEventListener('change', () => importFile($('import-file').files[0])); $('image-file').addEventListener('change', () => uploadImage($('image-file').files[0]));
     $('export-button').addEventListener('click', exportEffect); $('guide-export').addEventListener('click', exportEffect); $('yaml-download').addEventListener('click', () => { try { download(core.toYaml(effect), effect.id + '.yml', 'text/yaml;charset=utf-8'); toast('YAML downloaded. Images must be supplied separately; use Export effect for a complete ZIP.'); } catch (error) { toast(error.message, true); } });
     $('guide-button').addEventListener('click', () => $('guide-dialog').showModal()); $('close-guide').addEventListener('click', () => $('guide-dialog').close()); $('guide-dialog').addEventListener('click', event => { if (event.target === $('guide-dialog')) { const rect = $('guide-dialog').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('guide-dialog').close(); } });
-    $('new-button').addEventListener('click', async () => {
-        await save(); remember();
-        effect = core.userCopy(effect, usedIds(), usedNames());
-        activeCategory = core.categories[2]; rawDirty = false; renderSettings(); sync();
-        if (await save()) toast('Saved to My Effects. Changes are saved automatically in this browser.');
-    });
     $('reset-button').addEventListener('click', async () => { remember(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); activeCategory = effect.category; rawDirty = false; renderSettings(); renderCatalog(); sync(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
     const tabs = [...document.querySelectorAll('[data-tab]')];
     function selectTab(button) { dropdowns.close(); for (const tab of tabs) { const active = tab === button; tab.classList.toggle('active', active); tab.setAttribute('aria-selected', String(active)); tab.tabIndex = active ? 0 : -1; $('settings-' + tab.dataset.tab).hidden = !active; } }

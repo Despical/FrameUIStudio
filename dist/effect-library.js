@@ -20,10 +20,25 @@
             tx.onabort = tx.onerror = () => reject(tx.error || request.error);
         });
     }
+    async function purgeDeleted(ids) {
+        const targets = new Set(ids), removed = [];
+        await transaction('readwrite', store => {
+            const request = store.getAll();
+            request.onsuccess = () => {
+                for (const entry of request.result) {
+                    if (!entry.deleted || !targets.has(entry.id)) continue;
+                    store.delete(entry.id); removed.push(entry.id);
+                }
+            };
+            return request;
+        });
+        return removed;
+    }
     window.FrameStudioLibrary = {
         list: async () => (await transaction('readonly', store => store.getAll())).filter(entry => !entry.deleted),
         listDeleted: async () => (await transaction('readonly', store => store.getAll())).filter(entry => entry.deleted),
         put: entry => transaction('readwrite', store => store.put({ ...entry, deleted: false })),
-        remove: entry => transaction('readwrite', store => store.put({ ...entry, deleted: true }))
+        remove: entry => transaction('readwrite', store => store.put({ ...entry, deleted: true })),
+        purgeDeleted
     };
 })();

@@ -6,8 +6,6 @@
         const labels = {image: 'Logo / image', text: 'Text', progress: 'Loading indicator'};
         const toolbar = document.createElement('div'); toolbar.className = 'canvas-toolbar';
         toolbar.setAttribute('role', 'toolbar'); toolbar.setAttribute('aria-label', 'Arrange screen elements');
-        const hint = document.createElement('span'); hint.className = 'canvas-hint';
-        hint.textContent = 'Drag to move · pull a corner to resize · Esc cancels';
         const overlay = document.createElement('div'); overlay.className = 'canvas-editor';
         const boxes = new Map(), buttons = new Map(), rects = new Map();
         const measure = document.createElement('canvas').getContext('2d');
@@ -36,7 +34,7 @@
             }
             boxes.set(kind, box); overlay.append(box);
         }
-        toolbar.append(hint); stage.parentElement.before(toolbar); stage.append(overlay);
+        stage.parentElement.before(toolbar); stage.append(overlay);
 
         function select(kind) {
             selected = kind;
