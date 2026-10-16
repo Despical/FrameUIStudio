@@ -245,3 +245,18 @@ test('copy-name collisions ignore letter case and respect the 64-character expor
     assert.equal(new Set(names).size, 15);
     assert.equal(core.uniqueName('Fade Out · Copy 2', ['Fade Out · Copy', 'Fade Out · Copy 2']), 'Fade Out · Copy 3');
 });
+
+test('automatic playback is explicitly selected and survives standalone YAML and ZIP export', async () => {
+    for (const item of core.catalog) assert.deepEqual(core.createEffect(item.id)['play-on'], []);
+    const effect = core.userCopy(core.createEffect('clean-loader'), [], []);
+    effect['play-on'] = ['join', 'teleport', 'world-change'];
+    const zip = core.zip({ [`effects/${effect.id}.yml`]: core.toYaml(effect) });
+    const entries = await core.unzip(zip);
+    assert.deepEqual(core.fromYaml(core.decoder.decode(entries[`effects/${effect.id}.yml`])), effect);
+    assert.deepEqual(core.fromYaml('id: old-design\ntemplate: fade-out\nfilters:\n  triggers: [join, teleport]\n')['play-on'], []);
+    assert.deepEqual(core.fromYaml('id: selected\ntemplate: fade-out\nplay-on: [JOIN, WORLD_CHANGE]\n')['play-on'], ['join', 'world-change']);
+    for (const events of [['command'], ['unknown'], ['join', 'join'], 'join', [42]]) {
+        const invalid = core.clone(effect); invalid['play-on'] = events;
+        assert.throws(() => core.validate(invalid), /playback/);
+    }
+});

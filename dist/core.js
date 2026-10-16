@@ -61,7 +61,7 @@
         if (template.definition) return normalize(template.definition);
         return {
             id: template.id, name: template.name, category: template.category, template: template.id,
-            enabled: true, weight: 1, priority: 0,
+            enabled: true, weight: 1, priority: 0, 'play-on': [],
             timing: { 'fade-in-ticks': template.fadeIn, 'minimum-ticks': template.minimum, 'maximum-ticks': template.id === 'loading' ? Math.max(template.minimum, 100 - template.fadeOut) : template.minimum, 'fade-out-ticks': template.fadeOut },
             captions: { enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
             presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
@@ -86,6 +86,8 @@
         if (!catalog.some(entry => entry.id === template && !entry.definition)) throw new Error(`Unknown template: ${template}. Choose one of the 50 built-in templates.`);
         const result = merge(createEffect(template), input);
         result.category = categoryFor(result.id, result.category);
+        if (!Array.isArray(result['play-on'])) throw new Error('Automatic playback must be a list.');
+        result['play-on'] = result['play-on'].map(value => typeof value === 'string' ? value.toLowerCase().replaceAll('_', '-') : value);
         for (const key of ['include', 'exclude']) {
             if (!Array.isArray(result.filters['game-modes'][key])) throw new Error(`Game modes ${key} must be a list.`);
             result.filters['game-modes'][key] = result.filters['game-modes'][key].map(value => typeof value === 'string' ? value.toUpperCase() : value);
@@ -107,6 +109,8 @@
         string(effect.category, 'Category', 40); if (!categories.includes(effect.category)) fail('Choose one of the three library categories.');
         if (!catalog.some(entry => entry.id === effect.template && !entry.definition)) fail('Select a built-in template.');
         if (typeof effect.enabled !== 'boolean') fail('Enabled must be true or false.');
+        list(effect['play-on'], 'Automatic playback', ['join', 'teleport', 'world-change']);
+        if (new Set(effect['play-on']).size !== effect['play-on'].length) fail('Automatic playback contains duplicate events.');
         number(effect.weight, 'Weight', 1, 10000); number(effect.priority, 'Priority', -10000, 10000);
         const t = effect.timing;
         number(t['fade-in-ticks'], 'Fade in', 0, 1200); number(t['minimum-ticks'], 'Minimum duration', 0, 1200); number(t['maximum-ticks'], 'Maximum duration', 0, 1200); number(t['fade-out-ticks'], 'Fade out', 1, 1200);
