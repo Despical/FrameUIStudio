@@ -141,12 +141,17 @@
             renderSettings(); renderCatalog(); sync(); scheduleSave();
         } catch (error) { toast(error.message, true); }
     }
+    function catalogDuration(item) {
+        const timing = item.definition?.timing;
+        return timing ? timing['minimum-ticks'] + timing['fade-out-ticks'] : item.minimum + item.fadeOut;
+    }
     function renderCatalog() {
         renderCategories();
         const query = $('search').value.trim().toLowerCase(), list = $('template-list'); list.replaceChildren();
         const own = activeCategory === core.categories[2];
-        const items = own ? [...savedEffects.values()].map(entry => ({ id: entry.id, name: entry.effect.name, category: core.categories[2], definition: entry.effect }))
-            .sort((a, b) => a.name.localeCompare(b.name)) : core.catalog.filter(item => item.category === activeCategory);
+        const items = (own ? [...savedEffects.values()].map(entry => ({ id: entry.id, name: entry.effect.name, category: core.categories[2], definition: entry.effect }))
+            : core.catalog.filter(item => item.category === activeCategory))
+            .sort((a, b) => catalogDuration(a) - catalogDuration(b) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
         for (const item of items) {
             if (query && !`${item.name} ${item.id}`.toLowerCase().includes(query)) continue;
             const button = element('button', 'template-card'); button.dataset.template = item.id; button.dataset.libraryGroup = activeCategory;
@@ -161,8 +166,7 @@
                 }
                 thumb.src = preview.url;
             } else if (thumbs.has(saved?.effect.template || item.id)) thumb.src = thumbs.get(saved?.effect.template || item.id);
-            const timing = item.definition?.timing;
-            const seconds = timing ? (timing['minimum-ticks'] + timing['fade-out-ticks']) / 20 : (item.minimum + item.fadeOut) / 20;
+            const seconds = catalogDuration(item) / 20;
             const copy = element('span', 'template-copy'); copy.append(element('b', '', item.name), element('small', '', `${item.category} · ${seconds.toFixed(1)} s`));
             button.append(thumb, copy, icon('check')); button.addEventListener('click', () => openLibraryItem(item, saved)); list.append(button);
         }
