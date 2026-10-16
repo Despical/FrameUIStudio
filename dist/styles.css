@@ -169,7 +169,7 @@ code{font-family:"Cascadia Code",Consolas,monospace;color:#9bb1c9;font-size:.95e
 .switch input:checked+span{background:#22534d;border-color:#3a8177}
 .switch input:checked+span:before{left:18px;background:var(--accent)}
 .switch input:focus-visible+span{outline:2px solid var(--accent);outline-offset:3px}
-.image-upload{line-height:1.6;width:100%;background:#0d141f;border:1px dashed #344459;border-radius:7px;padding:18px 9px;display:flex;flex-direction:column;align-items:center;gap:7px;font-size:13px;color:#8fa4ba}
+.image-upload{line-height:1.6;width:100%;margin-bottom:16px;background:#0d141f;border:1px dashed #344459;border-radius:7px;padding:18px 9px;display:flex;flex-direction:column;align-items:center;gap:7px;font-size:13px;color:#8fa4ba}
 .image-upload svg{width:20px;height:20px;color:#7187a0}
 .image-upload strong{font-size:13px;font-weight:500;color:#c1cfdf}
 .image-upload small{font-size:11px;color:var(--subtle)}
