@@ -9,7 +9,8 @@
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let effect = core.createEffect('frameui'), imageBytes = null, imageUrl = '', imageElement = null;
     let undo = [], redo = [], playing = !reducedMotion, playTick = 24, lastFrame = 0, saveTimer, toastTimer, rawDirty = false;
-    const thumbs = new Map();
+    const thumbs = new Map(), savedEffects = new Map(), savedThumbnails = new Map();
+    let activeCategory = core.categories[1];
     function element(tag, classes, text) { const node = document.createElement(tag); if (classes) node.className = classes; if (text !== undefined) node.textContent = text; return node; }
     function icon(id) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', `#icon-${id}`); svg.append(use); return svg; }
     function toast(message, error = false) { clearTimeout(toastTimer); $('toast').textContent = message; $('toast').classList.toggle('error', error); $('toast').hidden = false; toastTimer = setTimeout(() => { $('toast').hidden = true; }, error ? 6500 : 3500); }
@@ -24,14 +25,26 @@
         if (path === 'presentation.hide-hud' && value) effect.presentation['show-hands'] = false;
         if (path === 'id' && imageBytes) effect.appearance.image = `images/${effect.id}.png`;
         if (!snapshotMatches(previous, snapshot())) { undo.push(previous); if (undo.length > 32) undo.shift(); redo.length = 0; }
+        effect.category = core.categoryFor(effect.id, effect.category);
         sync(); scheduleSave();
     }
     function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 450); }
     function toDataUrl(bytes) { let binary = ''; for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.slice(i, i + 8192)); return 'data:image/png;base64,' + btoa(binary); }
     function fromDataUrl(url) { return Uint8Array.from(atob(url.split(',')[1]), c => c.charCodeAt(0)); }
-    function save() {
-        try { localStorage.setItem(storageKey, JSON.stringify({ version: core.VERSION, effect, image: imageBytes ? toDataUrl(imageBytes) : '' })); }
-        catch { toast('Export to save this draft. Browser storage is unavailable.', true); }
+    async function save() {
+        clearTimeout(saveTimer);
+        const current = { effect: core.clone(effect), image: imageBytes };
+        let librarySaved = false;
+        if (current.effect.category === core.categories[2] && !validState()) {
+            const entry = { id: current.effect.id, effect: current.effect, image: current.image };
+            savedEffects.set(entry.id, entry);
+            try { await window.FrameStudioLibrary.put(entry); librarySaved = true; }
+            catch { toast('Efekt tarayıcıya kaydedilemedi. Kaybetmemek için dışa aktar.', true); }
+            renderCatalog();
+        }
+        try { localStorage.setItem(storageKey, JSON.stringify({ version: core.VERSION, effect: current.effect, image: current.image ? toDataUrl(current.image) : '' })); }
+        catch { if (!librarySaved) toast('Export to save this draft. Browser storage is unavailable.', true); }
+        return librarySaved;
     }
     async function setImage(bytes) {
         let nextUrl = '', nextImage = null;
@@ -84,7 +97,7 @@
         const composition = section('Loading screen elements', 'Reusable');
         composition.append(field('Background layout', 'elements.background', { options: [['template','Shader template'],['solid','Solid color'],['split','Split panels'],['grid','Technical grid'],['terminal','Terminal'],['pulse','Expanding pulse']] }), field('Loading indicator', 'elements.progress', { options: [['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']] }), field('Ambient decoration', 'elements.decoration', { options: [['none','None'],['embers','Embers'],['petals','Petals'],['scan','Scan line'],['pulse','Pulse emblem']] }), row(field('Indicator X', 'elements.progress-x', { type: 'range', min: .1, max: .9, step: .01 }), field('Indicator Y', 'elements.progress-y', { type: 'range', min: .1, max: .9, step: .01 })), field('Indicator width', 'elements.progress-width', { type: 'range', min: .08, max: .8, step: .01 }), field('Text entrance', 'elements.text-animation', { options: [['still','Fade'],['grow','Grow'],['slide-up','Slide up']] }), field('Text horizontal position', 'elements.text-x', { type: 'range', min: 0, max: 1, step: .01 }), field('Indicator thickness', 'elements.progress-scale', { type: 'range', min: .5, max: 3, step: .01 }), field('Text position', 'elements.text-y', { type: 'range', min: .1, max: .9, step: .01 }), field('Text size', 'elements.text-scale', { type: 'range', min: .5, max: 2, step: .01 }), note('Start with a ready-made layout, then replace its words, colors or logo. Loading indicators animate continuously; they do not claim a server loading percentage.'));
         visual.append(composition);
-        const identity = section('Effect identity'); identity.append(field('Display name', 'name', { maxLength: 64 }), field('Effect ID / filename', 'id', { maxLength: 48, placeholder: 'my-aurora' }), note('Use a new ID to create a separate effect. Keep the template ID to replace its configuration.'), field('Collection', 'category', { maxLength: 40 })); visual.append(identity);
+        const identity = section('Effect identity'); identity.append(field('Display name', 'name', { maxLength: 64 }), field('Effect ID / filename', 'id', { maxLength: 48, placeholder: 'my-aurora' }), note('Use a new ID to create a separate effect. Keep the template ID to replace its configuration.'), element('p', 'category-readonly', 'Kategori: ' + effect.category)); visual.append(identity);
         const palette = section('Color palette');
         const segments = element('div', 'segmented');
         for (const [value, label] of [['original', 'Original'], ['custom', 'Custom colors']]) { const button = element('button', effect.appearance.palette === value ? 'active' : '', label); button.dataset.palette = value; button.addEventListener('click', () => mutate('appearance.palette', value)); segments.append(button); }
@@ -105,22 +118,61 @@
         const environment = section('Environment'); environment.append(details('Distance & height', row(field('Min distance · blocks', 'filters.distance.min', { type: 'number', min: 0, max: 100000000, step: 'any' }), field('Max distance · blocks', 'filters.distance.max', { type: 'number', min: -1, max: 100000000, step: 'any' })), note('Use -1 for unlimited maximum distance. Cross-world teleports satisfy the minimum distance.'), row(field('Min Y', 'filters.height.min', { type: 'number', min: -30000000, max: 30000000, step: 'any' }), field('Max Y', 'filters.height.max', { type: 'number', min: -30000000, max: 30000000, step: 'any' })), note('Height applies to the destination. The defaults allow all heights.')), details('Time & weather', row(field('Start time · ticks', 'filters.time.min', { type: 'number', min: 0, max: 23999 }), field('End time · ticks', 'filters.time.max', { type: 'number', min: 0, max: 23999 })), note('Minecraft time: 0 sunrise, 6000 noon, 12000 sunset, 18000 midnight. A range crossing midnight is supported.'), checkboxList('filters.weather', ['clear', 'rain', 'thunder']), note('Empty allows any weather.'))); rules.append(environment);
         dropdowns.enhance();
     }
-    function renderCatalog() {
-        const query = $('search').value.trim().toLowerCase(), category = $('category-filter').value, list = $('template-list'); list.replaceChildren();
-        for (const item of core.catalog) {
-            if ((category && category !== item.category) || (query && !`${item.name} ${item.id} ${item.category}`.toLowerCase().includes(query))) continue;
-            const button = element('button', 'template-card' + (effect.id === item.id ? ' active' : '')); button.dataset.template = item.id; button.setAttribute('aria-pressed', effect.template === item.id ? 'true' : 'false');
-            const thumb = element('img', 'template-thumb'); thumb.alt = ''; if (thumbs.has(item.id)) thumb.src = thumbs.get(item.id);
-            const copy = element('span', 'template-copy'); copy.append(element('b', '', item.name), element('small', '', `${item.category} · ${((item.minimum + item.fadeOut) / 20).toFixed(1)} s`)); button.append(thumb, copy, icon('check'));
-            button.addEventListener('click', async () => { try { remember(); const next = core.createEffect(item.id); await setImage(item.image ? new Uint8Array(await (await fetch(item.image)).arrayBuffer()) : null); effect = next; playTick = Math.max(item.fadeIn, 1); rawDirty = false; renderSettings(); renderCatalog(); sync(); scheduleSave(); } catch (error) { toast(error.message, true); } }); list.append(button);
+    function renderCategories() {
+        const container = $('library-categories'); container.replaceChildren();
+        for (const category of core.categories) {
+            const count = category === core.categories[2] ? savedEffects.size : core.catalog.filter(item => item.category === category).length;
+            const button = element('button', 'library-category'); button.type = 'button';
+            button.setAttribute('role', 'tab'); button.setAttribute('aria-selected', String(category === activeCategory));
+            button.append(element('span', '', category), element('small', '', String(count)));
+            button.addEventListener('click', () => { activeCategory = category; renderCatalog(); }); container.append(button);
         }
-        if (!list.children.length) list.append(element('p', 'empty-state', 'No matching effects. Try another name or collection.'));
+        $('category-description').textContent = activeCategory === core.categories[0] ? '50 temel animasyon. Birini seçip kendi tasarımına başlangıç yap.'
+            : activeCategory === core.categories[1] ? 'Logo, yazı ve yükleme göstergeleriyle hazırlanmış tasarımlar.'
+            : 'Oluşturduğun ve içe aktardığın efektler. Bu tarayıcıda otomatik saklanır.';
+        document.querySelector('.panel-heading h1 span').textContent = core.catalog.length + savedEffects.size;
+    }
+    async function openLibraryItem(item, saved) {
+        try {
+            await save(); remember();
+            const next = saved ? core.clone(saved.effect) : core.createEffect(item.id);
+            await setImage(saved ? saved.image : item.image ? new Uint8Array(await (await fetch(item.image)).arrayBuffer()) : null);
+            effect = next; playTick = Math.max(effect.timing['fade-in-ticks'], 1); rawDirty = false;
+            renderSettings(); renderCatalog(); sync(); scheduleSave();
+        } catch (error) { toast(error.message, true); }
+    }
+    function renderCatalog() {
+        renderCategories();
+        const query = $('search').value.trim().toLowerCase(), list = $('template-list'); list.replaceChildren();
+        const own = activeCategory === core.categories[2];
+        const items = own ? [...savedEffects.values()].map(entry => ({ id: entry.id, name: entry.effect.name, category: core.categories[2], definition: entry.effect }))
+            .sort((a, b) => a.name.localeCompare(b.name)) : core.catalog.filter(item => item.category === activeCategory);
+        for (const item of items) {
+            if (query && !`${item.name} ${item.id}`.toLowerCase().includes(query)) continue;
+            const button = element('button', 'template-card'); button.dataset.template = item.id; button.dataset.libraryGroup = activeCategory;
+            button.setAttribute('aria-pressed', String(effect.id === item.id && effect.category === activeCategory));
+            const thumb = element('img', 'template-thumb'); thumb.alt = '';
+            const saved = own ? savedEffects.get(item.id) : null;
+            if (saved?.image) {
+                let preview = savedThumbnails.get(item.id);
+                if (!preview || preview.image !== saved.image) {
+                    if (preview) URL.revokeObjectURL(preview.url);
+                    preview = { image: saved.image, url: URL.createObjectURL(new Blob([saved.image], { type: 'image/png' })) }; savedThumbnails.set(item.id, preview);
+                }
+                thumb.src = preview.url;
+            } else if (thumbs.has(saved?.effect.template || item.id)) thumb.src = thumbs.get(saved?.effect.template || item.id);
+            const timing = item.definition?.timing;
+            const seconds = timing ? (timing['minimum-ticks'] + timing['fade-out-ticks']) / 20 : (item.minimum + item.fadeOut) / 20;
+            const copy = element('span', 'template-copy'); copy.append(element('b', '', item.name), element('small', '', `${item.category} · ${seconds.toFixed(1)} s`));
+            button.append(thumb, copy, icon('check')); button.addEventListener('click', () => openLibraryItem(item, saved)); list.append(button);
+        }
+        if (!list.children.length) list.append(element('p', 'empty-state', own && !query ? 'Henüz kayıtlı efektin yok. Bir animasyon veya hazır tasarım seçip “Efektlerime kaydet”e tıkla. Kendi efekt ZIP dosyanı da içe aktarabilirsin.' : 'Bu kategoride eşleşen efekt yok.'));
     }
     function validState() { try { core.validate(effect); return ''; } catch (error) { return error.message; } }
     function sync() {
         const error = validState(); $('validation-status').textContent = error || (effect.appearance.image && !imageBytes ? 'Image file needs to be supplied' : 'Ready to export'); document.querySelector('.inspector-footer').classList.toggle('invalid', !!error || !!(effect.appearance.image && !imageBytes));
         $('export-button').disabled = !!error; $('yaml-download').disabled = !!error; $('guide-export').disabled = !!error;
-        $('effect-heading').textContent = effect.name || 'Untitled effect'; $('effect-subheading').textContent = `${effect.category || 'Custom'} collection · ${effect.id === effect.template ? 'Built-in template' : 'Custom effect'}`;
+        $('effect-heading').textContent = effect.name || 'Untitled effect'; $('effect-subheading').textContent = effect.category + (effect.category === core.categories[2] ? ' · Otomatik kaydedilir' : ' · Düzenlenebilir başlangıç');
         $('summary-in').textContent = `${(effect.timing['fade-in-ticks'] / 20).toFixed(1)} s`; $('summary-hold').textContent = `${(effect.timing['minimum-ticks'] / 20).toFixed(1)} s`; $('summary-out').textContent = `${(effect.timing['fade-out-ticks'] / 20).toFixed(1)} s`; $('summary-triggers').textContent = `${effect.filters.triggers.length} events`;
         $('duration-label').textContent = `${(duration() / 20).toFixed(1)} s`; $('undo-button').disabled = !undo.length; $('redo-button').disabled = !redo.length;
         for (const input of document.querySelectorAll('[data-path]')) { if (document.activeElement === input) continue; const value = pathGet(input.dataset.path); if (input.type === 'checkbox') input.checked = value; else input.value = Array.isArray(value) ? value.join(', ') : value; }
@@ -132,7 +184,9 @@
         if ($('image-info')) { $('image-info').hidden = !effect.appearance.image; $('upload-image').hidden = !!imageBytes; if (imageUrl) $('image-thumbnail').src = imageUrl; else $('image-thumbnail').removeAttribute('src'); const label = $('image-description'); label.textContent = effect.appearance.image; label.append(element('small', '', imageElement ? `${imageElement.width} × ${imageElement.height} · ${(imageBytes.length / 1024).toFixed(0)} KB` : 'Missing image · choose the matching file')); }
         if (!rawDirty && !error) $('yaml-editor').value = core.toYaml(effect);
         $('play-button').setAttribute('aria-label', playing ? 'Pause preview' : 'Play preview'); $('play-button').replaceChildren(icon(playing ? 'pause' : 'play'));
-        for (const button of document.querySelectorAll('[data-template]')) { const selected = button.dataset.template === effect.id; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected)); }
+        for (const button of document.querySelectorAll('[data-template]')) { const selected = button.dataset.template === effect.id && button.dataset.libraryGroup === effect.category; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected)); }
+        if (document.querySelector('.category-readonly')) document.querySelector('.category-readonly').textContent = 'Kategori: ' + effect.category;
+        $('new-button').innerHTML = (effect.category === core.categories[2] ? 'Yeni kopya oluştur' : 'Efektlerime kaydet') + ' <span>↗</span>';
         directEditor?.render();
     }
     function duration() { return Math.max(1, effect.timing['minimum-ticks'] + effect.timing['fade-out-ticks']); }
@@ -197,7 +251,7 @@
     async function generateThumbnails() {
         const canvas = element('canvas'); canvas.width = 160; canvas.height = 90; let thumbnails;
         try { thumbnails = new ShaderRenderer(canvas); } catch { return; }
-        for (const template of core.catalog) { if (template.image) { const image = new Image(); image.src = template.image; try { await image.decode(); thumbnails.setImage(image); } catch { thumbnails.setImage(null); } } else thumbnails.setImage(null); thumbnails.draw(core.createEffect(template.id), 2.5, 1); const url = canvas.toDataURL('image/png'); thumbs.set(template.id, url); const img = document.querySelector(`[data-template="${template.id}"] .template-thumb`); if (img) img.src = url; await new Promise(resolve => requestAnimationFrame(resolve)); }
+        for (const template of core.catalog) { if (template.image) { const image = new Image(); image.src = template.image; try { await image.decode(); thumbnails.setImage(image); } catch { thumbnails.setImage(null); } } else thumbnails.setImage(null); thumbnails.draw(core.createEffect(template.id), 2.5, 1); const url = canvas.toDataURL('image/png'); thumbs.set(template.id, url); const img = document.querySelector(`[data-template="${template.id}"] .template-thumb`); if (img && activeCategory !== core.categories[2]) img.src = url; await new Promise(resolve => requestAnimationFrame(resolve)); }
         thumbnails.gl.getExtension('WEBGL_lose_context')?.loseContext();
     }
     function download(bytes, filename, type) { const url = URL.createObjectURL(new Blob([bytes], { type })), anchor = element('a'); anchor.href = url; anchor.download = filename; document.body.append(anchor); anchor.click(); anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000); }
@@ -215,6 +269,7 @@
             if (/\.zip$/i.test(file.name)) { const entries = await core.unzip(new Uint8Array(await file.arrayBuffer())), definitions = Object.keys(entries).filter(name => /^effects\/.*\.ya?ml$/i.test(name)); if (definitions.length !== 1) throw new Error('Import one effect at a time. The ZIP must contain exactly one effects/*.yml file.'); imported = core.fromYaml(core.decoder.decode(entries[definitions[0]])); if (definitions[0].replace(/^effects\//, '').replace(/\.ya?ml$/i, '') !== imported.id) throw new Error('Effect ID must match the YAML filename.'); if (imported.appearance.image) { bytes = entries[imported.appearance.image]; if (!bytes) throw new Error(`ZIP is missing ${imported.appearance.image}.`); core.validatePng(bytes); } }
             else if (/\.ya?ml$/i.test(file.name)) { if (file.size > 256000) throw new Error('YAML must be smaller than 256 KB.'); imported = core.fromYaml(await file.text()); if (file.name.replace(/\.ya?ml$/i, '') !== imported.id) throw new Error('Effect ID must match the YAML filename.'); }
             else throw new Error('Choose a FrameUI YAML definition or an exported effect ZIP.');
+            await save(); imported.category = core.categories[2]; activeCategory = core.categories[2];
             const before = snapshot(); await setImage(bytes); undo.push(before); if (undo.length > 32) undo.shift(); redo.length = 0; effect = imported; rawDirty = false; playTick = Math.max(effect.timing['fade-in-ticks'], 1); renderSettings(); renderCatalog(); sync(); scheduleSave(); toast(bytes || !effect.appearance.image ? 'Effect imported. Your previous draft is available with Undo.' : 'Definition imported. Choose its image to preview and export a complete ZIP.');
         } catch (error) { toast(error.message, true); }
         $('import-file').value = '';
@@ -237,16 +292,22 @@
         if (getComputedStyle(center).display === 'contents') window.scrollTo({ top: 0 });
         else center.scrollTo({ top: 0 });
     });
-    $('search').addEventListener('input', renderCatalog); $('category-filter').addEventListener('change', renderCatalog);
-    for (const category of [...new Set(core.catalog.map(item => item.category))]) { const option = element('option', '', category); option.value = category; $('category-filter').append(option); }
+    $('search').addEventListener('input', renderCatalog);
     $('undo-button').addEventListener('click', () => historyStep(false)); $('redo-button').addEventListener('click', () => historyStep(true));
     $('play-button').addEventListener('click', () => { playing = !playing; if (playing && playTick >= duration()) playTick = 0; sync(); }); $('restart-button').addEventListener('click', () => { playTick = 0; });
     $('timeline').addEventListener('input', () => { playTick = Number($('timeline').value) / 1000 * duration(); });
     $('import-button').addEventListener('click', () => $('import-file').click()); $('import-file').addEventListener('change', () => importFile($('import-file').files[0])); $('image-file').addEventListener('change', () => uploadImage($('image-file').files[0]));
     $('export-button').addEventListener('click', exportEffect); $('guide-export').addEventListener('click', exportEffect); $('yaml-download').addEventListener('click', () => { try { download(core.toYaml(effect), effect.id + '.yml', 'text/yaml;charset=utf-8'); toast('YAML downloaded. Images must be supplied separately; use Export effect for a complete ZIP.'); } catch (error) { toast(error.message, true); } });
     $('guide-button').addEventListener('click', () => $('guide-dialog').showModal()); $('close-guide').addEventListener('click', () => $('guide-dialog').close()); $('guide-dialog').addEventListener('click', event => { if (event.target === $('guide-dialog')) { const rect = $('guide-dialog').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('guide-dialog').close(); } });
-    $('new-button').addEventListener('click', () => { remember(); effect.id = 'custom-' + effect.template; effect.name += ' · Custom'; if (imageBytes) effect.appearance.image = `images/${effect.id}.png`; renderSettings(); sync(); scheduleSave(); toast('Custom effect created. Give it your own ID, name and settings.'); });
-    $('reset-button').addEventListener('click', async () => { remember(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); rawDirty = false; renderSettings(); sync(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
+    $('new-button').addEventListener('click', async () => {
+        await save(); remember();
+        effect.id = core.copyId(effect.id, [...core.catalog.map(item => item.id), ...savedEffects.keys()]);
+        effect.name = (effect.name.replace(/ · Kopya$/, '').slice(0, 56) + ' · Kopya'); effect.category = core.categories[2];
+        if (imageBytes) effect.appearance.image = `images/${effect.id}.png`;
+        activeCategory = core.categories[2]; rawDirty = false; renderSettings(); sync();
+        if (await save()) toast('Efektlerim’e kaydedildi. Değişikliklerin bu tarayıcıda otomatik saklanır.');
+    });
+    $('reset-button').addEventListener('click', async () => { remember(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); activeCategory = effect.category; rawDirty = false; renderSettings(); renderCatalog(); sync(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
     const tabs = [...document.querySelectorAll('[data-tab]')];
     function selectTab(button) { dropdowns.close(); for (const tab of tabs) { const active = tab === button; tab.classList.toggle('active', active); tab.setAttribute('aria-selected', String(active)); tab.tabIndex = active ? 0 : -1; $('settings-' + tab.dataset.tab).hidden = !active; } }
     for (const tab of tabs) { tab.addEventListener('click', () => selectTab(tab)); tab.addEventListener('keydown', event => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const index = tabs.indexOf(tab), next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length; selectTab(tabs[next]); tabs[next].focus(); } }); }
@@ -266,9 +327,15 @@
         commit: before => { const previous = snapshot(); previous.effect.elements = before; if (!snapshotMatches(previous, snapshot())) { undo.push(previous); if (undo.length > 32) undo.shift(); redo.length = 0; rawDirty = false; sync(); scheduleSave(); } }
     });
     async function start() {
+        try {
+            for (const entry of await window.FrameStudioLibrary.list()) {
+                try { entry.effect = core.normalize(entry.effect); entry.effect.category = core.categories[2]; savedEffects.set(entry.id, entry); } catch {}
+            }
+        } catch { toast('Efektlerim tarayıcı depolamasına erişemedi. Efektlerini dışa aktararak sakla.', true); }
         try { const stored = localStorage.getItem(storageKey); if (stored) { const draft = JSON.parse(stored); if (draft.version === core.VERSION) { effect = core.normalize(draft.effect); if (draft.image) await setImage(fromDataUrl(draft.image)); } } } catch { toast('Previous draft unavailable.', true); }
         if (effect.appearance.image && !imageBytes) { const preset = core.catalog.find(item => item.id === effect.id); if (preset?.image) { try { await setImage(new Uint8Array(await (await fetch(preset.image)).arrayBuffer())); } catch { toast('Preset image could not load. Choose the matching PNG.', true); } } }
-        document.querySelector('.panel-heading h1 span').textContent = core.catalog.length;
+        activeCategory = effect.category;
+        if (effect.category === core.categories[2]) await save();
         renderSettings(); renderCatalog(); sync(); requestAnimationFrame(previewFrame); generateThumbnails();
     }
     start();

@@ -2,7 +2,7 @@
 # IDs: lowercase letters, numbers, single hyphens; maximum 48 characters.
 id: 'iris'
 name: 'Cinema Iris'
-category: 'Geometric'
+category: "Animasyonlar"
 # Reuse any of the 50 built-in animation templates; your variation gets its own shader slot.
 template: 'iris'
 enabled: true

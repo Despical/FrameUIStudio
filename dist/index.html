@@ -31,13 +31,14 @@
         <aside class="catalog-panel" aria-label="Effect templates">
             <div class="panel-heading"><h1>Effect library <span>60</span></h1></div>
             <label class="search-field"><svg><use href="#icon-search"/></svg><input id="search" type="search" placeholder="Search effects…" aria-label="Search effects"><kbd>/</kbd></label>
-            <div class="category-field"><span>Collection</span><select id="category-filter" aria-label="Filter by collection"><option value="">All collections</option></select></div>
+            <div id="library-categories" class="library-categories" role="tablist" aria-label="Efekt kategorileri"></div>
+            <p id="category-description" class="category-description"></p>
             <div id="template-list" class="template-list" role="list" aria-label="Available effect templates"></div>
-            <div class="catalog-footer"><button id="new-button" class="text-button">New custom effect <span>↗</span></button></div>
+            <div class="catalog-footer"><button id="new-button" class="text-button">Efektlerime kaydet <span>↗</span></button></div>
         </aside>
         <div class="center-scroll" id="workspace-content" tabindex="0" role="region" aria-label="Effect preview">
         <section class="preview-panel" aria-label="Effect preview">
-            <div class="preview-heading"><div><h2 id="effect-heading">Aurora</h2><p id="effect-subheading">Nature collection · Built-in template</p></div></div>
+            <div class="preview-heading"><div><h2 id="effect-heading">FrameUI Signature</h2><p id="effect-subheading">Hazır Tasarımlar · Düzenlenebilir başlangıç</p></div></div>
             <div class="stage-wrap"><div class="stage" id="stage">
                 <div class="world-scene" aria-hidden="true"><div class="world-sky"></div><div class="world-sun"></div><div class="world-mountain mountain-back"></div><div class="world-mountain mountain-front"></div><div class="world-ground"></div><span class="world-caption">Minecraft scene placeholder</span></div>
                 <canvas id="preview-canvas" width="960" height="540" aria-label="Animated shader preview"></canvas>
@@ -92,6 +93,6 @@
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
     <dialog id="guide-dialog"><div class="dialog-heading"><button class="icon-button" id="close-guide" aria-label="Close install guide">×</button></div><h2>Install your effect.</h2><p>Your ZIP contains a complete effect definition and its image, when used.</p><ol><li><b>Export effect</b><span>Download your ready-to-install ZIP.</span></li><li><b>Extract into plugins/FrameUI/</b><span>Merge the <code>effects/</code> and <code>images/</code> folders. Keep your other files.</span></li><li><b>Run /frameui reload</b><span>FrameUI validates definitions and rebuilds its resource pack.</span></li><li><b>Test in game</b><span>Accept the refreshed pack, then run <code>/frameui preview &lt;id&gt;</code>.</span></li></ol><p class="dialog-note">A new ID creates a separate effect. An existing ID replaces that definition. Your drafts and photos stay in this browser until you export.</p><button class="button button-primary full-width" id="guide-export"><svg><use href="#icon-download"/></svg>Export effect ZIP</button></dialog>
     <script src="core.js"></script><script src="shaders.js"></script><script src="dropdowns.js"></script><script src="footer.js"></script><script src="canvas-editor.js"></script>
-    <script src="app.js"></script>
+    <script src="effect-library.js"></script><script src="app.js"></script>
 </body>
 </html>

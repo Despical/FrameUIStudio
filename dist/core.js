@@ -8,6 +8,19 @@
     const decoder = new TextDecoder('utf-8', { fatal: true });
     const clone = value => JSON.parse(JSON.stringify(value));
     const catalog = [];
+    const categories = ['Animasyonlar', 'Hazır Tasarımlar', 'Efektlerim'];
+    const designIds = new Set(['overworld', 'frameui', 'clean-loader', 'segmented-loader', 'orbit-loader', 'terminal-loader', 'split-loader', 'pulse-loader', 'nether-forge', 'cherry-valley']);
+    function categoryFor(id, configured) {
+        if (configured === categories[2]) return categories[2];
+        if (designIds.has(id)) return categories[1];
+        return catalog.some(item => item.id === id && !item.definition) ? categories[0] : categories[2];
+    }
+    function copyId(id, used) {
+        const base = ('custom-' + id.replace(/^custom-/, '')).slice(0, 43).replace(/-$/, '');
+        let candidate = base, suffix = 2;
+        while (used.includes(candidate)) candidate = base + '-' + suffix++;
+        return candidate;
+    }
     const modes = ['SURVIVAL', 'CREATIVE', 'ADVENTURE', 'SPECTATOR'];
     const triggers = ['join', 'teleport', 'world-change', 'command'];
     const causes = ['ENDER_PEARL', 'COMMAND', 'PLUGIN', 'NETHER_PORTAL', 'END_PORTAL', 'SPECTATE', 'END_GATEWAY', 'CONSUMABLE_EFFECT', 'CHORUS_FRUIT', 'DISMOUNT', 'EXIT_BED', 'UNKNOWN'];
@@ -42,6 +55,7 @@
         const template = input.template || input.id || 'aurora';
         if (!catalog.some(entry => entry.id === template && !entry.definition)) throw new Error(`Unknown template: ${template}. Choose one of the 50 built-in templates.`);
         const result = merge(createEffect(template), input);
+        result.category = categoryFor(result.id, result.category);
         for (const key of ['include', 'exclude']) {
             if (!Array.isArray(result.filters['game-modes'][key])) throw new Error(`Game modes ${key} must be a list.`);
             result.filters['game-modes'][key] = result.filters['game-modes'][key].map(value => typeof value === 'string' ? value.toUpperCase() : value);
@@ -60,7 +74,7 @@
         const list = (value, label, allowed) => { if (!Array.isArray(value) || value.length > 128 || value.some(item => typeof item !== 'string' || item.length > (allowed ? 64 : 128) || !item.trim() || /[\u0000-\u001f\u007f-\u009f]/.test(item) || (allowed && !allowed.includes(item)))) fail(`${label} contains an invalid value.`); };
         if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(effect.id) || effect.id.length > 48) fail('ID must contain up to 48 lowercase letters, numbers and single hyphens.');
         string(effect.name, 'Name', 64); if (!effect.name.trim()) fail('Name cannot be empty.');
-        string(effect.category, 'Category', 40); if (!effect.category.trim()) fail('Category cannot be empty.');
+        string(effect.category, 'Category', 40); if (!categories.includes(effect.category)) fail('Choose one of the three library categories.');
         if (!catalog.some(entry => entry.id === effect.template && !entry.definition)) fail('Select a built-in template.');
         if (typeof effect.enabled !== 'boolean') fail('Enabled must be true or false.');
         number(effect.weight, 'Weight', 1, 10000); number(effect.priority, 'Priority', -10000, 10000);
@@ -273,6 +287,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1–2048 pixels.');
         return { width, height };
     }
-    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, modes, triggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, modes, triggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

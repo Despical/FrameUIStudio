@@ -2,7 +2,7 @@
   {
     "id": "frameui",
     "name": "FrameUI Signature",
-    "category": "Signature",
+    "category": "Hazır Tasarımlar",
     "template": "fade-black",
     "fadeIn": 28,
     "minimum": 80,
@@ -11,7 +11,7 @@
     "definition": {
       "id": "frameui",
       "name": "FrameUI Signature",
-      "category": "Signature",
+      "category": "Hazır Tasarımlar",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -107,7 +107,7 @@
   {
     "id": "cherry-valley",
     "name": "Cherry Valley",
-    "category": "Photo Templates",
+    "category": "Hazır Tasarımlar",
     "template": "fade-black",
     "fadeIn": 18,
     "minimum": 82,
@@ -116,7 +116,7 @@
     "definition": {
       "id": "cherry-valley",
       "name": "Cherry Valley",
-      "category": "Photo Templates",
+      "category": "Hazır Tasarımlar",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -212,7 +212,7 @@
   {
     "id": "clean-loader",
     "name": "Clean Loader",
-    "category": "Loading Templates",
+    "category": "Hazır Tasarımlar",
     "template": "fade-black",
     "fadeIn": 18,
     "minimum": 64,
@@ -221,7 +221,7 @@
     "definition": {
       "id": "clean-loader",
       "name": "Clean Loader",
-      "category": "Loading Templates",
+      "category": "Hazır Tasarımlar",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -316,7 +316,7 @@
   {
     "id": "nether-forge",
     "name": "Nether Forge",
-    "category": "Photo Templates",
+    "category": "Hazır Tasarımlar",
     "template": "fade-black",
     "fadeIn": 18,
     "minimum": 76,
@@ -325,7 +325,7 @@
     "definition": {
       "id": "nether-forge",
       "name": "Nether Forge",
-      "category": "Photo Templates",
+      "category": "Hazır Tasarımlar",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -421,7 +421,7 @@
   {
     "id": "orbit-loader",
     "name": "Orbit Loader",
-    "category": "Loading Templates",
+    "category": "Hazır Tasarımlar",
     "template": "fade-black",
     "fadeIn": 18,
     "minimum": 76,
@@ -430,7 +430,7 @@
     "definition": {
       "id": "orbit-loader",
       "name": "Orbit Loader",
-      "category": "Loading Templates",
+      "category": "Hazır Tasarımlar",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -525,7 +525,7 @@
   {
     "id": "overworld",
     "name": "Overworld Panorama",
-    "category": "Landscape",
+    "category": "Hazır Tasarımlar",
     "template": "fade-black",
     "fadeIn": 20,
     "minimum": 80,
@@ -534,7 +534,7 @@
     "definition": {
       "id": "overworld",
       "name": "Overworld Panorama",
-      "category": "Landscape",
+      "category": "Hazır Tasarımlar",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -630,7 +630,7 @@
   {
     "id": "pulse-loader",
     "name": "Pulse Loader",
-    "category": "Loading Templates",
+    "category": "Hazır Tasarımlar",
     "template": "fade-black",
     "fadeIn": 18,
     "minimum": 70,
@@ -639,7 +639,7 @@
     "definition": {
       "id": "pulse-loader",
       "name": "Pulse Loader",
-      "category": "Loading Templates",
+      "category": "Hazır Tasarımlar",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -734,7 +734,7 @@
   {
     "id": "segmented-loader",
     "name": "Segmented Loader",
-    "category": "Loading Templates",
+    "category": "Hazır Tasarımlar",
     "template": "fade-black",
     "fadeIn": 18,
     "minimum": 70,
@@ -743,7 +743,7 @@
     "definition": {
       "id": "segmented-loader",
       "name": "Segmented Loader",
-      "category": "Loading Templates",
+      "category": "Hazır Tasarımlar",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -838,7 +838,7 @@
   {
     "id": "split-loader",
     "name": "Split Loader",
-    "category": "Loading Templates",
+    "category": "Hazır Tasarımlar",
     "template": "fade-black",
     "fadeIn": 18,
     "minimum": 64,
@@ -847,7 +847,7 @@
     "definition": {
       "id": "split-loader",
       "name": "Split Loader",
-      "category": "Loading Templates",
+      "category": "Hazır Tasarımlar",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -942,7 +942,7 @@
   {
     "id": "terminal-loader",
     "name": "Terminal Loader",
-    "category": "Loading Templates",
+    "category": "Hazır Tasarımlar",
     "template": "fade-black",
     "fadeIn": 18,
     "minimum": 82,
@@ -951,7 +951,7 @@
     "definition": {
       "id": "terminal-loader",
       "name": "Terminal Loader",
-      "category": "Loading Templates",
+      "category": "Hazır Tasarımlar",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -1046,7 +1046,7 @@
   {
     "id": "loading",
     "name": "Original loading",
-    "category": "Classic",
+    "category": "Animasyonlar",
     "shaderId": 0,
     "fadeIn": 8,
     "minimum": 50,
@@ -1056,7 +1056,7 @@
   {
     "id": "fade-in",
     "name": "Fade In",
-    "category": "Minimal",
+    "category": "Animasyonlar",
     "shaderId": 1,
     "fadeIn": 0,
     "minimum": 0,
@@ -1066,7 +1066,7 @@
   {
     "id": "fade-out",
     "name": "Fade Out",
-    "category": "Minimal",
+    "category": "Animasyonlar",
     "shaderId": 2,
     "fadeIn": 54,
     "minimum": 68,
@@ -1076,7 +1076,7 @@
   {
     "id": "color-wipe",
     "name": "Color Wipe",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 3,
     "fadeIn": 20,
     "minimum": 36,
@@ -1086,7 +1086,7 @@
   {
     "id": "iris",
     "name": "Cinema Iris",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 4,
     "fadeIn": 26,
     "minimum": 42,
@@ -1096,7 +1096,7 @@
   {
     "id": "aurora",
     "name": "Aurora",
-    "category": "Nature",
+    "category": "Animasyonlar",
     "shaderId": 5,
     "fadeIn": 16,
     "minimum": 86,
@@ -1106,7 +1106,7 @@
   {
     "id": "fade-black",
     "name": "Black Fade",
-    "category": "Minimal",
+    "category": "Animasyonlar",
     "shaderId": 6,
     "fadeIn": 30,
     "minimum": 64,
@@ -1116,7 +1116,7 @@
   {
     "id": "fade-rose",
     "name": "Rose Fade",
-    "category": "Minimal",
+    "category": "Animasyonlar",
     "shaderId": 7,
     "fadeIn": 24,
     "minimum": 50,
@@ -1126,7 +1126,7 @@
   {
     "id": "wipe-right",
     "name": "Reverse Curtain",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 8,
     "fadeIn": 18,
     "minimum": 34,
@@ -1136,7 +1136,7 @@
   {
     "id": "wipe-down",
     "name": "Blue Waterfall",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 9,
     "fadeIn": 22,
     "minimum": 46,
@@ -1146,7 +1146,7 @@
   {
     "id": "wipe-up",
     "name": "Amber Rise",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 10,
     "fadeIn": 26,
     "minimum": 40,
@@ -1156,7 +1156,7 @@
   {
     "id": "diagonal-wipe",
     "name": "Diagonal Sweep",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 11,
     "fadeIn": 28,
     "minimum": 52,
@@ -1166,7 +1166,7 @@
   {
     "id": "blinds",
     "name": "Horizontal Blinds",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 12,
     "fadeIn": 18,
     "minimum": 36,
@@ -1176,7 +1176,7 @@
   {
     "id": "vertical-blinds",
     "name": "Vertical Blinds",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 13,
     "fadeIn": 24,
     "minimum": 44,
@@ -1186,7 +1186,7 @@
   {
     "id": "checkerboard",
     "name": "Checkerboard",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 14,
     "fadeIn": 26,
     "minimum": 54,
@@ -1196,7 +1196,7 @@
   {
     "id": "mosaic",
     "name": "Ocean Mosaic",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 15,
     "fadeIn": 32,
     "minimum": 62,
@@ -1206,7 +1206,7 @@
   {
     "id": "diamond",
     "name": "Diamond Bloom",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 16,
     "fadeIn": 28,
     "minimum": 48,
@@ -1216,7 +1216,7 @@
   {
     "id": "hexagon",
     "name": "Honeycomb",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 17,
     "fadeIn": 24,
     "minimum": 46,
@@ -1226,7 +1226,7 @@
   {
     "id": "split-horizontal",
     "name": "Side Curtains",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 18,
     "fadeIn": 22,
     "minimum": 42,
@@ -1236,7 +1236,7 @@
   {
     "id": "split-vertical",
     "name": "Cinema Curtains",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 19,
     "fadeIn": 28,
     "minimum": 58,
@@ -1246,7 +1246,7 @@
   {
     "id": "zoom-square",
     "name": "Square Zoom",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 20,
     "fadeIn": 20,
     "minimum": 40,
@@ -1256,7 +1256,7 @@
   {
     "id": "shutter",
     "name": "Camera Shutter",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 21,
     "fadeIn": 26,
     "minimum": 52,
@@ -1266,7 +1266,7 @@
   {
     "id": "ripple",
     "name": "Ripple Reveal",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 22,
     "fadeIn": 32,
     "minimum": 60,
@@ -1276,7 +1276,7 @@
   {
     "id": "radar",
     "name": "Emerald Radar",
-    "category": "Space",
+    "category": "Animasyonlar",
     "shaderId": 23,
     "fadeIn": 20,
     "minimum": 92,
@@ -1286,7 +1286,7 @@
   {
     "id": "sonar",
     "name": "Deep Sonar",
-    "category": "Space",
+    "category": "Animasyonlar",
     "shaderId": 24,
     "fadeIn": 26,
     "minimum": 84,
@@ -1296,7 +1296,7 @@
   {
     "id": "starfield",
     "name": "Starlit Sky",
-    "category": "Space",
+    "category": "Animasyonlar",
     "shaderId": 25,
     "fadeIn": 28,
     "minimum": 98,
@@ -1306,7 +1306,7 @@
   {
     "id": "warp",
     "name": "Warp Drive",
-    "category": "Space",
+    "category": "Animasyonlar",
     "shaderId": 26,
     "fadeIn": 18,
     "minimum": 78,
@@ -1316,7 +1316,7 @@
   {
     "id": "nebula",
     "name": "Violet Nebula",
-    "category": "Space",
+    "category": "Animasyonlar",
     "shaderId": 27,
     "fadeIn": 32,
     "minimum": 102,
@@ -1326,7 +1326,7 @@
   {
     "id": "eclipse",
     "name": "Solar Eclipse",
-    "category": "Space",
+    "category": "Animasyonlar",
     "shaderId": 28,
     "fadeIn": 26,
     "minimum": 82,
@@ -1336,7 +1336,7 @@
   {
     "id": "solar-flare",
     "name": "Solar Flare",
-    "category": "Space",
+    "category": "Animasyonlar",
     "shaderId": 29,
     "fadeIn": 24,
     "minimum": 72,
@@ -1346,7 +1346,7 @@
   {
     "id": "ocean",
     "name": "Ocean Waves",
-    "category": "Nature",
+    "category": "Animasyonlar",
     "shaderId": 30,
     "fadeIn": 28,
     "minimum": 88,
@@ -1356,7 +1356,7 @@
   {
     "id": "lava",
     "name": "Molten Lava",
-    "category": "Nature",
+    "category": "Animasyonlar",
     "shaderId": 31,
     "fadeIn": 26,
     "minimum": 76,
@@ -1366,7 +1366,7 @@
   {
     "id": "snowflakes",
     "name": "Winter Snow",
-    "category": "Nature",
+    "category": "Animasyonlar",
     "shaderId": 32,
     "fadeIn": 32,
     "minimum": 100,
@@ -1376,7 +1376,7 @@
   {
     "id": "rain",
     "name": "Midnight Rain",
-    "category": "Nature",
+    "category": "Animasyonlar",
     "shaderId": 33,
     "fadeIn": 24,
     "minimum": 80,
@@ -1386,7 +1386,7 @@
   {
     "id": "sakura",
     "name": "Sakura Petals",
-    "category": "Nature",
+    "category": "Animasyonlar",
     "shaderId": 34,
     "fadeIn": 30,
     "minimum": 96,
@@ -1396,7 +1396,7 @@
   {
     "id": "fireflies",
     "name": "Forest Fireflies",
-    "category": "Nature",
+    "category": "Animasyonlar",
     "shaderId": 35,
     "fadeIn": 32,
     "minimum": 106,
@@ -1406,7 +1406,7 @@
   {
     "id": "matrix",
     "name": "Digital Rain",
-    "category": "Retro",
+    "category": "Animasyonlar",
     "shaderId": 36,
     "fadeIn": 18,
     "minimum": 74,
@@ -1416,7 +1416,7 @@
   {
     "id": "scanlines",
     "name": "Retro CRT",
-    "category": "Retro",
+    "category": "Animasyonlar",
     "shaderId": 37,
     "fadeIn": 22,
     "minimum": 60,
@@ -1426,7 +1426,7 @@
   {
     "id": "glitch",
     "name": "Signal Glitch",
-    "category": "Retro",
+    "category": "Animasyonlar",
     "shaderId": 38,
     "fadeIn": 16,
     "minimum": 48,
@@ -1436,7 +1436,7 @@
   {
     "id": "pixel-dissolve",
     "name": "Pixel Dissolve",
-    "category": "Retro",
+    "category": "Animasyonlar",
     "shaderId": 39,
     "fadeIn": 30,
     "minimum": 58,
@@ -1446,7 +1446,7 @@
   {
     "id": "ink",
     "name": "Ink Flood",
-    "category": "Atmosphere",
+    "category": "Animasyonlar",
     "shaderId": 40,
     "fadeIn": 34,
     "minimum": 64,
@@ -1456,7 +1456,7 @@
   {
     "id": "paper",
     "name": "Paper Fold",
-    "category": "Atmosphere",
+    "category": "Animasyonlar",
     "shaderId": 41,
     "fadeIn": 26,
     "minimum": 50,
@@ -1466,7 +1466,7 @@
   {
     "id": "film-grain",
     "name": "Old Film",
-    "category": "Retro",
+    "category": "Animasyonlar",
     "shaderId": 42,
     "fadeIn": 26,
     "minimum": 68,
@@ -1476,7 +1476,7 @@
   {
     "id": "prism",
     "name": "Glass Prism",
-    "category": "Atmosphere",
+    "category": "Animasyonlar",
     "shaderId": 43,
     "fadeIn": 28,
     "minimum": 84,
@@ -1486,7 +1486,7 @@
   {
     "id": "gradient-sunset",
     "name": "Sunset Gradient",
-    "category": "Atmosphere",
+    "category": "Animasyonlar",
     "shaderId": 44,
     "fadeIn": 30,
     "minimum": 94,
@@ -1496,7 +1496,7 @@
   {
     "id": "gradient-ocean",
     "name": "Ocean Gradient",
-    "category": "Atmosphere",
+    "category": "Animasyonlar",
     "shaderId": 45,
     "fadeIn": 28,
     "minimum": 86,
@@ -1506,7 +1506,7 @@
   {
     "id": "monochrome",
     "name": "Silver Monochrome",
-    "category": "Minimal",
+    "category": "Animasyonlar",
     "shaderId": 46,
     "fadeIn": 24,
     "minimum": 56,
@@ -1516,7 +1516,7 @@
   {
     "id": "pulse",
     "name": "Soft Pulse",
-    "category": "Atmosphere",
+    "category": "Animasyonlar",
     "shaderId": 47,
     "fadeIn": 20,
     "minimum": 70,
@@ -1526,7 +1526,7 @@
   {
     "id": "ribbon",
     "name": "Silk Ribbons",
-    "category": "Atmosphere",
+    "category": "Animasyonlar",
     "shaderId": 48,
     "fadeIn": 26,
     "minimum": 90,
@@ -1536,7 +1536,7 @@
   {
     "id": "spiral",
     "name": "Golden Spiral",
-    "category": "Geometric",
+    "category": "Animasyonlar",
     "shaderId": 49,
     "fadeIn": 30,
     "minimum": 62,

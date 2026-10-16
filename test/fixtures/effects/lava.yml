@@ -2,7 +2,7 @@
 # IDs: lowercase letters, numbers, single hyphens; maximum 48 characters.
 id: 'lava'
 name: 'Molten Lava'
-category: 'Nature'
+category: "Animasyonlar"
 # Reuse any of the 50 built-in animation templates; your variation gets its own shader slot.
 template: 'lava'
 enabled: true

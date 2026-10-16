@@ -1,7 +1,7 @@
 # Ready-to-customize example. Change text, colors, image and elements in Studio.
 id: "terminal-loader"
 name: "Terminal Loader"
-category: "Loading Templates"
+category: "Hazır Tasarımlar"
 template: "fade-black"
 enabled: true
 weight: 1

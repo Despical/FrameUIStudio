@@ -81,7 +81,7 @@ test('timing, numeric boundaries and permission filters match the plugin', () =>
 });
 
 test('effect ZIP round-trip preserves YAML and PNG bytes, verifies CRC', async () => {
-    const definition = core.createEffect('aurora'); definition.id = 'custom-aurora'; definition.appearance.image = 'images/custom-aurora.png';
+    const definition = core.createEffect('aurora'); definition.id = 'custom-aurora'; definition.category = 'Efektlerim'; definition.appearance.image = 'images/custom-aurora.png';
     const image = Uint8Array.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,8,6,0,0,0,0,0,0,0]);
     core.validatePng(image);
     const archive = core.zip({ 'effects/custom-aurora.yml': core.toYaml(definition), 'images/custom-aurora.png': image, 'INSTALL.txt': 'Installation instructions' });
@@ -155,4 +155,23 @@ test('corner resizing preserves aspect and fixes the opposite corner', () => {
     const bounded = core.transformElement(original,'image',100,100,'se',{x:.3,y:.4,width:.4,height:.2});
     assert.equal(bounded['image-scale'],2);
     assert.throws(() => core.transformElement(original,'text',1,1,'bad',{x:0,y:0,width:1,height:1}));
+});
+
+
+test('exactly three groups classify stock, legacy and custom effects consistently', () => {
+    assert.deepEqual(core.categories, ['Animasyonlar', 'Hazır Tasarımlar', 'Efektlerim']);
+    assert.equal(core.catalog.filter(item => item.category === 'Animasyonlar').length, 50);
+    assert.equal(core.catalog.filter(item => item.category === 'Hazır Tasarımlar').length, 10);
+    assert.equal(core.fromYaml('id: aurora\ncategory: Nature').category, 'Animasyonlar');
+    assert.equal(core.fromYaml('id: frameui\ntemplate: fade-black\ncategory: Signature').category, 'Hazır Tasarımlar');
+    assert.equal(core.fromYaml('id: my-screen\ntemplate: aurora\ncategory: Nature').category, 'Efektlerim');
+    assert.equal(core.fromYaml('id: aurora\ncategory: Efektlerim').category, 'Efektlerim');
+});
+
+test('custom copies never overwrite stock or existing saved IDs', () => {
+    assert.equal(core.copyId('frameui', ['frameui']), 'custom-frameui');
+    assert.equal(core.copyId('custom-frameui', ['custom-frameui', 'custom-frameui-2']), 'custom-frameui-3');
+    const id = core.copyId('a'.repeat(48), ['a'.repeat(48)]);
+    assert.ok(id.length <= 48);
+    assert.match(id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 });
