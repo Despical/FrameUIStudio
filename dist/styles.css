@@ -104,9 +104,9 @@ h2{font-size:25px;font-weight:600;letter-spacing:-.8px}
 .timing-strip>div:first-child{border:0}
 .timing-strip span{display:block;font-size:10px;letter-spacing:1.2px;color:var(--subtle);font-weight:650}
 .timing-strip b{display:block;font-size:17px;font-weight:500;margin-top:8px}
-.preview-note{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;color:var(--subtle);margin-top:18px;font-size:13px;line-height:1.7}
-.preview-note>svg{width:12px;height:12px;margin-top:2px}
-.preview-note p{flex:1;min-width:200px}
+.preview-note{display:flex;align-items:flex-start;gap:9px;color:var(--subtle);margin-top:18px;font-size:13px;line-height:1.7}
+.preview-note>svg{width:16px;height:16px;flex:0 0 16px;margin-top:3px}
+.preview-note p{flex:1;min-width:0}
 .preview-note .text-button{font-size:13px;white-space:nowrap;color:#8395ac}
 .preview-note .text-button svg{width:13px;height:13px}
 code{font-family:"Cascadia Code",Consolas,monospace;color:#9bb1c9;font-size:.95em}
@@ -118,7 +118,7 @@ code{font-family:"Cascadia Code",Consolas,monospace;color:#9bb1c9;font-size:.95e
 .footer-identity{min-width:0}
 .footer-identity>p{margin:8px 0 0;font-size:14px;line-height:1.5;color:#a0afc1}
 .footer-links{display:grid;grid-template-columns:repeat(3,minmax(110px,max-content));align-items:start;gap:48px;font-size:14px}
-.footer-link-group h2{font-size:13px;font-weight:600;letter-spacing:0;color:var(--text);margin:0 0 8px}
+.footer-link-group h2{font-size:14px;font-weight:650;line-height:1.5;letter-spacing:.09em;text-transform:uppercase;color:var(--text);margin:0 0 12px}
 .footer-link-group{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
 .footer-links a,.footer-links button{display:inline-flex;align-items:center;gap:9px;min-height:32px;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;line-height:1.5}
 .footer-links a:hover,.footer-links button:hover{color:var(--accent)}
@@ -383,3 +383,7 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .trash-row .template-copy{flex-basis:150px}
 .trash-row-actions{display:flex;flex-wrap:wrap;gap:8px}
 .trash-row-actions .button{min-height:36px;font-size:12px;padding:0 10px}
+
+.server-connection{margin:0 0 16px;padding:10px 13px;border:1px solid #315d57;border-radius:7px;background:#14302c;color:#a9ded5;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+.server-connection.connection-error{border-color:#925554;background:#382526;color:#ffd1c6}
+@media(max-width:760px){.header-actions{flex-wrap:wrap;justify-content:flex-end;gap:6px}.app-header{height:auto;min-height:84px;padding-top:12px;padding-bottom:12px}.header-actions .button{min-height:36px;padding:0 9px;font-size:12px}}

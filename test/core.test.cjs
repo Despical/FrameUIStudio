@@ -260,3 +260,16 @@ test('automatic playback is explicitly selected and survives standalone YAML and
         assert.throws(() => core.validate(invalid), /playback/);
     }
 });
+test('None background round-trips without removing image, widgets or event bindings', () => {
+    const effect = core.createEffect('frameui');
+    effect.elements.background = 'none';
+    effect.elements['image-animation'] = 'grow';
+    effect.elements.progress = 'bar';
+    effect['play-on'] = ['join','teleport','world-change'];
+    const restored = core.fromYaml(core.toYaml(effect));
+    assert.equal(restored.elements.background, 'none');
+    assert.equal(restored.appearance.image, effect.appearance.image);
+    assert.equal(restored.elements['image-animation'], 'grow');
+    assert.equal(restored.elements.progress, 'bar');
+    assert.deepEqual(restored['play-on'], effect['play-on']);
+});

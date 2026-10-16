@@ -16,6 +16,7 @@
       "enabled": true,
       "weight": 1,
       "priority": 0,
+      "play-on": [],
       "timing": {
         "fade-in-ticks": 28,
         "minimum-ticks": 80,
@@ -121,6 +122,7 @@
       "enabled": true,
       "weight": 1,
       "priority": 0,
+      "play-on": [],
       "timing": {
         "fade-in-ticks": 18,
         "minimum-ticks": 82,
@@ -226,6 +228,7 @@
       "enabled": true,
       "weight": 1,
       "priority": 0,
+      "play-on": [],
       "timing": {
         "fade-in-ticks": 10,
         "minimum-ticks": 28,
@@ -330,6 +333,7 @@
       "enabled": true,
       "weight": 1,
       "priority": 0,
+      "play-on": [],
       "timing": {
         "fade-in-ticks": 18,
         "minimum-ticks": 76,
@@ -435,6 +439,7 @@
       "enabled": true,
       "weight": 1,
       "priority": 0,
+      "play-on": [],
       "timing": {
         "fade-in-ticks": 16,
         "minimum-ticks": 48,
@@ -539,6 +544,7 @@
       "enabled": true,
       "weight": 1,
       "priority": 0,
+      "play-on": [],
       "timing": {
         "fade-in-ticks": 20,
         "minimum-ticks": 80,
@@ -644,6 +650,7 @@
       "enabled": true,
       "weight": 1,
       "priority": 0,
+      "play-on": [],
       "timing": {
         "fade-in-ticks": 12,
         "minimum-ticks": 32,
@@ -748,6 +755,7 @@
       "enabled": true,
       "weight": 1,
       "priority": 0,
+      "play-on": [],
       "timing": {
         "fade-in-ticks": 12,
         "minimum-ticks": 36,
@@ -852,6 +860,7 @@
       "enabled": true,
       "weight": 1,
       "priority": 0,
+      "play-on": [],
       "timing": {
         "fade-in-ticks": 10,
         "minimum-ticks": 24,
@@ -956,6 +965,7 @@
       "enabled": true,
       "weight": 1,
       "priority": 0,
+      "play-on": [],
       "timing": {
         "fade-in-ticks": 12,
         "minimum-ticks": 44,

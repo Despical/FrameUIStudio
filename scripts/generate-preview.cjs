@@ -83,7 +83,7 @@ void main() {
         vec2 point = (sampleUv - uPlacement.xy - offset) / (uPlacement.z * grow) * scale + 0.5;
         if (point.x >= 0.0 && point.x <= 1.0 && point.y >= 0.0 && point.y <= 1.0) {
             vec4 picture = texture2D(uImage, point);
-            float reveal = effect.a;
+            float reveal = uBackgroundStyle == 6 ? abs(frameLoadingTransition) : effect.a;
             if (uImageAnimation > 0) {
                 reveal *= uImageAnimation == 1 ? progress : smoothstep(0.0, 0.15, progress);
                 if (uImageAnimation == 5) reveal *= frameCover(uv.x, progress);
