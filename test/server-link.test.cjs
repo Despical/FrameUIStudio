@@ -1,0 +1,34 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+function fixture(responses, connected = true) {
+    const calls = [], context = { window: {}, location: new URL(connected ? 'http://localhost/studio/#server='+'a'.repeat(43) : 'https://studio.example/'),
+        document: {querySelectorAll: () => []}, URL, URLSearchParams, Uint8Array,
+        fetch: async (url, options) => { calls.push({url:String(url),...options}); return responses.shift(); } };
+    vm.runInNewContext(fs.readFileSync(require.resolve('../dist/server-link.js'),'utf8'),context);
+    return {api:context.window.FrameStudioServer,calls};
+}
+const response = (json,status=200) => ({ok:status===200,status,json:async()=>json});
+test('connected library requests keep bearer capabilities out of URLs and bind saves to revisions', async () => {
+    const {api,calls}=fixture([response({player:'Admin'}),response({effects:[{id:'custom'}]}),response({revision:'next'}),response({revision:'created'})]);
+    await api.connect(); assert.equal((await api.listEffects())[0].id,'custom');
+    const bytes=new Uint8Array([1,2]); await api.importEffect(bytes,'b'.repeat(64)); await api.importEffect(bytes);
+    assert.equal(calls[1].method,'GET'); assert.equal(calls[1].url,'http://localhost/studio/api/effects');
+    assert.equal(calls[2].headers['If-Match'],'"'+'b'.repeat(64)+'"');
+    assert.equal(calls[3].headers['If-None-Match'],'*');
+    assert.ok(calls.every(call=>!call.url.includes('server=')&&call.headers.Authorization==='Bearer '+'a'.repeat(43)));
+});
+test('server record downloads retain PNG bundle bytes and revision metadata', async () => {
+    const {api,calls}=fixture([{ok:true,status:200,arrayBuffer:async()=>new Uint8Array([80,75,3,4]).buffer,headers:{get:()=> '"'+'c'.repeat(64)+'"'}}]);
+    const result=await api.loadEffect('custom');assert.deepEqual([...result.bytes],[80,75,3,4]);assert.equal(result.revision,'c'.repeat(64));
+    assert.equal(calls[0].url,'http://localhost/studio/api/effects/custom');
+});
+test('revision conflicts retain the session while revoked permissions clear it', async () => {
+    const {api}=fixture([response({player:'Admin'}),response({error:'Changed on server'},409),response({error:'Permission revoked'},403)]);
+    await api.connect();await assert.rejects(api.importEffect(new Uint8Array([1]),'a'.repeat(64)),e=>e.status===409);assert.ok(api.session);
+    await assert.rejects(api.listEffects(),e=>e.status===403);assert.equal(api.session,null);
+});
+test('standalone Studio never contacts a server without a personal connection', async () => {
+    const {api,calls}=fixture([],false);assert.equal(api.available,false);await assert.rejects(api.listEffects(),/frameui editor/);assert.equal(calls.length,0);
+});

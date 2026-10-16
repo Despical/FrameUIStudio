@@ -387,3 +387,5 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .server-connection{margin:0 0 16px;padding:10px 13px;border:1px solid #315d57;border-radius:7px;background:#14302c;color:#a9ded5;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
 .server-connection.connection-error{border-color:#925554;background:#382526;color:#ffd1c6}
 @media(max-width:760px){.header-actions{flex-wrap:wrap;justify-content:flex-end;gap:6px}.app-header{height:auto;min-height:84px;padding-top:12px;padding-bottom:12px}.header-actions .button{min-height:36px;padding:0 9px;font-size:12px}}
+
+.server-effect-badge{display:block;margin-top:4px;color:#92d9ce;font-size:10px;font-weight:600;letter-spacing:.04em;line-height:1.4}
