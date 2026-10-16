@@ -39,7 +39,7 @@
             const entry = { id: current.effect.id, effect: current.effect, image: current.image };
             savedEffects.set(entry.id, entry);
             try { await window.FrameStudioLibrary.put(entry); librarySaved = true; }
-            catch { toast('Efekt tarayıcıya kaydedilemedi. Kaybetmemek için dışa aktar.', true); }
+            catch { toast('Could not save this effect in your browser. Export it to keep a copy.', true); }
             renderCatalog();
         }
         try { localStorage.setItem(storageKey, JSON.stringify({ version: core.VERSION, effect: current.effect, image: current.image ? toDataUrl(current.image) : '' })); }
@@ -97,7 +97,7 @@
         const composition = section('Loading screen elements', 'Reusable');
         composition.append(field('Background layout', 'elements.background', { options: [['template','Shader template'],['solid','Solid color'],['split','Split panels'],['grid','Technical grid'],['terminal','Terminal'],['pulse','Expanding pulse']] }), field('Loading indicator', 'elements.progress', { options: [['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']] }), field('Ambient decoration', 'elements.decoration', { options: [['none','None'],['embers','Embers'],['petals','Petals'],['scan','Scan line'],['pulse','Pulse emblem']] }), row(field('Indicator X', 'elements.progress-x', { type: 'range', min: .1, max: .9, step: .01 }), field('Indicator Y', 'elements.progress-y', { type: 'range', min: .1, max: .9, step: .01 })), field('Indicator width', 'elements.progress-width', { type: 'range', min: .08, max: .8, step: .01 }), field('Text entrance', 'elements.text-animation', { options: [['still','Fade'],['grow','Grow'],['slide-up','Slide up']] }), field('Text horizontal position', 'elements.text-x', { type: 'range', min: 0, max: 1, step: .01 }), field('Indicator thickness', 'elements.progress-scale', { type: 'range', min: .5, max: 3, step: .01 }), field('Text position', 'elements.text-y', { type: 'range', min: .1, max: .9, step: .01 }), field('Text size', 'elements.text-scale', { type: 'range', min: .5, max: 2, step: .01 }), note('Start with a ready-made layout, then replace its words, colors or logo. Loading indicators animate continuously; they do not claim a server loading percentage.'));
         visual.append(composition);
-        const identity = section('Effect identity'); identity.append(field('Display name', 'name', { maxLength: 64 }), field('Effect ID / filename', 'id', { maxLength: 48, placeholder: 'my-aurora' }), note('Use a new ID to create a separate effect. Keep the template ID to replace its configuration.'), element('p', 'category-readonly', 'Kategori: ' + effect.category)); visual.append(identity);
+        const identity = section('Effect identity'); identity.append(field('Display name', 'name', { maxLength: 64 }), field('Effect ID / filename', 'id', { maxLength: 48, placeholder: 'my-aurora' }), note('Use a new ID to create a separate effect. Keep the template ID to replace its configuration.'), element('p', 'category-readonly', 'Category: ' + effect.category)); visual.append(identity);
         const palette = section('Color palette');
         const segments = element('div', 'segmented');
         for (const [value, label] of [['original', 'Original'], ['custom', 'Custom colors']]) { const button = element('button', effect.appearance.palette === value ? 'active' : '', label); button.dataset.palette = value; button.addEventListener('click', () => mutate('appearance.palette', value)); segments.append(button); }
@@ -127,9 +127,9 @@
             button.append(element('span', '', category), element('small', '', String(count)));
             button.addEventListener('click', () => { activeCategory = category; renderCatalog(); }); container.append(button);
         }
-        $('category-description').textContent = activeCategory === core.categories[0] ? '50 temel animasyon. Birini seçip kendi tasarımına başlangıç yap.'
-            : activeCategory === core.categories[1] ? 'Logo, yazı ve yükleme göstergeleriyle hazırlanmış tasarımlar.'
-            : 'Oluşturduğun ve içe aktardığın efektler. Bu tarayıcıda otomatik saklanır.';
+        $('category-description').textContent = activeCategory === core.categories[0] ? '50 base animations. Pick one to start your own design.'
+            : activeCategory === core.categories[1] ? 'Complete, editable screens with logos, text and loading indicators.'
+            : 'Your created and imported effects. Saved automatically in this browser.';
         document.querySelector('.panel-heading h1 span').textContent = core.catalog.length + savedEffects.size;
     }
     async function openLibraryItem(item, saved) {
@@ -166,13 +166,13 @@
             const copy = element('span', 'template-copy'); copy.append(element('b', '', item.name), element('small', '', `${item.category} · ${seconds.toFixed(1)} s`));
             button.append(thumb, copy, icon('check')); button.addEventListener('click', () => openLibraryItem(item, saved)); list.append(button);
         }
-        if (!list.children.length) list.append(element('p', 'empty-state', own && !query ? 'Henüz kayıtlı efektin yok. Bir animasyon veya hazır tasarım seçip “Efektlerime kaydet”e tıkla. Kendi efekt ZIP dosyanı da içe aktarabilirsin.' : 'Bu kategoride eşleşen efekt yok.'));
+        if (!list.children.length) list.append(element('p', 'empty-state', own && !query ? 'No saved effects yet. Pick an animation or ready-made design, then click “Save to My Effects”. You can also import your own effect ZIP.' : 'No matching effects in this category.'));
     }
     function validState() { try { core.validate(effect); return ''; } catch (error) { return error.message; } }
     function sync() {
         const error = validState(); $('validation-status').textContent = error || (effect.appearance.image && !imageBytes ? 'Image file needs to be supplied' : 'Ready to export'); document.querySelector('.inspector-footer').classList.toggle('invalid', !!error || !!(effect.appearance.image && !imageBytes));
         $('export-button').disabled = !!error; $('yaml-download').disabled = !!error; $('guide-export').disabled = !!error;
-        $('effect-heading').textContent = effect.name || 'Untitled effect'; $('effect-subheading').textContent = effect.category + (effect.category === core.categories[2] ? ' · Otomatik kaydedilir' : ' · Düzenlenebilir başlangıç');
+        $('effect-heading').textContent = effect.name || 'Untitled effect'; $('effect-subheading').textContent = effect.category + (effect.category === core.categories[2] ? ' · Saved automatically' : ' · Editable starting point');
         $('summary-in').textContent = `${(effect.timing['fade-in-ticks'] / 20).toFixed(1)} s`; $('summary-hold').textContent = `${(effect.timing['minimum-ticks'] / 20).toFixed(1)} s`; $('summary-out').textContent = `${(effect.timing['fade-out-ticks'] / 20).toFixed(1)} s`; $('summary-triggers').textContent = `${effect.filters.triggers.length} events`;
         $('duration-label').textContent = `${(duration() / 20).toFixed(1)} s`; $('undo-button').disabled = !undo.length; $('redo-button').disabled = !redo.length;
         for (const input of document.querySelectorAll('[data-path]')) { if (document.activeElement === input) continue; const value = pathGet(input.dataset.path); if (input.type === 'checkbox') input.checked = value; else input.value = Array.isArray(value) ? value.join(', ') : value; }
@@ -185,8 +185,8 @@
         if (!rawDirty && !error) $('yaml-editor').value = core.toYaml(effect);
         $('play-button').setAttribute('aria-label', playing ? 'Pause preview' : 'Play preview'); $('play-button').replaceChildren(icon(playing ? 'pause' : 'play'));
         for (const button of document.querySelectorAll('[data-template]')) { const selected = button.dataset.template === effect.id && button.dataset.libraryGroup === effect.category; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected)); }
-        if (document.querySelector('.category-readonly')) document.querySelector('.category-readonly').textContent = 'Kategori: ' + effect.category;
-        $('new-button').innerHTML = (effect.category === core.categories[2] ? 'Yeni kopya oluştur' : 'Efektlerime kaydet') + ' <span>↗</span>';
+        if (document.querySelector('.category-readonly')) document.querySelector('.category-readonly').textContent = 'Category: ' + effect.category;
+        $('new-button').innerHTML = (effect.category === core.categories[2] ? 'Create a new copy' : 'Save to My Effects') + ' <span>↗</span>';
         directEditor?.render();
     }
     function duration() { return Math.max(1, effect.timing['minimum-ticks'] + effect.timing['fade-out-ticks']); }
@@ -302,10 +302,10 @@
     $('new-button').addEventListener('click', async () => {
         await save(); remember();
         effect.id = core.copyId(effect.id, [...core.catalog.map(item => item.id), ...savedEffects.keys()]);
-        effect.name = (effect.name.replace(/ · Kopya$/, '').slice(0, 56) + ' · Kopya'); effect.category = core.categories[2];
+        effect.name = (effect.name.replace(/ · (?:Kopya|Copy)$/, '').slice(0, 56) + ' · Copy'); effect.category = core.categories[2];
         if (imageBytes) effect.appearance.image = `images/${effect.id}.png`;
         activeCategory = core.categories[2]; rawDirty = false; renderSettings(); sync();
-        if (await save()) toast('Efektlerim’e kaydedildi. Değişikliklerin bu tarayıcıda otomatik saklanır.');
+        if (await save()) toast('Saved to My Effects. Changes are saved automatically in this browser.');
     });
     $('reset-button').addEventListener('click', async () => { remember(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); activeCategory = effect.category; rawDirty = false; renderSettings(); renderCatalog(); sync(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
     const tabs = [...document.querySelectorAll('[data-tab]')];
@@ -331,7 +331,7 @@
             for (const entry of await window.FrameStudioLibrary.list()) {
                 try { entry.effect = core.normalize(entry.effect); entry.effect.category = core.categories[2]; savedEffects.set(entry.id, entry); } catch {}
             }
-        } catch { toast('Efektlerim tarayıcı depolamasına erişemedi. Efektlerini dışa aktararak sakla.', true); }
+        } catch { toast('My Effects could not access browser storage. Export your effects to keep a copy.', true); }
         try { const stored = localStorage.getItem(storageKey); if (stored) { const draft = JSON.parse(stored); if (draft.version === core.VERSION) { effect = core.normalize(draft.effect); if (draft.image) await setImage(fromDataUrl(draft.image)); } } } catch { toast('Previous draft unavailable.', true); }
         if (effect.appearance.image && !imageBytes) { const preset = core.catalog.find(item => item.id === effect.id); if (preset?.image) { try { await setImage(new Uint8Array(await (await fetch(preset.image)).arrayBuffer())); } catch { toast('Preset image could not load. Choose the matching PNG.', true); } } }
         activeCategory = effect.category;

@@ -2,7 +2,7 @@
 # IDs: lowercase letters, numbers, single hyphens; maximum 48 characters.
 id: 'diagonal-wipe'
 name: 'Diagonal Sweep'
-category: "Animasyonlar"
+category: "Animations"
 # Reuse any of the 50 built-in animation templates; your variation gets its own shader slot.
 template: 'diagonal-wipe'
 enabled: true
@@ -12,11 +12,11 @@ priority: 0
 
 timing:
   # 20 ticks = 1 second. Fade-in may be 0; each timing is bounded to 1200 ticks.
-  fade-in-ticks: 28
-  minimum-ticks: 52
+  fade-in-ticks: 12
+  minimum-ticks: 24
   # Wait for world readiness up to this point, then fade out.
-  maximum-ticks: 52
-  fade-out-ticks: 24
+  maximum-ticks: 24
+  fade-out-ticks: 14
 
 captions:
   enabled: false

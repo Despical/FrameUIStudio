@@ -2,7 +2,7 @@
 # IDs: lowercase letters, numbers, single hyphens; maximum 48 characters.
 id: 'wipe-down'
 name: 'Blue Waterfall'
-category: "Animasyonlar"
+category: "Animations"
 # Reuse any of the 50 built-in animation templates; your variation gets its own shader slot.
 template: 'wipe-down'
 enabled: true
@@ -12,11 +12,11 @@ priority: 0
 
 timing:
   # 20 ticks = 1 second. Fade-in may be 0; each timing is bounded to 1200 ticks.
-  fade-in-ticks: 22
-  minimum-ticks: 46
+  fade-in-ticks: 10
+  minimum-ticks: 14
   # Wait for world readiness up to this point, then fade out.
-  maximum-ticks: 46
-  fade-out-ticks: 24
+  maximum-ticks: 14
+  fade-out-ticks: 12
 
 captions:
   enabled: false

@@ -2,7 +2,7 @@
 # IDs: lowercase letters, numbers, single hyphens; maximum 48 characters.
 id: 'matrix'
 name: 'Digital Rain'
-category: "Animasyonlar"
+category: "Animations"
 # Reuse any of the 50 built-in animation templates; your variation gets its own shader slot.
 template: 'matrix'
 enabled: true
@@ -12,11 +12,11 @@ priority: 0
 
 timing:
   # 20 ticks = 1 second. Fade-in may be 0; each timing is bounded to 1200 ticks.
-  fade-in-ticks: 18
-  minimum-ticks: 74
+  fade-in-ticks: 12
+  minimum-ticks: 40
   # Wait for world readiness up to this point, then fade out.
-  maximum-ticks: 74
-  fade-out-ticks: 24
+  maximum-ticks: 40
+  fade-out-ticks: 14
 
 captions:
   enabled: false

@@ -2,7 +2,7 @@
 # IDs: lowercase letters, numbers, single hyphens; maximum 48 characters.
 id: 'rain'
 name: 'Midnight Rain'
-category: "Animasyonlar"
+category: "Animations"
 # Reuse any of the 50 built-in animation templates; your variation gets its own shader slot.
 template: 'rain'
 enabled: true
@@ -12,11 +12,11 @@ priority: 0
 
 timing:
   # 20 ticks = 1 second. Fade-in may be 0; each timing is bounded to 1200 ticks.
-  fade-in-ticks: 24
-  minimum-ticks: 80
+  fade-in-ticks: 18
+  minimum-ticks: 50
   # Wait for world readiness up to this point, then fade out.
-  maximum-ticks: 80
-  fade-out-ticks: 28
+  maximum-ticks: 50
+  fade-out-ticks: 18
 
 captions:
   enabled: false

@@ -2,7 +2,7 @@
 # IDs: lowercase letters, numbers, single hyphens; maximum 48 characters.
 id: 'checkerboard'
 name: 'Checkerboard'
-category: "Animasyonlar"
+category: "Animations"
 # Reuse any of the 50 built-in animation templates; your variation gets its own shader slot.
 template: 'checkerboard'
 enabled: true
@@ -12,11 +12,11 @@ priority: 0
 
 timing:
   # 20 ticks = 1 second. Fade-in may be 0; each timing is bounded to 1200 ticks.
-  fade-in-ticks: 26
-  minimum-ticks: 54
+  fade-in-ticks: 14
+  minimum-ticks: 28
   # Wait for world readiness up to this point, then fade out.
-  maximum-ticks: 54
-  fade-out-ticks: 28
+  maximum-ticks: 28
+  fade-out-ticks: 14
 
 captions:
   enabled: false

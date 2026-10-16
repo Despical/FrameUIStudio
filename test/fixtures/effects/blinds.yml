@@ -2,7 +2,7 @@
 # IDs: lowercase letters, numbers, single hyphens; maximum 48 characters.
 id: 'blinds'
 name: 'Horizontal Blinds'
-category: "Animasyonlar"
+category: "Animations"
 # Reuse any of the 50 built-in animation templates; your variation gets its own shader slot.
 template: 'blinds'
 enabled: true
@@ -12,11 +12,11 @@ priority: 0
 
 timing:
   # 20 ticks = 1 second. Fade-in may be 0; each timing is bounded to 1200 ticks.
-  fade-in-ticks: 18
-  minimum-ticks: 36
+  fade-in-ticks: 8
+  minimum-ticks: 15
   # Wait for world readiness up to this point, then fade out.
-  maximum-ticks: 36
-  fade-out-ticks: 22
+  maximum-ticks: 15
+  fade-out-ticks: 10
 
 captions:
   enabled: false

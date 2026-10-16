@@ -2,7 +2,7 @@
 # IDs: lowercase letters, numbers, single hyphens; maximum 48 characters.
 id: 'snowflakes'
 name: 'Winter Snow'
-category: "Animasyonlar"
+category: "Animations"
 # Reuse any of the 50 built-in animation templates; your variation gets its own shader slot.
 template: 'snowflakes'
 enabled: true
@@ -12,11 +12,11 @@ priority: 0
 
 timing:
   # 20 ticks = 1 second. Fade-in may be 0; each timing is bounded to 1200 ticks.
-  fade-in-ticks: 32
-  minimum-ticks: 100
+  fade-in-ticks: 26
+  minimum-ticks: 74
   # Wait for world readiness up to this point, then fade out.
-  maximum-ticks: 100
-  fade-out-ticks: 32
+  maximum-ticks: 74
+  fade-out-ticks: 22
 
 captions:
   enabled: false

@@ -1,16 +1,16 @@
 # Ready-to-customize example. Change text, colors, image and elements in Studio.
 id: "clean-loader"
 name: "Clean Loader"
-category: "Hazır Tasarımlar"
+category: "Ready-made Designs"
 template: "fade-black"
 enabled: true
 weight: 1
 priority: 0
 timing:
-  fade-in-ticks: 18
-  minimum-ticks: 64
-  maximum-ticks: 64
-  fade-out-ticks: 16
+  fade-in-ticks: 10
+  minimum-ticks: 28
+  maximum-ticks: 28
+  fade-out-ticks: 12
 captions:
   enabled: true
   title: "YOUR SERVER"

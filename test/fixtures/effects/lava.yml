@@ -2,7 +2,7 @@
 # IDs: lowercase letters, numbers, single hyphens; maximum 48 characters.
 id: 'lava'
 name: 'Molten Lava'
-category: "Animasyonlar"
+category: "Animations"
 # Reuse any of the 50 built-in animation templates; your variation gets its own shader slot.
 template: 'lava'
 enabled: true
@@ -12,11 +12,11 @@ priority: 0
 
 timing:
   # 20 ticks = 1 second. Fade-in may be 0; each timing is bounded to 1200 ticks.
-  fade-in-ticks: 26
-  minimum-ticks: 76
+  fade-in-ticks: 18
+  minimum-ticks: 46
   # Wait for world readiness up to this point, then fade out.
-  maximum-ticks: 76
-  fade-out-ticks: 30
+  maximum-ticks: 46
+  fade-out-ticks: 18
 
 captions:
   enabled: false

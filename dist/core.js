@@ -8,10 +8,10 @@
     const decoder = new TextDecoder('utf-8', { fatal: true });
     const clone = value => JSON.parse(JSON.stringify(value));
     const catalog = [];
-    const categories = ['Animasyonlar', 'Hazır Tasarımlar', 'Efektlerim'];
+    const categories = ['Animations', 'Ready-made Designs', 'My Effects'];
     const designIds = new Set(['overworld', 'frameui', 'clean-loader', 'segmented-loader', 'orbit-loader', 'terminal-loader', 'split-loader', 'pulse-loader', 'nether-forge', 'cherry-valley']);
     function categoryFor(id, configured) {
-        if (configured === categories[2]) return categories[2];
+        if (configured === categories[2] || configured === 'Efektlerim') return categories[2];
         if (designIds.has(id)) return categories[1];
         return catalog.some(item => item.id === id && !item.definition) ? categories[0] : categories[2];
     }
@@ -32,7 +32,7 @@
         return {
             id: template.id, name: template.name, category: template.category, template: template.id,
             enabled: true, weight: 1, priority: 0,
-            timing: { 'fade-in-ticks': template.fadeIn, 'minimum-ticks': template.minimum, 'maximum-ticks': template.id === 'loading' ? 200 : template.minimum, 'fade-out-ticks': template.fadeOut },
+            timing: { 'fade-in-ticks': template.fadeIn, 'minimum-ticks': template.minimum, 'maximum-ticks': template.id === 'loading' ? Math.max(template.minimum, 100 - template.fadeOut) : template.minimum, 'fade-out-ticks': template.fadeOut },
             captions: { enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
             presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
             appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1, 'image-motion': 'still', 'title-motion': 'still' },

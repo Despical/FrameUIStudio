@@ -1,15 +1,15 @@
 # Ready-to-customize example. Change text, colors, image and elements in Studio.
 id: "terminal-loader"
 name: "Terminal Loader"
-category: "Hazır Tasarımlar"
+category: "Ready-made Designs"
 template: "fade-black"
 enabled: true
 weight: 1
 priority: 0
 timing:
-  fade-in-ticks: 18
-  minimum-ticks: 82
-  maximum-ticks: 82
+  fade-in-ticks: 12
+  minimum-ticks: 44
+  maximum-ticks: 44
   fade-out-ticks: 16
 captions:
   enabled: true

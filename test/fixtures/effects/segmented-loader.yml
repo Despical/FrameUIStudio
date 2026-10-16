@@ -1,16 +1,16 @@
 # Ready-to-customize example. Change text, colors, image and elements in Studio.
 id: "segmented-loader"
 name: "Segmented Loader"
-category: "Hazır Tasarımlar"
+category: "Ready-made Designs"
 template: "fade-black"
 enabled: true
 weight: 1
 priority: 0
 timing:
-  fade-in-ticks: 18
-  minimum-ticks: 70
-  maximum-ticks: 70
-  fade-out-ticks: 16
+  fade-in-ticks: 12
+  minimum-ticks: 36
+  maximum-ticks: 36
+  fade-out-ticks: 14
 captions:
   enabled: true
   title: "YOUR SERVER"

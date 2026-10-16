@@ -81,7 +81,7 @@ test('timing, numeric boundaries and permission filters match the plugin', () =>
 });
 
 test('effect ZIP round-trip preserves YAML and PNG bytes, verifies CRC', async () => {
-    const definition = core.createEffect('aurora'); definition.id = 'custom-aurora'; definition.category = 'Efektlerim'; definition.appearance.image = 'images/custom-aurora.png';
+    const definition = core.createEffect('aurora'); definition.id = 'custom-aurora'; definition.category = 'My Effects'; definition.appearance.image = 'images/custom-aurora.png';
     const image = Uint8Array.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,8,6,0,0,0,0,0,0,0]);
     core.validatePng(image);
     const archive = core.zip({ 'effects/custom-aurora.yml': core.toYaml(definition), 'images/custom-aurora.png': image, 'INSTALL.txt': 'Installation instructions' });
@@ -159,13 +159,13 @@ test('corner resizing preserves aspect and fixes the opposite corner', () => {
 
 
 test('exactly three groups classify stock, legacy and custom effects consistently', () => {
-    assert.deepEqual(core.categories, ['Animasyonlar', 'Hazır Tasarımlar', 'Efektlerim']);
-    assert.equal(core.catalog.filter(item => item.category === 'Animasyonlar').length, 50);
-    assert.equal(core.catalog.filter(item => item.category === 'Hazır Tasarımlar').length, 10);
-    assert.equal(core.fromYaml('id: aurora\ncategory: Nature').category, 'Animasyonlar');
-    assert.equal(core.fromYaml('id: frameui\ntemplate: fade-black\ncategory: Signature').category, 'Hazır Tasarımlar');
-    assert.equal(core.fromYaml('id: my-screen\ntemplate: aurora\ncategory: Nature').category, 'Efektlerim');
-    assert.equal(core.fromYaml('id: aurora\ncategory: Efektlerim').category, 'Efektlerim');
+    assert.deepEqual(core.categories, ['Animations', 'Ready-made Designs', 'My Effects']);
+    assert.equal(core.catalog.filter(item => item.category === 'Animations').length, 50);
+    assert.equal(core.catalog.filter(item => item.category === 'Ready-made Designs').length, 10);
+    assert.equal(core.fromYaml('id: aurora\ncategory: Nature').category, 'Animations');
+    assert.equal(core.fromYaml('id: frameui\ntemplate: fade-black\ncategory: Signature').category, 'Ready-made Designs');
+    assert.equal(core.fromYaml('id: my-screen\ntemplate: aurora\ncategory: Nature').category, 'My Effects');
+    assert.equal(core.fromYaml('id: aurora\ncategory: Efektlerim').category, 'My Effects');
 });
 
 test('custom copies never overwrite stock or existing saved IDs', () => {
@@ -174,4 +174,18 @@ test('custom copies never overwrite stock or existing saved IDs', () => {
     const id = core.copyId('a'.repeat(48), ['a'.repeat(48)]);
     assert.ok(id.length <= 48);
     assert.match(id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+});
+
+
+test('all sixty shipped screens use 1-5 seconds with short transitions and bounded readiness', () => {
+    let short = 0;
+    for (const item of core.catalog) {
+        const effect = core.createEffect(item.id), timing = effect.timing;
+        const duration = timing['minimum-ticks'] + timing['fade-out-ticks'];
+        assert.ok(duration >= 20 && duration <= 100, item.id);
+        assert.ok(timing['maximum-ticks'] + timing['fade-out-ticks'] <= 100, item.id);
+        if (duration <= 40) short++;
+    }
+    assert.ok(short >= 10);
+    assert.equal(core.createEffect('fade-in').timing['fade-out-ticks'], 20);
 });

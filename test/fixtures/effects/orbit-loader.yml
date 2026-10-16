@@ -1,15 +1,15 @@
 # Ready-to-customize example. Change text, colors, image and elements in Studio.
 id: "orbit-loader"
 name: "Orbit Loader"
-category: "Hazır Tasarımlar"
+category: "Ready-made Designs"
 template: "fade-black"
 enabled: true
 weight: 1
 priority: 0
 timing:
-  fade-in-ticks: 18
-  minimum-ticks: 76
-  maximum-ticks: 76
+  fade-in-ticks: 16
+  minimum-ticks: 48
+  maximum-ticks: 48
   fade-out-ticks: 16
 captions:
   enabled: true
