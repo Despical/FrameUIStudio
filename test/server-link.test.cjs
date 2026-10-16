@@ -32,3 +32,15 @@ test('revision conflicts retain the session while revoked permissions clear it',
 test('standalone Studio never contacts a server without a personal connection', async () => {
     const {api,calls}=fixture([],false);assert.equal(api.available,false);await assert.rejects(api.listEffects(),/frameui editor/);assert.equal(calls.length,0);
 });
+
+test('server trash and restore use revision-bound mutations without replacement uploads', async () => {
+    const {api,calls}=fixture([response({trash:[{trashId:'entry',id:'custom'}]}),response({trashId:'entry',id:'custom'}),response({id:'custom',revision:'restored'})]);
+    assert.equal((await api.listTrash())[0].id,'custom');
+    await api.trashEffect('custom','b'.repeat(64));await api.restoreEffect('entry','b'.repeat(64));
+    assert.equal(calls[0].method,'GET');assert.equal(calls[0].url,'http://localhost/studio/api/trash');
+    assert.equal(calls[1].method,'DELETE');assert.equal(calls[1].url,'http://localhost/studio/api/effects/custom');
+    assert.equal(calls[2].method,'POST');assert.equal(calls[2].url,'http://localhost/studio/api/trash/entry/restore');
+    assert.equal(calls[1].headers['If-Match'],'"'+'b'.repeat(64)+'"');
+    assert.equal(calls[2].headers['If-Match'],'"'+'b'.repeat(64)+'"');
+    assert.equal(calls[1].body,null);assert.equal(calls[2].body,null);
+});

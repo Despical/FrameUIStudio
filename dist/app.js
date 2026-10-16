@@ -5,9 +5,10 @@
     const dropdowns = window.FrameStudioDropdowns;
     const server = window.FrameStudioServer;
     let serverBusy = false, linkedEffectId = null;
-    const serverEffects = new Map();
+    const serverEffects = new Map(), serverTrash = new Map();
+    const inServerTrash = id => [...serverTrash.values()].some(entry => entry.id === id) && !serverEffects.has(id);
     const isServerEffect = () => effect.id === linkedEffectId && serverEffects.has(effect.id);
-    const libraryEntries = () => new Map([...savedEffects, ...serverEffects]);
+    const libraryEntries = () => new Map([...savedEffects, ...serverEffects].filter(([id]) => !inServerTrash(id)));
     const serverButtonLabel = () => serverBusy ? (isServerEffect() ? 'Saving…' : 'Importing…') : server.session ? (isServerEffect() ? 'Save to server' : 'Import to server') : 'Connect server';
     core.configureCatalog(window.FrameStudioCatalog);
     const $ = id => document.getElementById(id);
@@ -25,7 +26,7 @@
     function snapshot() { return { effect: core.clone(effect), image: imageBytes }; }
     function remember() { undo.push(snapshot()); if (undo.length > 32) undo.shift(); redo.length = 0; }
     function snapshotMatches(a, b) { return a.image === b.image && JSON.stringify(a.effect) === JSON.stringify(b.effect); }
-    function usedIds() { return [...core.catalog.map(item => item.id), ...savedEffects.keys(), ...serverEffects.keys(), ...deletedEffects.keys()]; }
+    function usedIds() { return [...core.catalog.map(item => item.id), ...savedEffects.keys(), ...serverEffects.keys(), ...[...serverTrash.values()].map(entry => entry.id), ...deletedEffects.keys()]; }
     function usedNames() { return [...libraryEntries().values()].map(entry => entry.effect.name); }
     function commitChange(previous) {
         if (snapshotMatches(previous, snapshot())) return false;
@@ -56,6 +57,7 @@
     async function save() {
         clearTimeout(saveTimer);
         const current = { effect: core.clone(effect), image: imageBytes };
+        if (inServerTrash(current.effect.id)) return false;
         if (current.effect.category === core.categories[2] && deletedEffects.has(current.effect.id) && !serverEffects.has(current.effect.id)) return false;
         let librarySaved = false;
         if (current.effect.category === core.categories[2] && !validState()) {
@@ -165,7 +167,7 @@
         dropdowns.refresh();
         document.querySelector('.panel-heading h1 span').textContent = core.catalog.length + libraryEntries().size;
         $('catalog-footer').hidden = activeCategory !== core.categories[2];
-        $('trash-button').textContent = `Trash (${deletedEffects.size})`;
+        $('trash-button').textContent = `Trash (${deletedEffects.size + serverTrash.size})`;
     }
     async function openLibraryItem(item, saved) {
         const version = ++selectionVersion;
@@ -230,7 +232,7 @@
             if (saved?.remote) copy.append(element('span', 'server-effect-badge', saved.dirty ? 'Unsaved changes' : 'Server'));
             button.title = item.name;
             button.append(thumb, copy, icon('check')); button.addEventListener('click', () => openLibraryItem(item, saved));
-            if (own && !saved?.remote) {
+            if (own) {
                 const entry = element('div', 'template-row'), remove = element('button', 'icon-button effect-delete');
                 remove.append(icon('trash')); remove.title = 'Move to Trash'; remove.setAttribute('aria-label', `Delete ${item.name}`);
                 remove.addEventListener('click', () => deleteEffect(item.id)); entry.append(button, remove); list.append(entry);
@@ -239,28 +241,60 @@
         if (!list.children.length) list.append(element('p', 'empty-state', own && !query ? 'Edit an animation or preset to create your first effect automatically. You can also import your own effect ZIP.' : 'No matching effects in this category.'));
     }
     async function deleteEffect(id) {
-        if (libraryBusy) return;
-        libraryBusy = true;
+        if (libraryBusy || serverBusy) return;
+        libraryBusy = true; sync();
         try {
             await save();
-            const entry = savedEffects.get(id); if (!entry) return;
-            await window.FrameStudioLibrary.remove(entry);
-            deletedEffects.set(id, entry); savedEffects.delete(id);
+            const remote = serverEffects.get(id);
+            if (remote) {
+                const deleted = await server.trashEffect(id, remote.revision);
+                serverTrash.set(deleted.trashId, deleted); serverEffects.delete(id);
+                serverStatus(`${deleted.name} moved to server Trash`);
+            } else {
+                const entry = savedEffects.get(id); if (!entry) return;
+                await window.FrameStudioLibrary.remove(entry);
+                deletedEffects.set(id, entry); savedEffects.delete(id);
+            }
             const thumbnail = savedThumbnails.get(id); if (thumbnail) URL.revokeObjectURL(thumbnail.url); savedThumbnails.delete(id);
             const keep = state => state.effect.category !== core.categories[2] || state.effect.id !== id;
             undo = undo.filter(keep); redo = redo.filter(keep);
             if (effect.id === id && effect.category === core.categories[2]) {
                 ++selectionVersion; const next = core.createEffect(effect.template);
-                await setImage(null); effect = next; rawDirty = false; renderSettings();
+                await setImage(null); effect = next; linkedEffectId = null; rawDirty = false; renderSettings();
             }
             renderCatalog(); sync(); await save();
             toast('Effect moved to Trash. Restore it from My Effects → Trash.');
-        } catch { toast('Could not delete this effect. Your saved copy is still available.', true); }
-        finally { libraryBusy = false; }
+        } catch (error) { toast(error.message || 'Could not delete this effect. Your saved copy is still available.', true); }
+        finally { libraryBusy = false; sync(); }
+    }
+    async function restoreServerEffect(entry) {
+        if (libraryBusy || serverBusy) return;
+        libraryBusy = true; sync(); renderTrash();
+        try {
+            await server.restoreEffect(entry.trashId, entry.revision);
+            serverTrash.delete(entry.trashId);
+            // The operation is already committed even if the subsequent image download is interrupted.
+            const records = await server.listEffects();
+            const record = records.find(record => record.id === entry.id);
+            if (!record) throw new Error('The effect was restored. Reopen Studio to refresh the library.');
+            serverEffects.set(record.id, { id: record.id, effect: core.fromYaml(record.yaml), image: null, remote: true,
+                revision: record.revision, loaded: false, dirty: false });
+            activeCategory = core.categories[2]; renderCatalog();
+            serverStatus(`${entry.name} restored to your server`); toast('Effect restored to your server.');
+        } catch (error) { toast(error.message || 'Could not restore this effect. It is still in server Trash.', true); }
+        finally { libraryBusy = false; renderCatalog(); renderTrash(); sync(); }
     }
     function renderTrash() {
         const list = $('trash-list'); list.replaceChildren();
         $('empty-trash').disabled = !deletedEffects.size || libraryBusy;
+        $('empty-trash').textContent = serverTrash.size ? 'Empty local Trash' : 'Empty Trash';
+        for (const entry of serverTrash.values()) {
+            const row = element('div', 'trash-row'), copy = element('div', 'template-copy');
+            copy.append(element('b', '', entry.name), element('small', '', entry.id), element('span', 'server-effect-badge', 'Server'));
+            const restore = element('button', 'button button-quiet', 'Restore'); restore.setAttribute('aria-label', `Restore ${entry.name} from server Trash`);
+            restore.disabled = libraryBusy; restore.addEventListener('click', () => restoreServerEffect(entry));
+            row.append(copy, restore); list.append(row);
+        }
         for (const entry of deletedEffects.values()) {
             const row = element('div', 'trash-row'), copy = element('div', 'template-copy');
             copy.append(element('b', '', entry.effect.name), element('small', '', entry.id));
@@ -305,10 +339,10 @@
             libraryBusy = false; $('confirm-purge').disabled = false; $('cancel-purge').disabled = false; renderTrash();
         }
     }
-    function validState() { try { core.validate(effect); if (effect.category === core.categories[2] && deletedEffects.has(effect.id) && !serverEffects.has(effect.id)) return 'This ID is in Trash. Restore it or choose another ID.'; return ''; } catch (error) { return error.message; } }
+    function validState() { try { core.validate(effect); if (inServerTrash(effect.id)) return 'This ID is in server Trash. Restore it first.'; if (effect.category === core.categories[2] && deletedEffects.has(effect.id) && !serverEffects.has(effect.id)) return 'This ID is in Trash. Restore it or choose another ID.'; return ''; } catch (error) { return error.message; } }
     function sync() {
         const error = validState(); $('validation-status').textContent = error || (effect.appearance.image && !imageBytes ? 'Image file needs to be supplied' : isServerEffect() ? (serverBusy ? 'Saving to server…' : snapshotMatches(serverEffects.get(effect.id).synced, snapshot()) ? 'Saved on server' : 'Changes not saved to server') : 'Ready to export'); document.querySelector('.inspector-footer').classList.toggle('invalid', !!error || !!(effect.appearance.image && !imageBytes));
-        $('server-import-button').disabled = serverBusy || (!!server.session && !!error);
+        $('server-import-button').disabled = serverBusy || libraryBusy || (!!server.session && !!error);
         $('server-import-button').querySelector('span').textContent = serverButtonLabel();
         $('export-button').disabled = !!error; $('yaml-download').disabled = !!error; $('guide-export').disabled = !!error;
         $('effect-heading').textContent = effect.name || 'Untitled effect';
@@ -414,13 +448,18 @@
         if (!server.available) return;
         try {
             const session = await server.connect();
-            const records = await server.listEffects();
+            const [records, trashed] = await Promise.all([server.listEffects(), server.listTrash()]);
+            for (const record of trashed) serverTrash.set(record.trashId, record);
             for (const record of records) {
                 const definition = core.fromYaml(record.yaml);
                 serverEffects.set(record.id, { id: record.id, effect: definition, image: null, remote: true,
                     revision: record.revision, loaded: false, dirty: false });
             }
-            if (serverEffects.size) activeCategory = core.categories[2];
+            if (inServerTrash(effect.id)) {
+                await setImage(null); effect = core.createEffect(effect.template); linkedEffectId = null;
+                rawDirty = false; renderSettings();
+            }
+            if (serverEffects.size || serverTrash.size) activeCategory = core.categories[2];
             renderCatalog();
             serverStatus(`Connected as ${session.player} · Link expires at ${new Date(session.expires).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
         } catch (error) { serverStatus(error.message, true); }
@@ -428,7 +467,7 @@
     }
     async function importToServer() {
         if (!server.session) { $('connect-dialog').showModal(); return; }
-        if (serverBusy) return;
+        if (serverBusy || libraryBusy) return;
         const updating = isServerEffect();
         serverBusy = true; serverStatus(updating ? 'Saving changes to your server…' : 'Importing your effect…'); sync();
         try {

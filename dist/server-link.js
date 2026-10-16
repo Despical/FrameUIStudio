@@ -10,7 +10,7 @@
         let response;
         try {
             response = await fetch(new URL('api/' + path, location.href), {
-                method: bytes ? 'POST' : 'GET', credentials: 'omit', cache: 'no-store', redirect: 'error',
+                method: options.method || (bytes ? 'POST' : 'GET'), credentials: 'omit', cache: 'no-store', redirect: 'error',
                 headers: { Authorization: 'Bearer ' + token, ...(bytes ? { 'Content-Type': 'application/zip' } : {}),
                     ...(options.revision ? { 'If-Match': '"' + options.revision + '"' } : bytes ? { 'If-None-Match': '*' } : {}) },
                 body: bytes
@@ -28,6 +28,9 @@
         get session() { return session; },
         async connect() { session = await request('session'); return session; },
         async listEffects() { return (await request('effects')).effects; },
+        async listTrash() { return (await request('trash')).trash; },
+        async trashEffect(id, revision) { return request('effects/' + encodeURIComponent(id), null, { method: 'DELETE', revision }); },
+        async restoreEffect(id, revision) { return request('trash/' + encodeURIComponent(id) + '/restore', null, { method: 'POST', revision }); },
         async loadEffect(id) { return request('effects/' + encodeURIComponent(id), null, { binary: true }); },
         async importEffect(bytes, revision) { return request('import', bytes, { revision }); }
     };
