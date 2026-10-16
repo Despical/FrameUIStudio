@@ -19,14 +19,29 @@
     function snapshot() { return { effect: core.clone(effect), image: imageBytes }; }
     function remember() { undo.push(snapshot()); if (undo.length > 32) undo.shift(); redo.length = 0; }
     function snapshotMatches(a, b) { return a.image === b.image && JSON.stringify(a.effect) === JSON.stringify(b.effect); }
+    function usedIds() { return [...core.catalog.map(item => item.id), ...savedEffects.keys()]; }
+    function commitChange(previous) {
+        if (snapshotMatches(previous, snapshot())) return false;
+        if (previous.effect.category !== core.categories[2]) {
+            const changed = effect, copy = core.userCopy(changed, usedIds());
+            if (changed.name !== previous.effect.name) copy.name = changed.name;
+            if (changed.id !== previous.effect.id && !usedIds().includes(changed.id)) copy.id = changed.id;
+            if (imageBytes) copy.appearance.image = `images/${copy.id}.png`;
+            effect = copy; activeCategory = core.categories[2];
+            savedEffects.set(copy.id, { id: copy.id, effect: core.clone(copy), image: imageBytes });
+            renderCatalog();
+            toast('Copy created in My Effects. Your original stays unchanged.');
+        } else effect.category = core.categories[2];
+        undo.push(previous); if (undo.length > 32) undo.shift(); redo.length = 0;
+        rawDirty = false; sync(); scheduleSave();
+        return true;
+    }
     function mutate(path, value) {
         const previous = snapshot(); pathSet(path, value);
         if (path === 'presentation.show-hands' && value) effect.presentation['hide-hud'] = false;
         if (path === 'presentation.hide-hud' && value) effect.presentation['show-hands'] = false;
         if (path === 'id' && imageBytes) effect.appearance.image = `images/${effect.id}.png`;
-        if (!snapshotMatches(previous, snapshot())) { undo.push(previous); if (undo.length > 32) undo.shift(); redo.length = 0; }
-        effect.category = core.categoryFor(effect.id, effect.category);
-        sync(); scheduleSave();
+        commitChange(previous);
     }
     function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 450); }
     function toDataUrl(bytes) { let binary = ''; for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.slice(i, i + 8192)); return 'data:image/png;base64,' + btoa(binary); }
@@ -59,7 +74,7 @@
         if (renderer) renderer.setImage(imageElement);
         return true;
     }
-    async function restore(state) { const next = core.clone(state.effect); await setImage(state.image); effect = next; rawDirty = false; renderSettings(); sync(); scheduleSave(); }
+    async function restore(state) { const next = core.clone(state.effect); await setImage(state.image); effect = next; activeCategory = effect.category; rawDirty = false; renderSettings(); renderCatalog(); sync(); scheduleSave(); }
     async function historyStep(isRedo) { const source = isRedo ? redo : undo, destination = isRedo ? undo : redo; if (!source.length) return; const target = source.pop(); destination.push(snapshot()); await restore(target); }
     function field(label, path, options = {}) {
         const wrap = element(options.options ? 'div' : 'label', 'field'), caption = element('span', 'field-label', label);
@@ -96,10 +111,15 @@
     function renderSettings() {
         dropdowns.close();
         const visual = $('settings-visual'), behavior = $('settings-behavior'), rules = $('settings-rules'); visual.replaceChildren(); behavior.replaceChildren(); rules.replaceChildren();
+        const durationSection = section('Duration', 'SECONDS'), durationField = element('label', 'field');
+        durationField.append(element('span', 'field-label', 'Total duration · seconds'));
+        const durationInput = element('input'); durationInput.id = 'duration-seconds'; durationInput.type = 'number'; durationInput.min = .05; durationInput.max = 60; durationInput.step = .05; durationInput.value = duration() / 20;
+        durationInput.addEventListener('change', () => { try { const previous = snapshot(); effect.timing = core.durationTiming(effect.timing, Number(durationInput.value)); commitChange(previous); durationInput.value = duration() / 20; } catch (error) { toast(error.message, true); durationInput.value = duration() / 20; } });
+        durationField.append(durationInput); durationSection.append(durationField, note('Scales the entrance, hold and exit together. Fine-tune each phase in Behavior. Editing an animation or preset creates a copy in My Effects.')); visual.append(durationSection);
         const composition = section('Loading screen elements');
         composition.append(field('Background layout', 'elements.background', { options: [['template','Shader template'],['solid','Solid color'],['split','Split panels'],['grid','Technical grid'],['terminal','Terminal'],['pulse','Expanding pulse']] }), field('Loading indicator', 'elements.progress', { options: [['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']] }), field('Ambient decoration', 'elements.decoration', { options: [['none','None'],['embers','Embers'],['petals','Petals'],['scan','Scan line'],['pulse','Pulse emblem']] }), row(field('Indicator X', 'elements.progress-x', { type: 'range', min: .1, max: .9, step: .01 }), field('Indicator Y', 'elements.progress-y', { type: 'range', min: .1, max: .9, step: .01 })), field('Indicator width', 'elements.progress-width', { type: 'range', min: .08, max: .8, step: .01 }), field('Text entrance', 'elements.text-animation', { options: [['still','Fade'],['grow','Grow'],['slide-up','Slide up']] }), field('Text horizontal position', 'elements.text-x', { type: 'range', min: 0, max: 1, step: .01 }), field('Indicator thickness', 'elements.progress-scale', { type: 'range', min: .5, max: 3, step: .01 }), field('Text position', 'elements.text-y', { type: 'range', min: .1, max: .9, step: .01 }), field('Text size', 'elements.text-scale', { type: 'range', min: .5, max: 2, step: .01 }), note('Start with a ready-made layout, then replace its words, colors or logo. Loading indicators animate continuously; they do not claim a server loading percentage.'));
         visual.append(composition);
-        const identity = section('Effect identity'); identity.append(field('Display name', 'name', { maxLength: 64 }), field('Effect ID / filename', 'id', { maxLength: 48, placeholder: 'my-aurora' }), note('Use a new ID to create a separate effect. Keep the template ID to replace its configuration.'), element('p', 'category-readonly', 'Category: ' + effect.category)); visual.append(identity);
+        const identity = section('Effect identity'); identity.append(field('Display name', 'name', { maxLength: 64 }), field('Effect ID / filename', 'id', { maxLength: 48, placeholder: 'my-aurora' }), note('Animations and presets stay unchanged. Your first edit creates a separate effect with its own ID.'), element('p', 'category-readonly', 'Category: ' + effect.category)); visual.append(identity);
         const palette = section('Color palette');
         const segments = element('div', 'segmented');
         for (const [value, label] of [['original', 'Original'], ['custom', 'Custom colors']]) { const button = element('button', effect.appearance.palette === value ? 'active' : '', label); button.dataset.palette = value; button.addEventListener('click', () => mutate('appearance.palette', value)); segments.append(button); }
@@ -108,7 +128,7 @@
         palette.append(segments, colors, field('Animation speed', 'appearance.speed', { type: 'range', min: 0.05, max: 8, step: 0.05 }), field('Brightness', 'appearance.intensity', { type: 'range', min: 0, max: 4, step: 0.05 })); visual.append(palette);
         const picture = section('Your image', 'OPTIONAL'), upload = element('button', 'image-upload'); upload.id = 'upload-image'; upload.append(icon('image'), element('strong', '', 'Choose an image'), element('span', '', 'Add a logo, artwork or your own photo'), element('small', '', 'PNG / JPEG · up to 8 MB · resized to 2048 px')); upload.addEventListener('click', () => $('image-file').click());
         picture.append(field('Image entrance', 'elements.image-animation', { options: [['inherit','Follow template'],['fade','Fade'],['grow','Grow from center'],['slide-up','Slide up'],['slide-left','Slide from left'],['wipe','Left-to-right reveal'],['page','Diagonal page']] }), field('Ambient image motion', 'appearance.image-motion', { options: [['still','Still'],['panorama','Slow zoom and pan'],['page','Legacy page reveal']] }), field('Image size', 'elements.image-scale', { type: 'range', min: .1, max: 2, step: .01 }), row(field('Horizontal position', 'elements.image-x', { type: 'range', min: 0, max: 1, step: .01 }),field('Vertical position', 'elements.image-y', { type: 'range', min: 0, max: 1, step: .01 })), field('Entrance delay', 'elements.image-delay', { type: 'range', min: 0, max: .8, step: .01 }));
-        const info = element('div', 'image-info'); info.id = 'image-info'; const thumbnail = element('img'); thumbnail.id = 'image-thumbnail'; thumbnail.alt = 'Uploaded effect image'; const label = element('span'); label.id = 'image-description'; const remove = element('button', 'icon-button', '×'); remove.setAttribute('aria-label', 'Remove image'); remove.addEventListener('click', async () => { remember(); await setImage(null); effect.appearance.image = ''; renderSettings(); sync(); scheduleSave(); }); info.append(thumbnail, label, remove);
+        const info = element('div', 'image-info'); info.id = 'image-info'; const thumbnail = element('img'); thumbnail.id = 'image-thumbnail'; thumbnail.alt = 'Uploaded effect image'; const label = element('span'); label.id = 'image-description'; const remove = element('button', 'icon-button', '×'); remove.setAttribute('aria-label', 'Remove image'); remove.addEventListener('click', async () => { const previous = snapshot(); await setImage(null); effect.appearance.image = ''; commitChange(previous); renderSettings(); sync(); }); info.append(thumbnail, label, remove);
         picture.append(info, upload, field('Image fit', 'appearance.image-fit', { options: [['cover', 'Cover — fill screen'], ['contain', 'Contain — show entire image']] }), field('Image opacity', 'appearance.image-opacity', { type: 'range', min: 0, max: 1, step: 0.01 }), note('Images follow the template’s transition mask. Transparent pixels reveal the shader underneath.')); visual.append(picture);
         const timing = section('Transition timing', '20 TICKS = 1 SECOND'); timing.append(row(field('Fade in · ticks', 'timing.fade-in-ticks', { type: 'number', min: 0, max: 1200 }), field('Fade out · ticks', 'timing.fade-out-ticks', { type: 'number', min: 1, max: 1200 })), row(field('Minimum · ticks', 'timing.minimum-ticks', { type: 'number', min: 0, max: 1200 }), field('Maximum · ticks', 'timing.maximum-ticks', { type: 'number', min: 0, max: 1200 })), note('Minimum includes fade in. Maximum caps waiting for the destination chunk. The preview uses the minimum duration.')); behavior.append(timing);
         const presentation = section('Player presentation'); presentation.append(toggle('Show hands', 'presentation.show-hands', 'Showing hands also keeps the HUD visible.'), toggle('Hide HUD', 'presentation.hide-hud', 'Hides the hotbar, crosshair and in-game HUD.'), toggle('Block movement', 'presentation.block-movement'), toggle('Block interactions', 'presentation.block-interactions')); behavior.append(presentation);
@@ -178,7 +198,7 @@
             const copy = element('span', 'template-copy'); copy.append(element('b', '', item.name), element('small', '', `${seconds.toFixed(1)} s`));
             button.append(thumb, copy, icon('check')); button.addEventListener('click', () => openLibraryItem(item, saved)); list.append(button);
         }
-        if (!list.children.length) list.append(element('p', 'empty-state', own && !query ? 'No saved effects yet. Pick an animation or ready-made design, then click “Save to My Effects”. You can also import your own effect ZIP.' : 'No matching effects in this category.'));
+        if (!list.children.length) list.append(element('p', 'empty-state', own && !query ? 'Edit an animation or preset to create your first effect automatically. You can also import your own effect ZIP.' : 'No matching effects in this category.'));
     }
     function validState() { try { core.validate(effect); return ''; } catch (error) { return error.message; } }
     function sync() {
@@ -187,6 +207,7 @@
         $('effect-heading').textContent = effect.name || 'Untitled effect'; $('effect-subheading').textContent = effect.category + (effect.category === core.categories[2] ? ' · Saved automatically' : ' · Editable starting point');
         $('summary-in').textContent = `${(effect.timing['fade-in-ticks'] / 20).toFixed(1)} s`; $('summary-hold').textContent = `${(effect.timing['minimum-ticks'] / 20).toFixed(1)} s`; $('summary-out').textContent = `${(effect.timing['fade-out-ticks'] / 20).toFixed(1)} s`; $('summary-triggers').textContent = `${effect.filters.triggers.length} events`;
         $('duration-label').textContent = `${(duration() / 20).toFixed(1)} s`; $('undo-button').disabled = !undo.length; $('redo-button').disabled = !redo.length;
+        if ($('duration-seconds') && document.activeElement !== $('duration-seconds')) $('duration-seconds').value = duration() / 20;
         for (const input of document.querySelectorAll('[data-path]')) { if (document.activeElement === input) continue; const value = pathGet(input.dataset.path); if (input.type === 'checkbox') input.checked = value; else input.value = Array.isArray(value) ? value.join(', ') : value; }
         for (const input of document.querySelectorAll('[data-check-path]')) input.checked = pathGet(input.dataset.checkPath).includes(input.value);
         dropdowns.refresh();
@@ -294,7 +315,7 @@
             try { await image.decode(); } finally { URL.revokeObjectURL(temporary); }
             const scale = Math.min(1, core.MAX_IMAGE_SIZE / Math.max(image.naturalWidth, image.naturalHeight)), canvas = element('canvas'); canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale)); canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
             const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png')); if (!blob || blob.size > core.MAX_IMAGE_BYTES) throw new Error('Converted PNG is larger than 8 MB. Use a smaller image.');
-            const bytes = new Uint8Array(await blob.arrayBuffer()); core.validatePng(bytes); remember(); await setImage(bytes); effect.appearance.image = `images/${effect.id}.png`; renderSettings(); sync(); scheduleSave(); toast(`Image added as ${canvas.width} × ${canvas.height} PNG.`);
+            const bytes = new Uint8Array(await blob.arrayBuffer()); core.validatePng(bytes); const previous = snapshot(); await setImage(bytes); effect.appearance.image = `images/${effect.id}.png`; commitChange(previous); renderSettings(); sync(); toast(`Image added as ${canvas.width} × ${canvas.height} PNG.`);
         } catch (error) { toast(error.message, true); }
         $('image-file').value = '';
     }
@@ -314,9 +335,7 @@
     $('guide-button').addEventListener('click', () => $('guide-dialog').showModal()); $('close-guide').addEventListener('click', () => $('guide-dialog').close()); $('guide-dialog').addEventListener('click', event => { if (event.target === $('guide-dialog')) { const rect = $('guide-dialog').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('guide-dialog').close(); } });
     $('new-button').addEventListener('click', async () => {
         await save(); remember();
-        effect.id = core.copyId(effect.id, [...core.catalog.map(item => item.id), ...savedEffects.keys()]);
-        effect.name = (effect.name.replace(/ · (?:Kopya|Copy)$/, '').slice(0, 56) + ' · Copy'); effect.category = core.categories[2];
-        if (imageBytes) effect.appearance.image = `images/${effect.id}.png`;
+        effect = core.userCopy(effect, usedIds());
         activeCategory = core.categories[2]; rawDirty = false; renderSettings(); sync();
         if (await save()) toast('Saved to My Effects. Changes are saved automatically in this browser.');
     });
@@ -325,7 +344,7 @@
     function selectTab(button) { dropdowns.close(); for (const tab of tabs) { const active = tab === button; tab.classList.toggle('active', active); tab.setAttribute('aria-selected', String(active)); tab.tabIndex = active ? 0 : -1; $('settings-' + tab.dataset.tab).hidden = !active; } }
     for (const tab of tabs) { tab.addEventListener('click', () => selectTab(tab)); tab.addEventListener('keydown', event => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const index = tabs.indexOf(tab), next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length; selectTab(tabs[next]); tabs[next].focus(); } }); }
     selectTab(tabs[0]);
-    $('yaml-editor').addEventListener('input', () => { rawDirty = true; }); $('apply-yaml').addEventListener('click', async () => { try { const imported = core.fromYaml($('yaml-editor').value); remember(); const priorPath = effect.appearance.image; effect = imported; if (priorPath !== effect.appearance.image) await setImage(null); rawDirty = false; renderSettings(); renderCatalog(); sync(); scheduleSave(); toast('YAML validated and applied.'); } catch (error) { toast(error.message, true); } });
+    $('yaml-editor').addEventListener('input', () => { rawDirty = true; }); $('apply-yaml').addEventListener('click', async () => { try { const imported = core.fromYaml($('yaml-editor').value), previous = snapshot(); effect = imported; if (previous.effect.appearance.image !== effect.appearance.image) await setImage(null); commitChange(previous); rawDirty = false; renderSettings(); renderCatalog(); sync(); toast('YAML validated and applied.'); } catch (error) { toast(error.message, true); } });
     document.addEventListener('keydown', event => {
         const editing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '') || document.activeElement?.getAttribute('role') === 'combobox';
         if (event.key === '/' && !editing) { event.preventDefault(); $('search').focus(); }
@@ -337,7 +356,7 @@
         effect: () => effect, image: () => imageElement,
         pause: () => { playing = false; playTick = Math.max(effect.timing['fade-in-ticks'], Math.min(playTick, effect.timing['minimum-ticks'] - 1)); sync(); },
         update: elements => { effect.elements = elements; sync(); },
-        commit: before => { const previous = snapshot(); previous.effect.elements = before; if (!snapshotMatches(previous, snapshot())) { undo.push(previous); if (undo.length > 32) undo.shift(); redo.length = 0; rawDirty = false; sync(); scheduleSave(); } }
+        commit: before => { const previous = snapshot(); previous.effect.elements = before; commitChange(previous); }
     });
     async function start() {
         try {

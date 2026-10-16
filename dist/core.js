@@ -21,6 +21,26 @@
         while (used.includes(candidate)) candidate = base + '-' + suffix++;
         return candidate;
     }
+    function userCopy(source, used) {
+        const result = clone(source);
+        result.id = copyId(source.id, used);
+        result.name = source.name.replace(/ · (?:Kopya|Copy)$/, '').slice(0, 56) + ' · Copy';
+        result.category = categories[2];
+        if (result.appearance.image) result.appearance.image = `images/${result.id}.png`;
+        return result;
+    }
+    function durationTiming(timing, seconds) {
+        if (!Number.isFinite(seconds) || seconds < .05 || seconds > 60) throw new Error('Duration must be between 0.05 and 60 seconds.');
+        const ticks = Math.round(seconds * 20), total = timing['minimum-ticks'] + timing['fade-out-ticks'];
+        const out = Math.max(1, Math.min(ticks, Math.round(timing['fade-out-ticks'] / total * ticks)));
+        const minimum = ticks - out;
+        return {
+            'fade-in-ticks': Math.min(minimum, Math.round(timing['fade-in-ticks'] / total * ticks)),
+            'minimum-ticks': minimum,
+            'maximum-ticks': Math.min(1200, Math.max(minimum, Math.round(timing['maximum-ticks'] / total * ticks))),
+            'fade-out-ticks': out
+        };
+    }
     const modes = ['SURVIVAL', 'CREATIVE', 'ADVENTURE', 'SPECTATOR'];
     const triggers = ['join', 'teleport', 'world-change', 'command'];
     const causes = ['ENDER_PEARL', 'COMMAND', 'PLUGIN', 'NETHER_PORTAL', 'END_PORTAL', 'SPECTATE', 'END_GATEWAY', 'CONSUMABLE_EFFECT', 'CHORUS_FRUIT', 'DISMOUNT', 'EXIT_BED', 'UNKNOWN'];
@@ -287,6 +307,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1–2048 pixels.');
         return { width, height };
     }
-    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, modes, triggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, userCopy, durationTiming, modes, triggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

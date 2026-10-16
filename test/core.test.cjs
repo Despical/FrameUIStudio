@@ -189,3 +189,35 @@ test('all sixty shipped screens use 1-5 seconds with short transitions and bound
     assert.ok(short >= 10);
     assert.equal(core.createEffect('fade-in').timing['fade-out-ticks'], 20);
 });
+
+test('editable copies retain the shader and image while isolating nested settings from their source', () => {
+    for (const item of core.catalog) {
+        const original = core.createEffect(item.id), baseline = core.toYaml(original);
+        const copy = core.userCopy(original, core.catalog.map(entry => entry.id));
+        assert.equal(copy.category, 'My Effects');
+        assert.notEqual(copy.id, original.id);
+        assert.equal(copy.template, original.template);
+        if (original.appearance.image) assert.equal(copy.appearance.image, `images/${copy.id}.png`);
+        copy.timing = core.durationTiming(copy.timing, 3.5);
+        copy.appearance.primary = '#123456'; copy.elements['text-x'] = .25;
+        copy.filters.worlds.include.push('private-world');
+        assert.equal(core.toYaml(original), baseline);
+        assert.deepEqual(core.fromYaml(core.toYaml(copy)), copy);
+        assert.equal(core.toYaml(core.createEffect(item.id)), baseline);
+        const second = core.userCopy(original, [copy.id]);
+        assert.notEqual(second.id, copy.id);
+    }
+});
+
+test('duration editing scales all phases and keeps every template valid at short and long durations', () => {
+    for (const item of core.catalog) for (const seconds of [.05, 1, 2.5, 5, 60]) {
+        const effect = core.createEffect(item.id), before = core.clone(effect.timing);
+        const timing = core.durationTiming(effect.timing, seconds);
+        assert.deepEqual(effect.timing, before);
+        effect.timing = timing; core.validate(effect);
+        assert.equal(timing['minimum-ticks'] + timing['fade-out-ticks'], Math.round(seconds * 20));
+    }
+    const exitOnly = core.createEffect('fade-in');
+    assert.equal(core.durationTiming(exitOnly.timing, 3)['minimum-ticks'], 0);
+    for (const value of [0, -1, 61, NaN, Infinity]) assert.throws(() => core.durationTiming(exitOnly.timing, value), /Duration/);
+});

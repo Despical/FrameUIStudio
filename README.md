@@ -40,4 +40,6 @@ Direct layout editing: drag the logo/image, text group or loading indicator on t
 
 Bundled screens range from 1 to 5 seconds, with short fades/wipes and longer atmospheric or photo designs. Original loading previews last 2.5 seconds; its default world-readiness wait plus fade-out is bounded to 5 seconds. Custom definitions retain configurable timing.
 
-The editor category dropdown contains Animations, Presets and My Effects. Cards show only their duration below the name. The game also supports `/frameui effects all [page]`, with distinct category colors and globally ascending durations. The legacy `designs` filter remains an alias for `presets`. An empty category displays a red error panel.
+The editor category dropdown contains Animations, Presets and My Effects. Cards show only their duration below the name. `/frameui effects` opens All, sorted by duration; selecting a category filters the rows. Only the active selector is highlighted, while table cells retain their category colors. The legacy `designs` filter remains an alias for `presets`. An empty category displays a red error panel.
+
+The first edit to an animation or preset creates an independent copy in My Effects. Subsequent edits update that copy, including canvas placement, images and applied YAML. The Design tab starts with a total duration field in seconds, which scales transition phases together; Behavior retains separate tick controls. My Effects are saved in the current browser; export the ZIP to install them on a server or transfer them elsewhere.
