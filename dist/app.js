@@ -10,7 +10,7 @@
     let effect = core.createEffect('frameui'), imageBytes = null, imageUrl = '', imageElement = null;
     let undo = [], redo = [], playing = !reducedMotion, playTick = 24, lastFrame = 0, saveTimer, toastTimer, rawDirty = false;
     const thumbs = new Map(), savedEffects = new Map(), savedThumbnails = new Map();
-    let activeCategory = core.categories[1];
+    let activeCategory = core.categories[1], selectionVersion = 0;
     function element(tag, classes, text) { const node = document.createElement(tag); if (classes) node.className = classes; if (text !== undefined) node.textContent = text; return node; }
     function icon(id) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', `#icon-${id}`); svg.append(use); return svg; }
     function toast(message, error = false) { clearTimeout(toastTimer); $('toast').textContent = message; $('toast').classList.toggle('error', error); $('toast').hidden = false; toastTimer = setTimeout(() => { $('toast').hidden = true; }, error ? 6500 : 3500); }
@@ -46,16 +46,18 @@
         catch { if (!librarySaved) toast('Export to save this draft. Browser storage is unavailable.', true); }
         return librarySaved;
     }
-    async function setImage(bytes) {
+    async function setImage(bytes, current = () => true) {
         let nextUrl = '', nextImage = null;
         if (bytes) {
             core.validatePng(bytes); nextUrl = URL.createObjectURL(new Blob([bytes], { type: 'image/png' })); const image = new Image(); image.src = nextUrl;
             try { await image.decode(); } catch { URL.revokeObjectURL(nextUrl); throw new Error('The PNG could not be decoded. Choose a valid image.'); }
             nextImage = image;
         }
+        if (!current()) { if (nextUrl) URL.revokeObjectURL(nextUrl); return false; }
         if (imageUrl.startsWith('blob:')) URL.revokeObjectURL(imageUrl);
         imageBytes = bytes; imageUrl = nextUrl; imageElement = nextImage;
         if (renderer) renderer.setImage(imageElement);
+        return true;
     }
     async function restore(state) { const next = core.clone(state.effect); await setImage(state.image); effect = next; rawDirty = false; renderSettings(); sync(); scheduleSave(); }
     async function historyStep(isRedo) { const source = isRedo ? redo : undo, destination = isRedo ? undo : redo; if (!source.length) return; const target = source.pop(); destination.push(snapshot()); await restore(target); }
@@ -94,7 +96,7 @@
     function renderSettings() {
         dropdowns.close();
         const visual = $('settings-visual'), behavior = $('settings-behavior'), rules = $('settings-rules'); visual.replaceChildren(); behavior.replaceChildren(); rules.replaceChildren();
-        const composition = section('Loading screen elements', 'Reusable');
+        const composition = section('Loading screen elements');
         composition.append(field('Background layout', 'elements.background', { options: [['template','Shader template'],['solid','Solid color'],['split','Split panels'],['grid','Technical grid'],['terminal','Terminal'],['pulse','Expanding pulse']] }), field('Loading indicator', 'elements.progress', { options: [['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']] }), field('Ambient decoration', 'elements.decoration', { options: [['none','None'],['embers','Embers'],['petals','Petals'],['scan','Scan line'],['pulse','Pulse emblem']] }), row(field('Indicator X', 'elements.progress-x', { type: 'range', min: .1, max: .9, step: .01 }), field('Indicator Y', 'elements.progress-y', { type: 'range', min: .1, max: .9, step: .01 })), field('Indicator width', 'elements.progress-width', { type: 'range', min: .08, max: .8, step: .01 }), field('Text entrance', 'elements.text-animation', { options: [['still','Fade'],['grow','Grow'],['slide-up','Slide up']] }), field('Text horizontal position', 'elements.text-x', { type: 'range', min: 0, max: 1, step: .01 }), field('Indicator thickness', 'elements.progress-scale', { type: 'range', min: .5, max: 3, step: .01 }), field('Text position', 'elements.text-y', { type: 'range', min: .1, max: .9, step: .01 }), field('Text size', 'elements.text-scale', { type: 'range', min: .5, max: 2, step: .01 }), note('Start with a ready-made layout, then replace its words, colors or logo. Loading indicators animate continuously; they do not claim a server loading percentage.'));
         visual.append(composition);
         const identity = section('Effect identity'); identity.append(field('Display name', 'name', { maxLength: 64 }), field('Effect ID / filename', 'id', { maxLength: 48, placeholder: 'my-aurora' }), note('Use a new ID to create a separate effect. Keep the template ID to replace its configuration.'), element('p', 'category-readonly', 'Category: ' + effect.category)); visual.append(identity);
@@ -119,27 +121,33 @@
         dropdowns.enhance();
     }
     function renderCategories() {
-        const container = $('library-categories'); container.replaceChildren();
+        const select = $('category-filter');
         for (const category of core.categories) {
             const count = category === core.categories[2] ? savedEffects.size : core.catalog.filter(item => item.category === category).length;
-            const button = element('button', 'library-category'); button.type = 'button';
-            button.setAttribute('role', 'tab'); button.setAttribute('aria-selected', String(category === activeCategory));
-            button.append(element('span', '', category), element('small', '', String(count)));
-            button.addEventListener('click', () => { activeCategory = category; renderCatalog(); }); container.append(button);
+            const option = [...select.options].find(option => option.value === category);
+            option.textContent = `${category} (${count})`;
         }
-        $('category-description').textContent = activeCategory === core.categories[0] ? '50 base animations. Pick one to start your own design.'
-            : activeCategory === core.categories[1] ? 'Complete, editable screens with logos, text and loading indicators.'
-            : 'Your created and imported effects. Saved automatically in this browser.';
+        select.value = activeCategory;
+        dropdowns.refresh();
         document.querySelector('.panel-heading h1 span').textContent = core.catalog.length + savedEffects.size;
     }
     async function openLibraryItem(item, saved) {
+        const version = ++selectionVersion;
+        const current = () => version === selectionVersion;
         try {
-            await save(); remember();
-            const next = saved ? core.clone(saved.effect) : core.createEffect(item.id);
-            await setImage(saved ? saved.image : item.image ? new Uint8Array(await (await fetch(item.image)).arrayBuffer()) : null);
+            await save(); if (!current()) return;
+            const stored = saved ? savedEffects.get(item.id) || saved : null;
+            const next = stored ? core.clone(stored.effect) : core.createEffect(item.id);
+            const bytes = stored ? stored.image : item.image ? new Uint8Array(await (await fetch(item.image)).arrayBuffer()) : null;
+            if (!current()) return;
+            const before = snapshot();
+            if (!await setImage(bytes, current)) return;
+            undo.push(before); if (undo.length > 32) undo.shift(); redo.length = 0;
             effect = next; playTick = Math.max(effect.timing['fade-in-ticks'], 1); rawDirty = false;
-            renderSettings(); renderCatalog(); sync(); scheduleSave();
-        } catch (error) { toast(error.message, true); }
+            renderSettings(); renderCatalog(); sync();
+            document.querySelector('.inspector-scroll').scrollTop = 0;
+            scheduleSave();
+        } catch (error) { if (current()) toast(error.message, true); }
     }
     function catalogDuration(item) {
         const timing = item.definition?.timing;
@@ -167,7 +175,7 @@
                 thumb.src = preview.url;
             } else if (thumbs.has(saved?.effect.template || item.id)) thumb.src = thumbs.get(saved?.effect.template || item.id);
             const seconds = catalogDuration(item) / 20;
-            const copy = element('span', 'template-copy'); copy.append(element('b', '', item.name), element('small', '', `${item.category} · ${seconds.toFixed(1)} s`));
+            const copy = element('span', 'template-copy'); copy.append(element('b', '', item.name), element('small', '', `${seconds.toFixed(1)} s`));
             button.append(thumb, copy, icon('check')); button.addEventListener('click', () => openLibraryItem(item, saved)); list.append(button);
         }
         if (!list.children.length) list.append(element('p', 'empty-state', own && !query ? 'No saved effects yet. Pick an animation or ready-made design, then click “Save to My Effects”. You can also import your own effect ZIP.' : 'No matching effects in this category.'));
@@ -297,6 +305,7 @@
         else center.scrollTo({ top: 0 });
     });
     $('search').addEventListener('input', renderCatalog);
+    $('category-filter').addEventListener('change', () => { activeCategory = $('category-filter').value; renderCatalog(); });
     $('undo-button').addEventListener('click', () => historyStep(false)); $('redo-button').addEventListener('click', () => historyStep(true));
     $('play-button').addEventListener('click', () => { playing = !playing; if (playing && playTick >= duration()) playTick = 0; sync(); }); $('restart-button').addEventListener('click', () => { playTick = 0; });
     $('timeline').addEventListener('input', () => { playTick = Number($('timeline').value) / 1000 * duration(); });

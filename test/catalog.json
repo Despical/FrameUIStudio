@@ -2,7 +2,7 @@
   {
     "id": "frameui",
     "name": "FrameUI Signature",
-    "category": "Ready-made Designs",
+    "category": "Presets",
     "template": "fade-black",
     "fadeIn": 28,
     "minimum": 80,
@@ -11,7 +11,7 @@
     "definition": {
       "id": "frameui",
       "name": "FrameUI Signature",
-      "category": "Ready-made Designs",
+      "category": "Presets",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -107,7 +107,7 @@
   {
     "id": "cherry-valley",
     "name": "Cherry Valley",
-    "category": "Ready-made Designs",
+    "category": "Presets",
     "template": "fade-black",
     "fadeIn": 18,
     "minimum": 82,
@@ -116,7 +116,7 @@
     "definition": {
       "id": "cherry-valley",
       "name": "Cherry Valley",
-      "category": "Ready-made Designs",
+      "category": "Presets",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -212,7 +212,7 @@
   {
     "id": "clean-loader",
     "name": "Clean Loader",
-    "category": "Ready-made Designs",
+    "category": "Presets",
     "template": "fade-black",
     "fadeIn": 10,
     "minimum": 28,
@@ -221,7 +221,7 @@
     "definition": {
       "id": "clean-loader",
       "name": "Clean Loader",
-      "category": "Ready-made Designs",
+      "category": "Presets",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -316,7 +316,7 @@
   {
     "id": "nether-forge",
     "name": "Nether Forge",
-    "category": "Ready-made Designs",
+    "category": "Presets",
     "template": "fade-black",
     "fadeIn": 18,
     "minimum": 76,
@@ -325,7 +325,7 @@
     "definition": {
       "id": "nether-forge",
       "name": "Nether Forge",
-      "category": "Ready-made Designs",
+      "category": "Presets",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -421,7 +421,7 @@
   {
     "id": "orbit-loader",
     "name": "Orbit Loader",
-    "category": "Ready-made Designs",
+    "category": "Presets",
     "template": "fade-black",
     "fadeIn": 16,
     "minimum": 48,
@@ -430,7 +430,7 @@
     "definition": {
       "id": "orbit-loader",
       "name": "Orbit Loader",
-      "category": "Ready-made Designs",
+      "category": "Presets",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -525,7 +525,7 @@
   {
     "id": "overworld",
     "name": "Overworld Panorama",
-    "category": "Ready-made Designs",
+    "category": "Presets",
     "template": "fade-black",
     "fadeIn": 20,
     "minimum": 80,
@@ -534,7 +534,7 @@
     "definition": {
       "id": "overworld",
       "name": "Overworld Panorama",
-      "category": "Ready-made Designs",
+      "category": "Presets",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -630,7 +630,7 @@
   {
     "id": "pulse-loader",
     "name": "Pulse Loader",
-    "category": "Ready-made Designs",
+    "category": "Presets",
     "template": "fade-black",
     "fadeIn": 12,
     "minimum": 32,
@@ -639,7 +639,7 @@
     "definition": {
       "id": "pulse-loader",
       "name": "Pulse Loader",
-      "category": "Ready-made Designs",
+      "category": "Presets",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -734,7 +734,7 @@
   {
     "id": "segmented-loader",
     "name": "Segmented Loader",
-    "category": "Ready-made Designs",
+    "category": "Presets",
     "template": "fade-black",
     "fadeIn": 12,
     "minimum": 36,
@@ -743,7 +743,7 @@
     "definition": {
       "id": "segmented-loader",
       "name": "Segmented Loader",
-      "category": "Ready-made Designs",
+      "category": "Presets",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -838,7 +838,7 @@
   {
     "id": "split-loader",
     "name": "Split Loader",
-    "category": "Ready-made Designs",
+    "category": "Presets",
     "template": "fade-black",
     "fadeIn": 10,
     "minimum": 24,
@@ -847,7 +847,7 @@
     "definition": {
       "id": "split-loader",
       "name": "Split Loader",
-      "category": "Ready-made Designs",
+      "category": "Presets",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,
@@ -942,7 +942,7 @@
   {
     "id": "terminal-loader",
     "name": "Terminal Loader",
-    "category": "Ready-made Designs",
+    "category": "Presets",
     "template": "fade-black",
     "fadeIn": 12,
     "minimum": 44,
@@ -951,7 +951,7 @@
     "definition": {
       "id": "terminal-loader",
       "name": "Terminal Loader",
-      "category": "Ready-made Designs",
+      "category": "Presets",
       "template": "fade-black",
       "enabled": true,
       "weight": 1,

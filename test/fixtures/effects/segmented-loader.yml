@@ -1,7 +1,7 @@
 # Ready-to-customize example. Change text, colors, image and elements in Studio.
 id: "segmented-loader"
 name: "Segmented Loader"
-category: "Ready-made Designs"
+category: "Presets"
 template: "fade-black"
 enabled: true
 weight: 1

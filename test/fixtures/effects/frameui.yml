@@ -1,7 +1,7 @@
 # Signature logo artwork is replaceable. Subtitle, indicator and all motion stay editable.
 id: "frameui"
 name: "FrameUI Signature"
-category: "Ready-made Designs"
+category: "Presets"
 template: "fade-black"
 enabled: true
 weight: 1

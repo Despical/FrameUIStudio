@@ -159,11 +159,11 @@ test('corner resizing preserves aspect and fixes the opposite corner', () => {
 
 
 test('exactly three groups classify stock, legacy and custom effects consistently', () => {
-    assert.deepEqual(core.categories, ['Animations', 'Ready-made Designs', 'My Effects']);
+    assert.deepEqual(core.categories, ['Animations', 'Presets', 'My Effects']);
     assert.equal(core.catalog.filter(item => item.category === 'Animations').length, 50);
-    assert.equal(core.catalog.filter(item => item.category === 'Ready-made Designs').length, 10);
+    assert.equal(core.catalog.filter(item => item.category === 'Presets').length, 10);
     assert.equal(core.fromYaml('id: aurora\ncategory: Nature').category, 'Animations');
-    assert.equal(core.fromYaml('id: frameui\ntemplate: fade-black\ncategory: Signature').category, 'Ready-made Designs');
+    assert.equal(core.fromYaml('id: frameui\ntemplate: fade-black\ncategory: Signature').category, 'Presets');
     assert.equal(core.fromYaml('id: my-screen\ntemplate: aurora\ncategory: Nature').category, 'My Effects');
     assert.equal(core.fromYaml('id: aurora\ncategory: Efektlerim').category, 'My Effects');
 });

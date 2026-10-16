@@ -8,7 +8,7 @@
     const decoder = new TextDecoder('utf-8', { fatal: true });
     const clone = value => JSON.parse(JSON.stringify(value));
     const catalog = [];
-    const categories = ['Animations', 'Ready-made Designs', 'My Effects'];
+    const categories = ['Animations', 'Presets', 'My Effects'];
     const designIds = new Set(['overworld', 'frameui', 'clean-loader', 'segmented-loader', 'orbit-loader', 'terminal-loader', 'split-loader', 'pulse-loader', 'nether-forge', 'cherry-valley']);
     function categoryFor(id, configured) {
         if (configured === categories[2] || configured === 'Efektlerim') return categories[2];

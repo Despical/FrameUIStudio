@@ -1,7 +1,7 @@
 # GreenLauncher's original Overworld artwork, revealed like a page from top-left to bottom-right.
 id: 'overworld'
 name: 'Overworld Panorama'
-category: "Ready-made Designs"
+category: "Presets"
 template: 'fade-black'
 enabled: true
 weight: 1
