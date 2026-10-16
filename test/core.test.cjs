@@ -221,3 +221,27 @@ test('duration editing scales all phases and keeps every template valid at short
     assert.equal(core.durationTiming(exitOnly.timing, 3)['minimum-ticks'], 0);
     for (const value of [0, -1, 61, NaN, Infinity]) assert.throws(() => core.durationTiming(exitOnly.timing, value), /Duration/);
 });
+
+test('automatic copies get distinct readable names, including copies of numbered copies', () => {
+    const source = core.createEffect('fade-out'), ids = [], names = [];
+    for (let i = 1; i <= 12; i++) {
+        const copy = core.userCopy(i === 1 ? source : { ...source, name: names[names.length - 1] }, ids, names);
+        assert.equal(copy.name, 'Fade Out · Copy' + (i === 1 ? '' : ' ' + i));
+        core.validate(copy); ids.push(copy.id); names.push(copy.name);
+    }
+    assert.equal(new Set(ids).size, 12);
+    assert.equal(core.userCopy({ ...source, name: 'Fade Out · Kopya 2' }, [], names).name, 'Fade Out · Copy 13');
+    assert.equal(core.userCopy(source, [], ['Fade Out · Copy', 'Fade Out · Copy 3']).name, 'Fade Out · Copy 2');
+});
+
+test('copy-name collisions ignore letter case and respect the 64-character export limit', () => {
+    assert.equal(core.uniqueName('Fade Out · Copy', ['  FADE OUT · COPY  ']), 'Fade Out · Copy 2');
+    const source = core.createEffect('frameui'); source.name = 'A'.repeat(64);
+    const names = [];
+    for (let i = 0; i < 15; i++) {
+        const copy = core.userCopy(source, [], names);
+        assert.ok(copy.name.length <= 64); core.validate(copy); names.push(copy.name);
+    }
+    assert.equal(new Set(names).size, 15);
+    assert.equal(core.uniqueName('Fade Out · Copy 2', ['Fade Out · Copy', 'Fade Out · Copy 2']), 'Fade Out · Copy 3');
+});

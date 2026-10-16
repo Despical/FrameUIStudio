@@ -21,7 +21,9 @@
         });
     }
     window.FrameStudioLibrary = {
-        list: () => transaction('readonly', store => store.getAll()),
-        put: entry => transaction('readwrite', store => store.put(entry))
+        list: async () => (await transaction('readonly', store => store.getAll())).filter(entry => !entry.deleted),
+        listDeleted: async () => (await transaction('readonly', store => store.getAll())).filter(entry => entry.deleted),
+        put: entry => transaction('readwrite', store => store.put({ ...entry, deleted: false })),
+        remove: entry => transaction('readwrite', store => store.put({ ...entry, deleted: true }))
     };
 })();

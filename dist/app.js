@@ -9,8 +9,8 @@
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let effect = core.createEffect('frameui'), imageBytes = null, imageUrl = '', imageElement = null;
     let undo = [], redo = [], playing = !reducedMotion, playTick = 24, lastFrame = 0, saveTimer, toastTimer, rawDirty = false;
-    const thumbs = new Map(), savedEffects = new Map(), savedThumbnails = new Map();
-    let activeCategory = core.categories[1], selectionVersion = 0;
+    const thumbs = new Map(), savedEffects = new Map(), deletedEffects = new Map(), savedThumbnails = new Map();
+    let activeCategory = core.categories[1], selectionVersion = 0, libraryBusy = false;
     function element(tag, classes, text) { const node = document.createElement(tag); if (classes) node.className = classes; if (text !== undefined) node.textContent = text; return node; }
     function icon(id) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', `#icon-${id}`); svg.append(use); return svg; }
     function toast(message, error = false) { clearTimeout(toastTimer); $('toast').textContent = message; $('toast').classList.toggle('error', error); $('toast').hidden = false; toastTimer = setTimeout(() => { $('toast').hidden = true; }, error ? 6500 : 3500); }
@@ -19,12 +19,13 @@
     function snapshot() { return { effect: core.clone(effect), image: imageBytes }; }
     function remember() { undo.push(snapshot()); if (undo.length > 32) undo.shift(); redo.length = 0; }
     function snapshotMatches(a, b) { return a.image === b.image && JSON.stringify(a.effect) === JSON.stringify(b.effect); }
-    function usedIds() { return [...core.catalog.map(item => item.id), ...savedEffects.keys()]; }
+    function usedIds() { return [...core.catalog.map(item => item.id), ...savedEffects.keys(), ...deletedEffects.keys()]; }
+    function usedNames() { return [...savedEffects.values()].map(entry => entry.effect.name); }
     function commitChange(previous) {
         if (snapshotMatches(previous, snapshot())) return false;
         if (previous.effect.category !== core.categories[2]) {
-            const changed = effect, copy = core.userCopy(changed, usedIds());
-            if (changed.name !== previous.effect.name) copy.name = changed.name;
+            const changed = effect, copy = core.userCopy(changed, usedIds(), usedNames());
+            if (changed.name !== previous.effect.name) copy.name = core.uniqueName(changed.name, usedNames());
             if (changed.id !== previous.effect.id && !usedIds().includes(changed.id)) copy.id = changed.id;
             if (imageBytes) copy.appearance.image = `images/${copy.id}.png`;
             effect = copy; activeCategory = core.categories[2];
@@ -49,6 +50,7 @@
     async function save() {
         clearTimeout(saveTimer);
         const current = { effect: core.clone(effect), image: imageBytes };
+        if (current.effect.category === core.categories[2] && deletedEffects.has(current.effect.id)) return false;
         let librarySaved = false;
         if (current.effect.category === core.categories[2] && !validState()) {
             const entry = { id: current.effect.id, effect: current.effect, image: current.image };
@@ -150,6 +152,8 @@
         select.value = activeCategory;
         dropdowns.refresh();
         document.querySelector('.panel-heading h1 span').textContent = core.catalog.length + savedEffects.size;
+        $('trash-button').hidden = activeCategory !== core.categories[2];
+        $('trash-button').textContent = `Trash (${deletedEffects.size})`;
     }
     async function openLibraryItem(item, saved) {
         const version = ++selectionVersion;
@@ -196,11 +200,58 @@
             } else if (thumbs.has(saved?.effect.template || item.id)) thumb.src = thumbs.get(saved?.effect.template || item.id);
             const seconds = catalogDuration(item) / 20;
             const copy = element('span', 'template-copy'); copy.append(element('b', '', item.name), element('small', '', `${seconds.toFixed(1)} s`));
-            button.append(thumb, copy, icon('check')); button.addEventListener('click', () => openLibraryItem(item, saved)); list.append(button);
+            button.title = item.name;
+            button.append(thumb, copy, icon('check')); button.addEventListener('click', () => openLibraryItem(item, saved));
+            if (own) {
+                const entry = element('div', 'template-row'), remove = element('button', 'icon-button effect-delete');
+                remove.append(icon('trash')); remove.title = 'Move to Trash'; remove.setAttribute('aria-label', `Delete ${item.name}`);
+                remove.addEventListener('click', () => deleteEffect(item.id)); entry.append(button, remove); list.append(entry);
+            } else list.append(button);
         }
         if (!list.children.length) list.append(element('p', 'empty-state', own && !query ? 'Edit an animation or preset to create your first effect automatically. You can also import your own effect ZIP.' : 'No matching effects in this category.'));
     }
-    function validState() { try { core.validate(effect); return ''; } catch (error) { return error.message; } }
+    async function deleteEffect(id) {
+        if (libraryBusy) return;
+        libraryBusy = true;
+        try {
+            await save();
+            const entry = savedEffects.get(id); if (!entry) return;
+            await window.FrameStudioLibrary.remove(entry);
+            deletedEffects.set(id, entry); savedEffects.delete(id);
+            const thumbnail = savedThumbnails.get(id); if (thumbnail) URL.revokeObjectURL(thumbnail.url); savedThumbnails.delete(id);
+            const keep = state => state.effect.category !== core.categories[2] || state.effect.id !== id;
+            undo = undo.filter(keep); redo = redo.filter(keep);
+            if (effect.id === id && effect.category === core.categories[2]) {
+                ++selectionVersion; const next = core.createEffect(effect.template);
+                await setImage(null); effect = next; rawDirty = false; renderSettings();
+            }
+            renderCatalog(); sync(); await save();
+            toast('Effect moved to Trash. Restore it from My Effects → Trash.');
+        } catch { toast('Could not delete this effect. Your saved copy is still available.', true); }
+        finally { libraryBusy = false; }
+    }
+    function renderTrash() {
+        const list = $('trash-list'); list.replaceChildren();
+        for (const entry of deletedEffects.values()) {
+            const row = element('div', 'trash-row'), copy = element('div', 'template-copy');
+            copy.append(element('b', '', entry.effect.name), element('small', '', entry.id));
+            const restore = element('button', 'button button-quiet', 'Restore'); restore.setAttribute('aria-label', `Restore ${entry.effect.name}`);
+            restore.addEventListener('click', async () => {
+                if (libraryBusy) return; libraryBusy = true; restore.disabled = true;
+                try {
+                    const restored = { id: entry.id, effect: core.clone(entry.effect), image: entry.image };
+                    restored.effect.name = core.uniqueName(restored.effect.name, usedNames());
+                    await window.FrameStudioLibrary.put(restored);
+                    deletedEffects.delete(entry.id); savedEffects.set(entry.id, restored);
+                    renderCatalog(); renderTrash(); sync(); toast('Effect restored to My Effects.');
+                } catch { restore.disabled = false; toast('Could not restore this effect. It is still in Trash.', true); }
+                finally { libraryBusy = false; }
+            });
+            row.append(copy, restore); list.append(row);
+        }
+        if (!list.children.length) list.append(element('p', 'empty-state', 'Trash is empty.'));
+    }
+    function validState() { try { core.validate(effect); if (effect.category === core.categories[2] && deletedEffects.has(effect.id)) return 'This ID is in Trash. Restore it or choose another ID.'; return ''; } catch (error) { return error.message; } }
     function sync() {
         const error = validState(); $('validation-status').textContent = error || (effect.appearance.image && !imageBytes ? 'Image file needs to be supplied' : 'Ready to export'); document.querySelector('.inspector-footer').classList.toggle('invalid', !!error || !!(effect.appearance.image && !imageBytes));
         $('export-button').disabled = !!error; $('yaml-download').disabled = !!error; $('guide-export').disabled = !!error;
@@ -326,6 +377,8 @@
         else center.scrollTo({ top: 0 });
     });
     $('search').addEventListener('input', renderCatalog);
+    $('trash-button').addEventListener('click', () => { renderTrash(); $('trash-dialog').showModal(); });
+    $('close-trash').addEventListener('click', () => $('trash-dialog').close());
     $('category-filter').addEventListener('change', () => { activeCategory = $('category-filter').value; renderCatalog(); });
     $('undo-button').addEventListener('click', () => historyStep(false)); $('redo-button').addEventListener('click', () => historyStep(true));
     $('play-button').addEventListener('click', () => { playing = !playing; if (playing && playTick >= duration()) playTick = 0; sync(); }); $('restart-button').addEventListener('click', () => { playTick = 0; });
@@ -335,7 +388,7 @@
     $('guide-button').addEventListener('click', () => $('guide-dialog').showModal()); $('close-guide').addEventListener('click', () => $('guide-dialog').close()); $('guide-dialog').addEventListener('click', event => { if (event.target === $('guide-dialog')) { const rect = $('guide-dialog').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('guide-dialog').close(); } });
     $('new-button').addEventListener('click', async () => {
         await save(); remember();
-        effect = core.userCopy(effect, usedIds());
+        effect = core.userCopy(effect, usedIds(), usedNames());
         activeCategory = core.categories[2]; rawDirty = false; renderSettings(); sync();
         if (await save()) toast('Saved to My Effects. Changes are saved automatically in this browser.');
     });
@@ -359,12 +412,24 @@
         commit: before => { const previous = snapshot(); previous.effect.elements = before; commitChange(previous); }
     });
     async function start() {
+        const renamed = new Map();
         try {
+            for (const entry of await window.FrameStudioLibrary.listDeleted()) {
+                try { entry.effect = core.normalize(entry.effect); entry.effect.category = core.categories[2]; deletedEffects.set(entry.id, entry); } catch {}
+            }
             for (const entry of await window.FrameStudioLibrary.list()) {
                 try { entry.effect = core.normalize(entry.effect); entry.effect.category = core.categories[2]; savedEffects.set(entry.id, entry); } catch {}
             }
+            const names = [...savedEffects.values()].filter(entry => !/ · (?:Copy|Kopya)(?: \d+)?$/.test(entry.effect.name)).map(entry => entry.effect.name);
+            for (const entry of savedEffects.values()) {
+                if (!/ · (?:Copy|Kopya)(?: \d+)?$/.test(entry.effect.name)) continue;
+                const original = entry.effect.name; entry.effect.name = core.uniqueName(original, names); names.push(entry.effect.name);
+                if (original !== entry.effect.name) { renamed.set(entry.id, { original, name: entry.effect.name }); await window.FrameStudioLibrary.put(entry); }
+            }
         } catch { toast('My Effects could not access browser storage. Export your effects to keep a copy.', true); }
         try { const stored = localStorage.getItem(storageKey); if (stored) { const draft = JSON.parse(stored); if (draft.version === core.VERSION) { effect = core.normalize(draft.effect); if (draft.image) await setImage(fromDataUrl(draft.image)); } } } catch { toast('Previous draft unavailable.', true); }
+        if (effect.category === core.categories[2] && deletedEffects.has(effect.id)) { const template = effect.template; await setImage(null); effect = core.createEffect(template); }
+        const rename = renamed.get(effect.id); if (effect.category === core.categories[2] && rename?.original === effect.name) effect.name = rename.name;
         if (effect.appearance.image && !imageBytes) { const preset = core.catalog.find(item => item.id === effect.id); if (preset?.image) { try { await setImage(new Uint8Array(await (await fetch(preset.image)).arrayBuffer())); } catch { toast('Preset image could not load. Choose the matching PNG.', true); } } }
         activeCategory = effect.category;
         if (effect.category === core.categories[2]) await save();

@@ -21,10 +21,20 @@
         while (used.includes(candidate)) candidate = base + '-' + suffix++;
         return candidate;
     }
-    function userCopy(source, used) {
+    function uniqueName(preferred, used) {
+        const names = new Set(used.map(name => name.trim().toLowerCase()));
+        let candidate = preferred.slice(0, 64), suffix = 2;
+        const base = preferred.replace(/( · (?:Kopya|Copy))(?: \d+)?$/, '$1');
+        while (names.has(candidate.trim().toLowerCase())) {
+            const ending = ' ' + suffix++;
+            candidate = base.slice(0, 64 - ending.length).trimEnd() + ending;
+        }
+        return candidate;
+    }
+    function userCopy(source, used, names = []) {
         const result = clone(source);
         result.id = copyId(source.id, used);
-        result.name = source.name.replace(/ · (?:Kopya|Copy)$/, '').slice(0, 56) + ' · Copy';
+        result.name = uniqueName(source.name.replace(/ · (?:Kopya|Copy)(?: \d+)?$/, '').slice(0, 57) + ' · Copy', names);
         result.category = categories[2];
         if (result.appearance.image) result.appearance.image = `images/${result.id}.png`;
         return result;
@@ -307,6 +317,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1–2048 pixels.');
         return { width, height };
     }
-    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, userCopy, durationTiming, modes, triggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, modes, triggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);
