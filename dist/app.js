@@ -146,11 +146,11 @@
         'timing.exit': ['Time for the effect to fade away and reveal the game.', 'The last part of the normal playback duration.'],
         'timing.wait': ['Extra time allowed for the destination world to finish loading.', 'Only used when world readiness is pending. It does not lengthen a normal manual preview.']
     };
-    let helpPopup = null, helpOwner = null, helpPinned = false;
+    let helpPopup = null, helpOwner = null;
     function closeFieldHelp() {
         if (helpOwner) { helpOwner.setAttribute('aria-expanded', 'false'); helpOwner.removeAttribute('aria-describedby'); }
         if (helpPopup) helpPopup.hidden = true;
-        helpOwner = null; helpPinned = false;
+        helpOwner = null;
     }
     function fieldHelp(path) {
         if (FIELD_HELP[path]) return FIELD_HELP[path];
@@ -163,27 +163,30 @@
     }
     function helpButton(path, label, explanation = fieldHelp(path)) {
         if (!explanation) return document.createTextNode('');
-        const button = element('button', 'field-info', 'i');
+        const button = element('button', 'field-info');
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 16 16'); svg.setAttribute('aria-hidden', 'true');
+        const circle = document.createElementNS(svg.namespaceURI, 'circle');
+        circle.setAttribute('cx', '8'); circle.setAttribute('cy', '8'); circle.setAttribute('r', '6.25');
+        const stem = document.createElementNS(svg.namespaceURI, 'path'); stem.setAttribute('d', 'M8 7.3v3.5');
+        const dot = document.createElementNS(svg.namespaceURI, 'circle'); dot.setAttribute('cx', '8'); dot.setAttribute('cy', '4.9'); dot.setAttribute('r', '.7'); dot.setAttribute('class', 'info-dot');
+        svg.append(circle, stem, dot); button.append(svg);
         button.type = 'button'; button.dataset.helpFor = path;
         button.setAttribute('aria-label', 'About ' + label); button.setAttribute('aria-expanded', 'false');
         function open() {
             if (helpOwner !== button) closeFieldHelp();
             if (!helpPopup) { helpPopup = element('div', 'field-help-popup'); helpPopup.id = 'field-help-popup'; helpPopup.role = 'tooltip'; document.body.append(helpPopup); }
-            helpOwner = button; helpPopup.replaceChildren(element('strong', '', label), element('p', '', explanation[0]), element('p', 'help-location', explanation[1]));
+            helpOwner = button; helpPopup.textContent = explanation.join(' ');
             helpPopup.hidden = false; button.setAttribute('aria-expanded', 'true'); button.setAttribute('aria-describedby', helpPopup.id);
             const anchor = button.getBoundingClientRect(), box = helpPopup.getBoundingClientRect();
             helpPopup.style.left = Math.max(12, Math.min(innerWidth - box.width - 12, anchor.right - box.width)) + 'px';
             helpPopup.style.top = Math.max(12, anchor.bottom + box.height + 10 <= innerHeight ? anchor.bottom + 10 : anchor.top - box.height - 10) + 'px';
         }
-        button.addEventListener('pointerenter', () => { if (!helpPinned) open(); });
-        button.addEventListener('pointerleave', () => { if (!helpPinned && helpOwner === button && document.activeElement !== button) closeFieldHelp(); });
+        button.addEventListener('pointerenter', open);
+        button.addEventListener('pointerleave', () => { if (helpOwner === button && !button.matches(':focus-visible')) closeFieldHelp(); });
         button.addEventListener('focus', open);
-        button.addEventListener('blur', () => { if (!helpPinned && helpOwner === button) closeFieldHelp(); });
-        button.addEventListener('click', event => {
-            event.preventDefault(); event.stopPropagation();
-            if (helpOwner === button && helpPinned) closeFieldHelp();
-            else { open(); helpPinned = true; }
-        });
+        button.addEventListener('blur', () => { if (helpOwner === button) closeFieldHelp(); });
+        button.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); open(); });
         return button;
     }
     document.addEventListener('click', event => { if (helpOwner && !helpOwner.contains(event.target)) closeFieldHelp(); });
