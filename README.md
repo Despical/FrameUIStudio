@@ -6,10 +6,10 @@
 <p align="center">
   <a href="https://github.com/Despical/FrameUIStudio/actions/workflows/ci.yml"><img alt="Checks" src="https://github.com/Despical/FrameUIStudio/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://github.com/Despical/FrameUIStudio/actions/workflows/pages.yml"><img alt="Deployment" src="https://github.com/Despical/FrameUIStudio/actions/workflows/pages.yml/badge.svg"></a>
-  <img alt="28 languages" src="https://img.shields.io/badge/languages-28-75e8dc">
-  <img alt="60 templates" src="https://img.shields.io/badge/templates-60-75e8dc">
-  <img alt="Vanilla JavaScript" src="https://img.shields.io/badge/JavaScript-vanilla-f7df1e">
-  <a href="LICENSE"><img alt="GPLv3 license" src="https://img.shields.io/badge/license-GPLv3-blue"></a>
+  <img alt="28 Languages" src="https://img.shields.io/badge/Languages-28-75e8dc">
+  <img alt="60 Templates" src="https://img.shields.io/badge/Templates-60-a78bfa">
+  <img alt="Vanilla JavaScript" src="https://img.shields.io/badge/JavaScript-Vanilla-f7df1e">
+  <a href="LICENSE"><img alt="GPLv3 License" src="https://img.shields.io/badge/License-GPLv3-blue"></a>
 </p>
 <p align="center">
   <a href="https://frameui.despical.dev/">Open Studio</a> ·
