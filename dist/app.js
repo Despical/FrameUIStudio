@@ -1,7 +1,7 @@
 /* FrameUI Studio - Copyright (C) 2026 Berke Akçen. All rights reserved. Proprietary and confidential. */
 (function () {
     'use strict';
-    const t = window.FrameStudioI18n?.t || (value => value);
+    const t = window.FrameStudioI18n.t, displayName = window.FrameStudioI18n.displayName, secondsLabel = window.FrameStudioI18n.seconds;
     const core = window.FrameStudioCore;
     const dropdowns = window.FrameStudioDropdowns;
     const server = window.FrameStudioServer;
@@ -294,7 +294,15 @@
     function row(...fields) { const result = element('div', 'field-row'); result.append(...fields); return result; }
     function checkboxList(path, values, names = {}) {
         const grid = element('div', 'check-grid');
-        for (const value of values) { const label = element('label'), input = element('input'); input.type = 'checkbox'; input.checked = pathGet(path).includes(value); input.dataset.checkPath = path; input.value = value; input.addEventListener('change', () => { const current = pathGet(path).filter(entry => entry !== value); if (input.checked) current.push(value); mutate(path, current); }); label.append(input, element('span', '', names[value] || value.toLowerCase().replace(/[_-]+/g, ' ').replace(/\b[a-z]/g, letter => letter.toUpperCase()))); grid.append(label); }
+        for (const value of values) {
+            const label = element('label'), input = element('input');
+            input.type = 'checkbox'; input.checked = pathGet(path).includes(value); input.dataset.checkPath = path; input.value = value;
+            input.addEventListener('change', () => { const current = pathGet(path).filter(entry => entry !== value); if (input.checked) current.push(value); mutate(path, current); });
+            const name = names[value] || value.toLowerCase().replace(/[_-]+/g, ' ').replace(/\b[a-z]/g, letter => letter.toUpperCase());
+            const eventNames = {Home:'Home location',Warp:'Warp destination',Spawn:'Spawn location',Back:'Previous location'};
+            label.append(input, element('span', '', path === 'play-on' && value.includes('-') && eventNames[name] ? eventNames[name] : name));
+            grid.append(label);
+        }
         return grid;
     }
     function details(title, ...children) {
@@ -551,7 +559,7 @@
             : core.catalog.filter(item => item.category === activeCategory))
             .sort((a, b) => catalogDuration(a) - catalogDuration(b) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
         for (const item of items) {
-            if (query && !`${item.name} ${item.id}`.toLowerCase().includes(query)) continue;
+            if (query && !`${item.name} ${displayName(item.name)} ${item.id}`.toLowerCase().includes(query)) continue;
             const button = element('button', 'template-card'); button.dataset.template = item.id; button.dataset.libraryGroup = activeCategory;
             button.setAttribute('aria-pressed', String(effect.id === item.id && effect.category === activeCategory));
             button.classList.toggle('active', effect.id === item.id && effect.category === activeCategory);
@@ -566,13 +574,13 @@
                 thumb.src = preview.url;
             } else if (thumbs.has(saved?.effect.template || item.id)) thumb.src = thumbs.get(saved?.effect.template || item.id);
             const seconds = catalogDuration(item) / 20;
-            const copy = element('span', 'template-copy'); copy.append(element('b', '', item.name, true), element('small', '', `${seconds.toFixed(1)} s`));
+            const copy = element('span', 'template-copy'); copy.append(element('b', '', displayName(item.name), true), element('small', '', secondsLabel(seconds)));
             if (saved?.remote) copy.append(element('span', 'server-effect-badge', saved.dirty ? 'Unsaved changes' : 'Server'));
-            button.title = item.name;
+            button.title = displayName(item.name);
             button.append(thumb, copy); button.addEventListener('click', () => openLibraryItem(item, saved));
             if (own) {
                 const entry = element('div', 'template-row'), remove = element('button', 'icon-button effect-delete');
-                remove.append(icon('trash')); remove.title = t('Delete effect'); remove.setAttribute('aria-label', t(`Delete ${item.name}`));
+                remove.append(icon('trash')); remove.title = t('Delete effect'); remove.setAttribute('aria-label', t('Delete {0}', displayName(item.name)));
                 remove.addEventListener('click', () => requestDelete(item.id)); entry.append(button, remove); list.append(entry);
             } else list.append(button);
         }
@@ -583,7 +591,7 @@
         if (libraryBusy || serverBusy) return;
         const entry=libraryEntries().get(id); if (!entry) return;
         pendingDelete={id,name:entry.effect.name,remote:!!entry.remote,revision:entry.revision};
-        $('purge-description').textContent=t(`Permanently delete “${pendingDelete.name}”? This action cannot be undone.`);
+        $('purge-description').textContent=t('Permanently delete “{0}”? This action cannot be undone.', displayName(pendingDelete.name));
         $('purge-dialog').showModal();
     }
     async function confirmDelete() {
@@ -617,10 +625,10 @@
         $('server-import-button').disabled = serverBusy || libraryBusy || (!!server.session && !!error);
         $('server-import-button').querySelector('span').textContent = t(serverButtonLabel());
         $('export-button').disabled = !!error; $('yaml-download').disabled = !!error; $('guide-export').disabled = !!error;
-        $('effect-heading').textContent = effect.name || t('Untitled effect');
+        $('effect-heading').textContent = displayName(effect.name) || t('Untitled effect');
         for (const input of document.querySelectorAll('[data-caption-entry]')) input.value = effect.captions[input.dataset.captionEntry];
-        $('summary-in').textContent = t(`${Number((effect.timing['fade-in-ticks'] / 20).toFixed(2))} s`); $('summary-hold').textContent = t(`${Number(((effect.timing['minimum-ticks'] - effect.timing['fade-in-ticks']) / 20).toFixed(2))} s`); $('summary-out').textContent = t(`${Number((effect.timing['fade-out-ticks'] / 20).toFixed(2))} s`); $('summary-triggers').textContent = t(effect['play-on'].length ? `${effect['play-on'].length} ${t(effect['play-on'].length === 1 ? 'event' : 'events')}` : 'Manual only');
-        $('duration-label').textContent = t(`${Number((duration() / 20).toFixed(2))} s`); $('undo-button').disabled = !undo.length; $('redo-button').disabled = !redo.length;
+        $('summary-in').textContent = secondsLabel(effect.timing['fade-in-ticks'] / 20); $('summary-hold').textContent = secondsLabel((effect.timing['minimum-ticks'] - effect.timing['fade-in-ticks']) / 20); $('summary-out').textContent = secondsLabel(effect.timing['fade-out-ticks'] / 20); $('summary-triggers').textContent = t(effect['play-on'].length ? `${effect['play-on'].length} ${t(effect['play-on'].length === 1 ? 'event' : 'events')}` : 'Manual only');
+        $('duration-label').textContent = secondsLabel(duration() / 20); $('undo-button').disabled = !undo.length; $('redo-button').disabled = !redo.length;
         if ($('duration-seconds') && document.activeElement !== $('duration-seconds')) $('duration-seconds').value = duration() / 20;
         for (const input of document.querySelectorAll('[data-path]')) { if (document.activeElement === input) continue; const value = pathGet(input.dataset.path); if (input.type === 'checkbox') input.checked = value; else input.value = Array.isArray(value) ? value.join(', ') : input.dataset.unit === 'seconds' ? value / 20 : input.dataset.unit === 'image-delay-seconds' ? Number((value * effect.timing['fade-in-ticks'] / 20).toFixed(3)) : value; }
         for (const input of document.querySelectorAll('[data-unit="image-delay-seconds"]')) {
@@ -635,7 +643,7 @@
             const group = document.querySelector(`[data-addon="${addon.id}"]`);
             if (group) {
                 const count = Object.keys(addon.events).filter(key => effect['play-on'].includes(key)).length;
-                group.querySelector('summary').setAttribute('aria-label', t(addon.name + (count ? ` · ${count} selected` : '')));
+                group.querySelector('summary').setAttribute('aria-label', count ? t('{0} · {1} selected', addon.name, count) : addon.name);
             }
         }
         updateAvailability();
@@ -777,7 +785,7 @@
     function effectArchive() {
         core.validate(effect);
         if (effect.appearance.image && !imageBytes) throw new Error('Choose the referenced image, or remove it in Design.');
-        const entries = { [`effects/${effect.id}.yml`]: core.toYaml(effect), 'INSTALL.txt': `FrameUI effect: ${effect.name}\n\nOpen /frameui editor to import directly, or extract effects/ and images/ into plugins/FrameUI/ and run /frameui reload.\nTest with /frameui preview ${effect.id}.\n` };
+        const entries = { [`effects/${effect.id}.yml`]: core.toYaml(effect), 'INSTALL.txt': t('FrameUI effect: {0}', effect.name) + '\n\n' + t('Open /frameui editor to import directly, or extract effects/ and images/ into plugins/FrameUI/ and run /frameui reload.') + '\n' + t('Test with /frameui preview {0}.', effect.id) + '\n' };
         if (imageBytes) entries[effect.appearance.image] = imageBytes;
         return core.zip(entries);
     }

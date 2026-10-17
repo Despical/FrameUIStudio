@@ -49,3 +49,35 @@ test('language switches preserve the server fragment and only persist a language
     assert.ok(api.t('Delete {0}',injected).includes(injected));
     assert.equal(api.t('Permanently delete “My Effect”? This action cannot be undone.'),'“My Effect” kalıcı olarak silinsin mi? Bu işlem geri alınamaz.');
 });
+
+test('every language translates destructive dialogs and has localized language names and offline flags', () => {
+    const {api,data}=fixture();
+    for (const code of Object.keys(data.languages)) {
+        api.setLanguage(code);
+        for (const key of ['Delete permanently?','Cancel','Delete permanently','Connect your server','Close server connection']) {
+            assert.ok(data.messages[code][key],code+': '+key);
+            if(code !== 'en') assert.notEqual(api.t(key),key,code+': '+key);
+        }
+        for (const language of Object.keys(data.languages)) {
+            assert.ok(data.languageNames[code][language],code+': '+language);
+            assert.ok(fs.existsSync(require('node:path').join(__dirname,'../dist/flags',api.flags[language]+'.svg')));
+        }
+    }
+    api.setLanguage('tr');
+    assert.equal(api.languageName('en'),'İngilizce');
+    assert.equal(api.languageName('de'),'Almanca');
+    api.setLanguage('de');
+    assert.equal(api.languageName('tr'),'Türkisch');
+});
+
+test('translated stock labels and copy badges preserve authored effect names and command values', () => {
+    const {api}=fixture('?lang=tr');
+    assert.equal(api.displayName('Square Zoom'),'Kare Yakınlaştırma');
+    assert.equal(api.displayName('Square Zoom · Copy 2'),'Kare Yakınlaştırma · Kopya 2');
+    const custom='My <server> effect · Copy 2';
+    assert.equal(api.displayName(custom),custom);
+    assert.equal(api.t('Run {0} in Minecraft.','/frameui editor'),'Minecraft içinde /frameui editor komutunu çalıştır.');
+    assert.ok(api.seconds(1.5).includes('sn'));
+    api.setLanguage('en');
+    assert.equal(api.displayName('Square Zoom · Copy 2'),'Square Zoom · Copy 2');
+});

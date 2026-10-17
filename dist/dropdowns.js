@@ -19,6 +19,8 @@
             if (controls.has(select)) continue;
             const wrapper = document.createElement('div');
             wrapper.className = 'custom-select';
+            const languageSelect = select.id === 'language-select';
+            if (languageSelect) wrapper.classList.add('language-picker');
             const trigger = document.createElement('button');
             trigger.type = 'button';
             trigger.className = 'select-trigger';
@@ -36,13 +38,21 @@
             path.setAttribute('d', 'm5 8 5 5 5-5');
             chevron.append(path);
             trigger.append(value, chevron);
+            if (languageSelect) {
+                const globe = document.createElementNS('http://www.w3.org/2000/svg','svg');
+                globe.setAttribute('viewBox','0 0 24 24'); globe.setAttribute('aria-hidden','true');
+                const lines = document.createElementNS(globe.namespaceURI,'path');
+                lines.setAttribute('d','M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM3 12h18M12 3c3 3 3 15 0 18-3-3-3-15 0-18Z');
+                globe.append(lines); trigger.prepend(globe); chevron.remove();
+            }
             select.before(wrapper);
             wrapper.append(select, trigger);
             select.hidden = true;
             const update = () => {
                 label = select.getAttribute('aria-label') || label;
                 trigger.setAttribute('aria-label', t(label));
-                value.textContent = t(select.selectedOptions[0]?.textContent || 'Choose an option');
+                value.textContent = languageSelect ? select.value.toUpperCase() : (select.selectedOptions[0]?.textContent || t('Choose an option'));
+                if (languageSelect) trigger.setAttribute('aria-label', t('Language') + ': ' + select.selectedOptions[0]?.textContent);
                 trigger.disabled = select.disabled;
             };
             controls.set(select, update);
@@ -76,9 +86,10 @@
                 typed = '';
                 popup = document.createElement('div');
                 popup.className = 'select-menu';
+                if (languageSelect) popup.classList.add('language-menu');
                 popup.id = select.id + '-options';
                 popup.setAttribute('role', 'listbox');
-                popup.setAttribute('aria-label', t(label + ' options'));
+                popup.setAttribute('aria-label', t('{0} options', label));
                 choices = [...select.options].map((option, index) => {
                     const choice = document.createElement('div');
                     choice.id = popup.id + '-' + index;
@@ -87,12 +98,17 @@
                     choice.setAttribute('aria-selected', String(option.selected));
                     choice.setAttribute('aria-disabled', String(option.disabled));
                     const text = document.createElement('span');
-                    text.textContent = t(option.textContent);
+                    text.textContent = option.textContent;
                     const check = document.createElement('span');
                     check.className = 'select-check';
                     check.textContent = t('✓');
                     check.setAttribute('aria-hidden', 'true');
                     choice.append(text, check);
+                    if (languageSelect) {
+                        const flag = document.createElement('img'); flag.className = 'language-flag';
+                        flag.src = 'flags/' + option.dataset.flag + '.svg'; flag.alt = ''; flag.setAttribute('aria-hidden','true');
+                        choice.prepend(flag); choice.lang = window.FrameStudioI18n.language;
+                    }
                     choice.addEventListener('pointermove', () => { if (!option.disabled) highlight(index, false); });
                     choice.addEventListener('pointerdown', event => event.preventDefault());
                     choice.addEventListener('click', () => choose(index));
@@ -103,7 +119,7 @@
                 const below = innerHeight - rect.bottom - 14, above = rect.top - 14;
                 const upward = below < Math.min(180, choices.length * 42 + 12) && above > below;
                 const height = Math.min(320, Math.max(60, upward ? above : below));
-                const width = Math.min(innerWidth - 24, Math.max(rect.width, 216));
+                const width = Math.min(innerWidth - 24, Math.max(rect.width, languageSelect ? 240 : 216));
                 popup.style.width = width + 'px';
                 popup.style.maxHeight = height + 'px';
                 popup.style.left = Math.max(12, Math.min(rect.left, innerWidth - width - 12)) + 'px';
