@@ -9,7 +9,7 @@
         const overlay = document.createElement('div'); overlay.className = 'canvas-editor';
         const boxes = new Map(), buttons = new Map(), rects = new Map();
         const measure = document.createElement('canvas').getContext('2d');
-        let selected = '', gesture = null;
+        let selected = '', gesture = null, renderedKey = '';
         const guides = {};
         for (const axis of ['x', 'y']) {
             const line = document.createElement('div'); line.className = 'canvas-guide canvas-guide-' + axis;
@@ -75,7 +75,10 @@
         function render() {
             const definition = options.effect(), e = definition.elements, width = stage.clientWidth, height = stage.clientHeight;
             if (!width || !height) return;
-            const image = options.image(); rects.clear();
+            const image = options.image();
+            const key = JSON.stringify([e,definition.captions,definition.name,definition.appearance['image-fit'],width,height,image?.width,image?.height]);
+            if (key === renderedKey) {options.geometry?.(selected,rects.get(selected));return;}
+            renderedKey = key; rects.clear();
             if (image && definition.appearance.image) {
                 const ratio = (width / height) / (image.width / image.height);
                 const contain = definition.appearance['image-fit'] === 'contain';

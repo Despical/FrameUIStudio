@@ -54,6 +54,9 @@
         "title-motion": "still"
       },
       "elements": {
+        "title-animation": "slide-up",
+        "subtitle-animation": "slide-up",
+        "detail-animation": "slide-up",
         "title-offset-x": 0,
         "title-offset-y": 0,
         "title-scale": 1,
@@ -186,6 +189,9 @@
         "title-motion": "still"
       },
       "elements": {
+        "title-animation": "slide-up",
+        "subtitle-animation": "slide-up",
+        "detail-animation": "slide-up",
         "title-offset-x": 0,
         "title-offset-y": 0,
         "title-scale": 1,
@@ -318,6 +324,9 @@
         "title-motion": "still"
       },
       "elements": {
+        "title-animation": "slide-up",
+        "subtitle-animation": "slide-up",
+        "detail-animation": "slide-up",
         "title-offset-x": 0,
         "title-offset-y": 0,
         "title-scale": 1,
@@ -449,6 +458,9 @@
         "title-motion": "still"
       },
       "elements": {
+        "title-animation": "slide-up",
+        "subtitle-animation": "slide-up",
+        "detail-animation": "slide-up",
         "title-offset-x": 0,
         "title-offset-y": 0,
         "title-scale": 1,
@@ -581,6 +593,9 @@
         "title-motion": "still"
       },
       "elements": {
+        "title-animation": "grow",
+        "subtitle-animation": "grow",
+        "detail-animation": "grow",
         "title-offset-x": 0,
         "title-offset-y": 0,
         "title-scale": 1,
@@ -712,6 +727,9 @@
         "title-motion": "still"
       },
       "elements": {
+        "title-animation": "still",
+        "subtitle-animation": "still",
+        "detail-animation": "still",
         "title-offset-x": 0,
         "title-offset-y": 0,
         "title-scale": 1,
@@ -844,6 +862,9 @@
         "title-motion": "still"
       },
       "elements": {
+        "title-animation": "slide-up",
+        "subtitle-animation": "slide-up",
+        "detail-animation": "slide-up",
         "title-offset-x": 0,
         "title-offset-y": 0,
         "title-scale": 1,
@@ -975,6 +996,9 @@
         "title-motion": "still"
       },
       "elements": {
+        "title-animation": "slide-up",
+        "subtitle-animation": "slide-up",
+        "detail-animation": "slide-up",
         "title-offset-x": 0,
         "title-offset-y": 0,
         "title-scale": 1,
@@ -1106,6 +1130,9 @@
         "title-motion": "still"
       },
       "elements": {
+        "title-animation": "grow",
+        "subtitle-animation": "grow",
+        "detail-animation": "grow",
         "title-offset-x": 0,
         "title-offset-y": 0,
         "title-scale": 1,
@@ -1237,6 +1264,9 @@
         "title-motion": "still"
       },
       "elements": {
+        "title-animation": "slide-up",
+        "subtitle-animation": "slide-up",
+        "detail-animation": "slide-up",
         "title-offset-x": 0,
         "title-offset-y": 0,
         "title-scale": 1,

@@ -577,3 +577,19 @@ test('motion speed is disabled for transition-only screens and enabled for actua
     assert.equal(core.catalog.find(e=>e.id==='fade-black').ambientMotion,false);
     assert.equal(core.catalog.find(e=>e.id==='aurora').ambientMotion,true);
 });
+
+
+test('caption entrance animations are independent and survive portable exports', async () => {
+    const effect=core.createEffect('aurora');
+    for (const animation of ['still','grow','slide-up','slide-down','slide-left','slide-right','none']) {
+        effect.elements['title-animation']=animation;effect.elements['subtitle-animation']='slide-right';effect.elements['detail-animation']='none';
+        const archive=core.zip({'effects/entrances.yml':core.toYaml(effect)}), entries=await core.unzip(archive);
+        const restored=core.fromYaml(core.decoder.decode(entries['effects/entrances.yml']));
+        assert.equal(restored.elements['title-animation'],animation);assert.equal(restored.elements['subtitle-animation'],'slide-right');assert.equal(restored.elements['detail-animation'],'none');
+        assert.equal(core.resetComponent(effect,'title').elements['title-animation'],'still');
+        assert.equal(core.resetComponent(effect,'title').elements['subtitle-animation'],'slide-right');
+    }
+    const legacy=core.fromYaml('template: aurora\nelements:\n  text-animation: slide-left\n');
+    for(const line of ['title','subtitle','detail']) assert.equal(legacy.elements[line+'-animation'],'slide-left');
+    const bad=core.clone(effect);bad.elements['subtitle-animation']='spin';assert.throws(()=>core.validate(bad));
+});

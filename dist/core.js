@@ -95,7 +95,7 @@
         if (!backgroundMotion && !overlay && !(hasImage && a['image-motion'] === 'panorama')) {
             block(['appearance.speed'], 'This screen has no ambient movement. Motion speed does not change fades, entrances or total duration.');
         }
-        if (!effect.captions.enabled) block(['captions.title-color', 'captions.subtitle-color', 'captions.detail-color', 'captions.title', 'captions.subtitle', 'captions.join-detail', 'captions.teleport-detail', 'captions.preview-detail', 'elements.text-x', 'elements.text-y', 'elements.text-scale', 'elements.text-animation'], 'Show captions is off. Enable it to edit the on-screen text and its placement.');
+        if (!effect.captions.enabled) block(['elements.title-animation','elements.subtitle-animation','elements.detail-animation','captions.title-color', 'captions.subtitle-color', 'captions.detail-color', 'captions.title', 'captions.subtitle', 'captions.join-detail', 'captions.teleport-detail', 'captions.preview-detail', 'elements.text-x', 'elements.text-y', 'elements.text-scale', 'elements.text-animation'], 'Show captions is off. Enable it to edit the on-screen text and its placement.');
         if (!hasImage) block(['appearance.image-fit', 'appearance.image-opacity', 'appearance.image-motion', 'elements.image-scale', 'elements.image-x', 'elements.image-y', 'elements.image-animation', 'elements.image-delay'], 'Add an image in Design before adjusting its appearance, placement or movement.');
         if (e['image-animation'] === 'none') block(['elements.image-delay'], 'Image entrance is None (instant), so there is no entrance animation to delay.');
         if (effect.timing['fade-in-ticks'] === 0) block(['elements.image-delay'], 'Fade in is zero seconds, so there is no entrance phase to delay.');
@@ -129,7 +129,7 @@
             captions: { 'title-color':'#f1f4fa', 'subtitle-color':'#8595ad', 'detail-color':'#8595ad', enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
             presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
             appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1, 'image-motion': 'still', 'title-motion': 'still' },
-            elements: { 'title-offset-x': 0, 'title-offset-y': 0, 'title-scale': 1, 'title-stretch-x': 1, 'title-stretch-y': 1, 'subtitle-offset-x': 0, 'subtitle-offset-y': 0, 'subtitle-scale': 1, 'subtitle-stretch-x': 1, 'subtitle-stretch-y': 1, 'detail-offset-x': 0, 'detail-offset-y': 0, 'detail-scale': 1, 'detail-stretch-x': 1, 'detail-stretch-y': 1, background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1, 'image-stretch-x': 1, 'image-stretch-y': 1, 'text-stretch-x': 1, 'text-stretch-y': 1 },
+            elements: { 'title-animation':'still', 'subtitle-animation':'still', 'detail-animation':'still', 'title-offset-x': 0, 'title-offset-y': 0, 'title-scale': 1, 'title-stretch-x': 1, 'title-stretch-y': 1, 'subtitle-offset-x': 0, 'subtitle-offset-y': 0, 'subtitle-scale': 1, 'subtitle-stretch-x': 1, 'subtitle-stretch-y': 1, 'detail-offset-x': 0, 'detail-offset-y': 0, 'detail-scale': 1, 'detail-stretch-x': 1, 'detail-stretch-y': 1, background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1, 'image-stretch-x': 1, 'image-stretch-y': 1, 'text-stretch-x': 1, 'text-stretch-y': 1 },
             filters: { permission: '', 'deny-permissions': [], worlds: { include: [], exclude: [] }, 'source-worlds': { include: [], exclude: [] }, 'addon-targets': { include: [], exclude: [] }, 'game-modes': { include: [], exclude: [] }, 'teleport-causes': [], triggers: [...triggers], distance: { min: 0, max: -1 }, height: { min: -30000000, max: 30000000 }, time: { min: 0, max: 23999 }, weather: [], 'cooldown-ticks': 0 }
         };
     }
@@ -148,10 +148,11 @@
         const template = input.template || input.id || 'aurora';
         if (!catalog.some(entry => entry.id === template && !entry.definition)) throw new Error(`Unknown template: ${template}. Choose one of the 50 built-in templates.`);
         const result = merge(createEffect(template), input);
+        for (const kind of ['title','subtitle','detail']) if (!Object.hasOwn(input.elements || {},kind+'-animation')) result.elements[kind+'-animation'] = result.elements['text-animation'];
         // Resolve legacy palette-linked caption colors once; subsequent palette edits are independent.
         const templateBackground = result.elements.background === 'template';
         const legacyGrow = result.appearance['title-motion'] === 'grow' && ['title','subtitle','detail'].every(kind =>
-            ['offset-x','offset-y'].every(key => result.elements[kind+'-'+key] === 0) && ['scale','stretch-x','stretch-y'].every(key => result.elements[kind+'-'+key] === 1));
+            ['offset-x','offset-y'].every(key => result.elements[kind+'-'+key] === 0) && ['scale','stretch-x','stretch-y'].every(key => result.elements[kind+'-'+key] === 1) && result.elements[kind+'-animation'] === 'still');
         const defaults = {'title-color':legacyGrow?'#e8efe5':templateBackground?'#f1f4fa':result.appearance.primary,
             'subtitle-color':templateBackground?'#8595ad':result.appearance.secondary,'detail-color':'#8595ad'};
         for (const [key,value] of Object.entries(defaults)) if (!Object.hasOwn(input.captions || {},key)) result.captions[key] = value;
@@ -207,6 +208,7 @@
         choice('decoration', ['none', 'embers', 'petals', 'scan', 'pulse']);
         for (const key of ['image-x', 'image-y', 'text-x', 'text-y', 'progress-x', 'progress-y']) number(e[key], key, -10, 10, false);
         for (const kind of ['title', 'subtitle', 'detail']) {
+            choice(kind+'-animation',['still','grow','slide-up','slide-down','slide-left','slide-right','none']);
             for (const axis of ['x','y']) number(e[kind + '-offset-' + axis], kind + ' offset ' + axis, -20, 20, false);
             for (const key of ['scale','stretch-x','stretch-y']) number(e[kind + '-' + key], kind + ' ' + key, .01, 10, false);
         }
@@ -244,7 +246,7 @@
         } else if (kind === 'progress') {
             for (const key of Object.keys(defaults.elements).filter(key => key === 'progress' || key.startsWith('progress-'))) next.elements[key] = defaults.elements[key];
         } else {
-            for (const key of ['offset-x','offset-y','scale','stretch-x','stretch-y']) next.elements[kind+'-'+key] = defaults.elements[kind+'-'+key];
+            for (const key of ['offset-x','offset-y','scale','stretch-x','stretch-y','animation']) next.elements[kind+'-'+key] = defaults.elements[kind+'-'+key];
             next.captions[kind+'-color'] = defaults.captions[kind+'-color'];
             for (const key of kind === 'detail' ? ['join-detail','teleport-detail','preview-detail'] : [kind]) next.captions[key] = defaults.captions[key];
         }

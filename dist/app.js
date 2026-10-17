@@ -16,7 +16,7 @@
     const storageKey = 'frameui-studio-v1';
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let effect = core.createEffect('frameui'), imageBytes = null, imageUrl = '', imageElement = null;
-    let undo = [], redo = [], playing = !reducedMotion, playTick = 24, lastFrame = 0, saveTimer, toastTimer;
+    let undo = [], redo = [], playing = !reducedMotion, playTick = 24, saveTimer, toastTimer;
     const thumbs = new Map(), savedEffects = new Map(), deletedEffects = new Map(), savedThumbnails = new Map();
     let activeCategory = core.categories[1], selectionVersion = 0, libraryBusy = false, pendingPurge = [];
     function element(tag, classes, text) { const node = document.createElement(tag); if (classes) node.className = classes; if (text !== undefined) node.textContent = text; return node; }
@@ -93,6 +93,7 @@
     async function restore(state) { const kind = selectedComponent, next = core.clone(state.effect); await setImage(state.image); effect = next; activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); if (kind) directEditor.select(kind); scheduleSave(); }
     async function historyStep(isRedo) { const source = isRedo ? redo : undo, destination = isRedo ? undo : redo; if (!source.length) return; const target = source.pop(); destination.push(snapshot()); await restore(target); }
     const FIELD_HELP = {
+        ...Object.fromEntries(['title','subtitle','detail'].map(kind=>['elements.'+kind+'-animation',['Entrance animation for this caption line only.','None (instant) shows it immediately. Fade, Grow and Slide use the effect’s fade-in and fade-out durations. Other lines keep their own entrance.']])),
         'captions.title-color':['Color of the title in Studio and Minecraft.','Changes only the title, independently of the background palette and other caption lines.'],
         'captions.subtitle-color':['Color of the subtitle in Studio and Minecraft.','Changes only the subtitle, independently of the background palette and other caption lines.'],
         'captions.detail-color':['Color of the extra caption line in Studio and Minecraft.','Applies to its Joining, Teleporting and Preview text. Other caption lines keep their own colors.'],
@@ -371,9 +372,6 @@
         const animation = section('Animation');
         animation.append(field('Ambient motion speed', 'appearance.speed', { type: 'range', min: .05, max: 8, step: .05 }), note('0.5× = half-speed motion; 2× = double speed. Duration and entrances stay the same. Play the preview to compare.'));
         motion.append(animation);
-        const entrances = section('Caption entrance');
-        entrances.append(field('Text entrance','elements.text-animation',{options:[['none','None (instant)'],['still','Fade'],['grow','Grow'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right']]}));
-        motion.append(entrances);
         const playback = section('When to play');
         playback.append(checkboxList('play-on', ['join', 'teleport', 'world-change'], { join: 'Join', teleport: 'Teleport', 'world-change': 'World change' }), note('Choose where this effect runs automatically. Your selection applies when imported to your server. Leave all unchecked for manual previews only.')); events.append(playback);
         const integrations = section('Plugin events', 'OPTIONAL');
@@ -460,7 +458,7 @@
             if (kind==='detail') {
                 for (const [key,label] of [['join-detail','Joining'],['teleport-detail','Teleporting'],['preview-detail','Preview']]) content.append(field(label,'captions.'+key,{maxLength:128,component:true}));
             } else content.append(field(componentLabels[kind],'captions.'+kind,{maxLength:kind==='title'?64:96,component:true}));
-            content.append(captionColor(kind));
+            content.append(captionColor(kind),field('Entrance','elements.'+kind+'-animation',{component:true,options:[['none','None (instant)'],['still','Fade'],['grow','Grow'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right']]}));
             pane.append(content);
         } else if (kind==='image') {
             const appearance = section('Appearance');
@@ -572,6 +570,7 @@
                 remove.addEventListener('click', () => deleteEffect(item.id)); entry.append(button, remove); list.append(entry);
             } else list.append(button);
         }
+        if (previewReady) generateThumbnails();
         if (!list.children.length) list.append(element('p', 'empty-state', own && !query ? 'Edit an animation or preset to create your first effect automatically. You can also import your own effect ZIP.' : 'No matching effects in this category.'));
     }
     async function deleteEffect(id) {
@@ -649,6 +648,7 @@
             const actions = element('div', 'trash-row-actions'); actions.append(restore, remove);
             row.append(copy, actions); list.append(row);
         }
+        if (previewReady) generateThumbnails();
         if (!list.children.length) list.append(element('p', 'empty-state', 'Trash is empty.'));
     }
     function requestPurge(ids) {
@@ -709,6 +709,7 @@
         for (const button of document.querySelectorAll('[data-template]')) { const selected = button.dataset.template === effect.id && button.dataset.libraryGroup === effect.category; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected)); }
         if ($('edit-image')) $('edit-image').hidden = !imageBytes;
         directEditor?.render();
+        if (previewReady) previewLoop.invalidate();
     }
     function duration() { return Math.max(1, effect.timing['minimum-ticks'] + effect.timing['fade-out-ticks']); }
     function coverageAt(tick) {
@@ -745,42 +746,100 @@
         }
     }
     let directEditor = null;
-    let renderer = null;
+    let renderer = null, previewLoop = null, previewReady = false, previewInView = true;
+    let previewFit = 1, previewDraws = 0;
     try { renderer = new ShaderRenderer($('preview-canvas')); } catch (error) { $('renderer-error').hidden = false; $('renderer-error').textContent = error.message; }
-    function previewFrame(time) {
-        if (lastFrame && playing && !document.hidden) { playTick += Math.min((time - lastFrame) / 50, 2); if (playTick > duration()) { if ($('loop').checked) playTick %= duration(); else { playTick = duration(); playing = false; sync(); } } }
-        lastFrame = time;
-        const raw = coverageAt(playTick), value = Math.abs(raw), transition = Math.sign(raw) * value * value * (3 - 2 * value), opacity = Math.abs(transition);
-        if (renderer && !document.hidden) renderer.draw(effect, playTick / 20, transition);
-        const phase = playTick < effect.timing['fade-in-ticks'] ? 'FADE IN' : playTick < effect.timing['minimum-ticks'] ? 'HOLD' : 'FADE OUT'; $('stage-phase').textContent = phase;
-        const caption = $('caption-preview'), layout = effect.elements;
-        const delay = Math.max(.12, layout['image-delay']), t = Math.max(0, Math.min(1, (opacity - delay) / (1 - delay))), entrance = t * t * (3 - 2 * t);
-        caption.hidden = !effect.captions.enabled; caption.style.opacity = String(layout['text-animation'] === 'none' ? 1 : entrance);
-        caption.style.inset = '0'; caption.style.transform = 'none';
-        const fit = $('stage').clientWidth / 640;
-        const direction = { 'slide-up':[0,30], 'slide-down':[0,-30], 'slide-left':[-40,0], 'slide-right':[40,0] }[layout['text-animation']] || [0,0];
-        const grow = layout['text-animation'] === 'grow' ? 1 - Math.pow(1-entrance,3) : 1;
-        for (const [kind, definition] of Object.entries(core.captionLines)) {
-            const line = $('preview-'+kind), anchor = core.elementAnchor(layout,kind);
-            line.style.position = 'absolute'; line.style.left = anchor.x*100+'%'; line.style.right = 'auto';
-            line.style.width = 'max-content'; line.style.top = anchor.y*100+'%'; line.style.margin = '0';
-            line.style.fontSize = definition.size * fit+'px'; line.style.lineHeight = '1.3'; line.style.transformOrigin = '50% 0';
-            const scale = layout['text-scale'] * layout[kind+'-scale'] * grow;
-            line.style.transform = `translateX(-50%) translate(${direction[0]*(1-entrance)*fit}px,${direction[1]*(1-entrance)*fit}px) scale(${layout['text-stretch-x']*layout[kind+'-stretch-x']*scale},${layout['text-stretch-y']*layout[kind+'-stretch-y']*scale})`;
+    function previewFrame(time,elapsed,changed) {
+        if (playing) {
+            playTick += elapsed / 50;
+            if (playTick > duration()) {
+                if ($('loop').checked) playTick %= duration();
+                else { playTick = duration(); playing = false; sync(); }
+            }
         }
-        for (const kind of Object.keys(core.captionLines)) $('preview-'+kind).style.color = effect.captions[kind+'-color'];
-        const captionText = value => value.replace(/\{effect\}/g, effect.name).replace(/\{world\}/g, 'world');
-        $('preview-title').textContent = captionText(effect.captions.title); $('preview-subtitle').textContent = captionText(effect.captions.subtitle); $('preview-detail').textContent = captionText(effect.captions['preview-detail']);
-        $('game-hud').hidden = effect.presentation['hide-hud']; $('game-hands').hidden = !effect.presentation['show-hands'];
-        const seconds = playTick / 20; $('time-label').textContent = `00:${seconds.toFixed(1).padStart(4, '0')}`; if (document.activeElement !== $('timeline')) $('timeline').value = Math.round(playTick / duration() * 1000);
-        directEditor?.render();
-        requestAnimationFrame(previewFrame);
+        const raw = coverageAt(playTick), value = Math.abs(raw), transition = Math.sign(raw)*value*value*(3-2*value), opacity = Math.abs(transition);
+        if (renderer) renderer.draw(effect,playTick/20,transition);
+        $('preview-canvas').dataset.renderCount = String(++previewDraws);
+        const phase = playTick < effect.timing['fade-in-ticks'] ? 'FADE IN' : playTick < effect.timing['minimum-ticks'] ? 'HOLD' : 'FADE OUT';
+        if ($('stage-phase').textContent !== phase) $('stage-phase').textContent = phase;
+        const caption = $('caption-preview'), layout = effect.elements;
+        const delay = Math.max(.12,layout['image-delay']), t = Math.max(0,Math.min(1,(opacity-delay)/(1-delay))), entrance = t*t*(3-2*t);
+        if (changed) {
+            previewFit = $('stage').clientWidth/640;
+            caption.hidden = !effect.captions.enabled; caption.style.inset = '0'; caption.style.transform = 'none'; caption.style.opacity = '1';
+            const captionText = text => text.replace(/\{effect\}/g,effect.name).replace(/\{world\}/g,'world');
+            for (const [kind,definition] of Object.entries(core.captionLines)) {
+                const line = $('preview-'+kind), anchor = core.elementAnchor(layout,kind);
+                line.style.position = 'absolute'; line.style.left = anchor.x*100+'%'; line.style.right = 'auto';
+                line.style.width = 'max-content'; line.style.top = anchor.y*100+'%'; line.style.margin = '0';
+                line.style.fontSize = definition.size*previewFit+'px'; line.style.lineHeight = '1.3'; line.style.transformOrigin = '50% 0';
+                line.style.color = effect.captions[kind+'-color']; line.textContent = captionText(effect.captions[definition.key]);
+            }
+            $('game-hud').hidden = effect.presentation['hide-hud']; $('game-hands').hidden = !effect.presentation['show-hands'];
+            directEditor?.render();
+        }
+        for (const kind of Object.keys(core.captionLines)) {
+            const line = $('preview-'+kind), animation = layout[kind+'-animation'];
+            const direction = {'slide-up':[0,30],'slide-down':[0,-30],'slide-left':[-40,0],'slide-right':[40,0]}[animation] || [0,0];
+            const grow = animation === 'grow' ? 1-Math.pow(1-entrance,3) : 1;
+            const scale = layout['text-scale']*layout[kind+'-scale']*grow;
+            const alpha = String(animation === 'none' ? 1 : entrance);
+            const transform = `translateX(-50%) translate(${direction[0]*(1-entrance)*previewFit}px,${direction[1]*(1-entrance)*previewFit}px) scale(${layout['text-stretch-x']*layout[kind+'-stretch-x']*scale},${layout['text-stretch-y']*layout[kind+'-stretch-y']*scale})`;
+            if (line.style.opacity !== alpha) line.style.opacity = alpha;
+            if (line.style.transform !== transform) line.style.transform = transform;
+        }
+        const seconds = playTick/20, label = `00:${seconds.toFixed(1).padStart(4,'0')}`;
+        if ($('time-label').textContent !== label) $('time-label').textContent = label;
+        if (document.activeElement !== $('timeline')) $('timeline').value = Math.round(playTick/duration()*1000);
+    }
+    previewLoop = window.FrameStudioPreviewLoop.create({fps:30,playing:()=>playing,
+        visible:()=>previewReady && !document.hidden && previewInView,render:previewFrame});
+    function sizePreview() {
+        const stage = $('stage'), canvas = $('preview-canvas'), ratio = Math.min(devicePixelRatio || 1,1.5);
+        const width = Math.max(1,Math.min(960,Math.round(stage.clientWidth*ratio)));
+        const height = Math.max(1,Math.round(width*stage.clientHeight/Math.max(1,stage.clientWidth)));
+        if (canvas.width !== width || canvas.height !== height) { canvas.width=width;canvas.height=height; }
+        if (previewReady) previewLoop.invalidate();
+    }
+    document.addEventListener('visibilitychange',()=>{if(document.hidden) previewLoop.suspend();else {previewLoop.invalidate();generateThumbnails();}});
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizePreview).observe($('stage'));
+    else window.addEventListener('resize',sizePreview);
+    if (typeof IntersectionObserver !== 'undefined') new IntersectionObserver(entries=>{
+        previewInView = entries[0].isIntersecting;
+        if (previewInView) previewLoop.invalidate(); else previewLoop.suspend();
+    }).observe($('stage'));
+    let thumbnailsRunning = false;
+    function pendingThumbnails() {
+        const wanted = new Set([...document.querySelectorAll('.template-card[data-template]')].map(button=>{
+            const saved=activeCategory===core.categories[2]?libraryEntries().get(button.dataset.template):null;
+            return saved?.image?null:saved?.effect.template || button.dataset.template;
+        }));
+        return core.catalog.filter(item=>wanted.has(item.id)&&!thumbs.has(item.id));
     }
     async function generateThumbnails() {
-        const canvas = element('canvas'); canvas.width = 160; canvas.height = 90; let thumbnails;
-        try { thumbnails = new ShaderRenderer(canvas); } catch { return; }
-        for (const template of core.catalog) { if (template.image) { const image = new Image(); image.src = template.image; try { await image.decode(); thumbnails.setImage(image); } catch { thumbnails.setImage(null); } } else thumbnails.setImage(null); thumbnails.draw(core.createEffect(template.id), 2.5, 1); const url = canvas.toDataURL('image/png'); thumbs.set(template.id, url); const img = document.querySelector(`[data-template="${template.id}"] .template-thumb`); if (img && activeCategory !== core.categories[2]) img.src = url; await new Promise(resolve => requestAnimationFrame(resolve)); }
-        thumbnails.gl.getExtension('WEBGL_lose_context')?.loseContext();
+        if (!previewReady || document.hidden || thumbnailsRunning) return;
+        const missing = pendingThumbnails(), category=activeCategory;
+        if (!missing.length) return;
+        thumbnailsRunning = true;
+        const canvas = element('canvas'); canvas.width=160;canvas.height=90;let thumbnails,failed=false;
+        try {
+            thumbnails = new ShaderRenderer(canvas);
+            for (const template of missing) {
+                if (document.hidden || category!==activeCategory) break;
+                if (template.image) { const image = new Image(); image.src=template.image; try {await image.decode();thumbnails.setImage(image);} catch {thumbnails.setImage(null);} }
+                else thumbnails.setImage(null);
+                thumbnails.draw(core.createEffect(template.id),2.5,1);
+                const url=canvas.toDataURL('image/png'); thumbs.set(template.id,url);
+                for (const button of document.querySelectorAll('.template-card[data-template]')) {
+                    const saved=activeCategory===core.categories[2]?libraryEntries().get(button.dataset.template):null;
+                    if (!saved?.image && (saved?.effect.template || button.dataset.template)===template.id) button.querySelector('.template-thumb').src=url;
+                }
+                await new Promise(resolve=>setTimeout(resolve,50));
+            }
+        } catch {failed=true;} finally {
+            thumbnails?.gl.getExtension('WEBGL_lose_context')?.loseContext(); thumbnailsRunning=false;
+            if (!failed && pendingThumbnails().length && !document.hidden) setTimeout(generateThumbnails,100);
+        }
     }
     function download(bytes, filename, type) { const url = URL.createObjectURL(new Blob([bytes], { type })), anchor = element('a'); anchor.href = url; anchor.download = filename; document.body.append(anchor); anchor.click(); anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000); }
     function effectArchive() {
@@ -889,8 +948,8 @@
     $('purge-dialog').addEventListener('cancel', event => { if (libraryBusy) event.preventDefault(); else pendingPurge = []; });
     $('category-filter').addEventListener('change', () => { activeCategory = $('category-filter').value; renderCatalog(); });
     $('undo-button').addEventListener('click', () => historyStep(false)); $('redo-button').addEventListener('click', () => historyStep(true));
-    $('play-button').addEventListener('click', () => { playing = !playing; if (playing && playTick >= duration()) playTick = 0; sync(); }); $('restart-button').addEventListener('click', () => { playTick = 0; });
-    $('timeline').addEventListener('input', () => { playTick = Number($('timeline').value) / 1000 * duration(); });
+    $('play-button').addEventListener('click', () => { playing = !playing; if (playing && playTick >= duration()) playTick = 0; sync(); }); $('restart-button').addEventListener('click', () => { playTick = 0; previewLoop.invalidate(); });
+    $('timeline').addEventListener('input', () => { playTick = Number($('timeline').value) / 1000 * duration(); previewLoop.invalidate(); });
     $('import-button').addEventListener('click', () => $('import-file').click()); $('import-file').addEventListener('change', () => importFile($('import-file').files[0])); $('image-file').addEventListener('change', () => uploadImage($('image-file').files[0]));
     $('server-import-button').addEventListener('click', importToServer);
     $('close-connect').addEventListener('click', () => $('connect-dialog').close());
@@ -955,7 +1014,7 @@
         if (effect.appearance.image && !imageBytes) { const preset = core.catalog.find(item => item.id === effect.id); if (preset?.image) { try { await setImage(new Uint8Array(await (await fetch(preset.image)).arrayBuffer())); } catch { toast('Preset image could not load. Choose the matching PNG.', true); } } }
         activeCategory = effect.category;
         if (effect.category === core.categories[2]) await save();
-        renderSettings(); renderCatalog(); sync(); requestAnimationFrame(previewFrame); generateThumbnails();
+        renderSettings(); renderCatalog(); sync(); previewReady=true; sizePreview(); previewLoop.invalidate(); generateThumbnails();
     }
     start().then(connectServer);
 })();
