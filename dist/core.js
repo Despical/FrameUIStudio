@@ -83,17 +83,17 @@
         function block(paths, reason) { for (const path of paths) if (!disabled[path]) disabled[path] = reason; }
         if (!template) block(['appearance.palette'], 'Palette mode only affects Shader template backgrounds. Other layouts use their colors directly.');
         if (!(mapped || !template && !none)) block(['appearance.background'], none ? 'Background is None, so no base background color is drawn.' : 'Choose Custom colors to edit the shader background color.');
-        if (!(mapped || overlay || !none && !template && e.background !== 'solid' || !template && effect.captions.enabled && effect.captions.title.trim())) {
-            block(['appearance.primary'], template ? 'Primary is unused with the Original shader palette and no loading indicator or decoration. Choose Custom colors or add an element that uses it.' : 'No visible title, indicator, decoration or background element uses the primary color.');
+        if (!(mapped || overlay || !none && !template && e.background !== 'solid')) {
+            block(['appearance.primary'], template ? 'Primary is unused with the Original shader palette and no loading indicator or decoration. Choose Custom colors or add an element that uses it.' : 'No indicator, decoration or background element uses the primary color.');
         }
-        if (!(mapped || !template && effect.captions.enabled && effect.captions.subtitle.trim())) {
-            block(['appearance.secondary'], 'Accent is unused here. It colors the subtitle on composed screens, or the shader when Custom colors is selected.');
+        if (!mapped) {
+            block(['appearance.secondary'], 'Accent only affects Shader template backgrounds with Custom colors selected. Caption colors are set in their own menus.');
         }
         if (!template) block(['appearance.intensity'], 'Brightness adjusts the Shader template background. This background layout does not use that setting.');
         if (none || e.background === 'solid') {
             if (!overlay && !(hasImage && a['image-motion'] === 'panorama')) block(['appearance.speed'], 'There is no moving background, indicator, decoration or panorama image using animation speed.');
         }
-        if (!effect.captions.enabled) block(['captions.title', 'captions.subtitle', 'captions.join-detail', 'captions.teleport-detail', 'captions.preview-detail', 'elements.text-x', 'elements.text-y', 'elements.text-scale', 'elements.text-animation'], 'Show captions is off. Enable it to edit the on-screen text and its placement.');
+        if (!effect.captions.enabled) block(['captions.title-color', 'captions.subtitle-color', 'captions.detail-color', 'captions.title', 'captions.subtitle', 'captions.join-detail', 'captions.teleport-detail', 'captions.preview-detail', 'elements.text-x', 'elements.text-y', 'elements.text-scale', 'elements.text-animation'], 'Show captions is off. Enable it to edit the on-screen text and its placement.');
         if (!hasImage) block(['appearance.image-fit', 'appearance.image-opacity', 'appearance.image-motion', 'elements.image-scale', 'elements.image-x', 'elements.image-y', 'elements.image-animation', 'elements.image-delay'], 'Add an image in Design before adjusting its appearance, placement or movement.');
         if (e['image-animation'] === 'none') block(['elements.image-delay'], 'Image entrance is None (instant), so there is no entrance animation to delay.');
         if (effect.timing['fade-in-ticks'] === 0) block(['elements.image-delay'], 'Fade in is zero seconds, so there is no entrance phase to delay.');
@@ -124,7 +124,7 @@
             id: template.id, name: template.name, category: template.category, template: template.id,
             enabled: true, weight: 1, priority: 0, 'play-on': [],
             timing: { 'fade-in-ticks': template.fadeIn, 'minimum-ticks': template.minimum, 'maximum-ticks': template.id === 'loading' ? Math.max(template.minimum, 100 - template.fadeOut) : template.minimum, 'fade-out-ticks': template.fadeOut },
-            captions: { enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
+            captions: { 'title-color':'#f1f4fa', 'subtitle-color':'#8595ad', 'detail-color':'#8595ad', enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
             presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
             appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1, 'image-motion': 'still', 'title-motion': 'still' },
             elements: { 'title-offset-x': 0, 'title-offset-y': 0, 'title-scale': 1, 'title-stretch-x': 1, 'title-stretch-y': 1, 'subtitle-offset-x': 0, 'subtitle-offset-y': 0, 'subtitle-scale': 1, 'subtitle-stretch-x': 1, 'subtitle-stretch-y': 1, 'detail-offset-x': 0, 'detail-offset-y': 0, 'detail-scale': 1, 'detail-stretch-x': 1, 'detail-stretch-y': 1, background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1, 'image-stretch-x': 1, 'image-stretch-y': 1, 'text-stretch-x': 1, 'text-stretch-y': 1 },
@@ -146,6 +146,13 @@
         const template = input.template || input.id || 'aurora';
         if (!catalog.some(entry => entry.id === template && !entry.definition)) throw new Error(`Unknown template: ${template}. Choose one of the 50 built-in templates.`);
         const result = merge(createEffect(template), input);
+        // Resolve legacy palette-linked caption colors once; subsequent palette edits are independent.
+        const templateBackground = result.elements.background === 'template';
+        const legacyGrow = result.appearance['title-motion'] === 'grow' && ['title','subtitle','detail'].every(kind =>
+            ['offset-x','offset-y'].every(key => result.elements[kind+'-'+key] === 0) && ['scale','stretch-x','stretch-y'].every(key => result.elements[kind+'-'+key] === 1));
+        const defaults = {'title-color':legacyGrow?'#e8efe5':templateBackground?'#f1f4fa':result.appearance.primary,
+            'subtitle-color':templateBackground?'#8595ad':result.appearance.secondary,'detail-color':'#8595ad'};
+        for (const [key,value] of Object.entries(defaults)) if (!Object.hasOwn(input.captions || {},key)) result.captions[key] = value;
         result.category = categoryFor(result.id, result.category);
         if (!Array.isArray(result['play-on'])) throw new Error('Automatic playback must be a list.');
         result['play-on'] = result['play-on'].map(value => typeof value === 'string' ? value.toLowerCase().replaceAll('_', '-') : value);
@@ -178,6 +185,7 @@
         if (t['minimum-ticks'] < t['fade-in-ticks']) fail('Minimum duration must be at least the fade-in duration.');
         if (t['maximum-ticks'] < t['minimum-ticks']) fail('Maximum duration must be at least the minimum duration.');
         for (const key of ['title', 'subtitle', 'join-detail', 'teleport-detail', 'preview-detail']) string(effect.captions[key], `Caption ${key}`, key === 'title' ? 64 : key === 'subtitle' ? 96 : 128);
+        for (const key of ['title-color','subtitle-color','detail-color']) if (!/^#[0-9a-f]{6}$/i.test(effect.captions[key])) fail(`Caption ${key} must be a six-digit hexadecimal color.`);
         if (typeof effect.captions.enabled !== 'boolean') fail('Captions enabled must be true or false.');
         for (const [key, value] of Object.entries(effect.presentation)) if (typeof value !== 'boolean') fail(`${key} must be true or false.`);
         if (effect.presentation['show-hands'] && effect.presentation['hide-hud']) fail('Show hands requires hide HUD to be disabled.');

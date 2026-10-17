@@ -321,7 +321,7 @@ test('transparent backgrounds disable only colors with no visible consumers', ()
     const original = core.clone(effect);
     let disabled = core.disabledSettings(effect, false);
     assert.ok(disabled['appearance.background']); assert.ok(disabled['appearance.palette']);
-    assert.equal(disabled['appearance.primary'], undefined); assert.equal(disabled['appearance.secondary'], undefined);
+    assert.ok(disabled['appearance.primary']); assert.ok(disabled['appearance.secondary']);
     assert.deepEqual(effect, original);
     effect.captions.enabled = false;
     disabled = core.disabledSettings(effect, false);
@@ -493,4 +493,29 @@ test('caption resizing keeps a readable minimum on both axes and preserves resiz
         assert.equal(moved[kind+'-scale'],e[kind+'-scale']);
         assert.equal(moved[kind+'-stretch-x'],e[kind+'-stretch-x']);
     }
+});
+
+
+test('each caption color is independent of other captions and palette edits through export', async () => {
+    const effect = core.createEffect('frameui');
+    Object.assign(effect.captions,{'title-color':'#ff3355','subtitle-color':'#33ff88','detail-color':'#5588ff'});
+    const colors = core.clone(effect.captions);
+    effect.appearance.primary = '#000000'; effect.appearance.secondary = '#ffffff'; effect.elements.background = 'none';
+    assert.deepEqual(effect.captions,colors);
+    assert.deepEqual(core.fromYaml(core.toYaml(effect)).captions,colors);
+    const zip = core.zip({'effects/colors.yml':core.toYaml(effect)}), entries = await core.unzip(zip);
+    assert.deepEqual(core.fromYaml(core.decoder.decode(entries['effects/colors.yml'])).captions,colors);
+    for (const key of ['title-color','subtitle-color','detail-color']) {
+        const bad=core.clone(effect); bad.captions[key]='red'; assert.throws(()=>core.validate(bad));
+    }
+});
+
+test('old definitions capture their existing caption colors once without palette coupling', () => {
+    const old={id:'my-colors',template:'aurora',elements:{background:'solid'},appearance:{primary:'#123456',secondary:'#654321'}};
+    const effect=core.normalize(old);
+    assert.equal(effect.captions['title-color'],'#123456'); assert.equal(effect.captions['subtitle-color'],'#654321');
+    assert.equal(effect.captions['detail-color'],'#8595ad');
+    effect.appearance.primary='#ff0000'; assert.equal(core.normalize(effect).captions['title-color'],'#123456');
+    assert.equal(core.normalize({template:'aurora'}).captions['title-color'],'#f1f4fa');
+    assert.equal(core.normalize({template:'aurora',appearance:{'title-motion':'grow'}}).captions['title-color'],'#e8efe5');
 });

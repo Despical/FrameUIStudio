@@ -479,3 +479,11 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .component-back:hover{color:#bafff2}
 [data-caption-entry]{cursor:text}
 .caption-content{padding-top:20px}
+
+.inspector-heading.component-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.component-heading h2{margin:0;min-width:0}
+.component-heading .component-back{flex-shrink:0;margin:0 -6px 0 0}
+
+.caption-color .color-well{display:grid;grid-template-columns:36px minmax(0,1fr);align-items:center;gap:12px;padding:6px}
+#settings-component .caption-color input[type=color]{width:36px;height:36px}
+#settings-component .caption-color input[type=text]{height:36px;padding:0;border:0;border-radius:0;font:14px Consolas,monospace;text-align:left}

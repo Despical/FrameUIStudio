@@ -93,6 +93,9 @@
     async function restore(state) { const kind = selectedComponent, next = core.clone(state.effect); await setImage(state.image); effect = next; activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); if (kind) directEditor.select(kind); scheduleSave(); }
     async function historyStep(isRedo) { const source = isRedo ? redo : undo, destination = isRedo ? undo : redo; if (!source.length) return; const target = source.pop(); destination.push(snapshot()); await restore(target); }
     const FIELD_HELP = {
+        'captions.title-color':['Color of the title in Studio and Minecraft.','Changes only the title, independently of the background palette and other caption lines.'],
+        'captions.subtitle-color':['Color of the subtitle in Studio and Minecraft.','Changes only the subtitle, independently of the background palette and other caption lines.'],
+        'captions.detail-color':['Color of the extra caption line in Studio and Minecraft.','Applies to its Joining, Teleporting and Preview text. Other caption lines keep their own colors.'],
         'canvas.x':['Horizontal position of the selected component’s left edge, as a percentage of the screen width.','Values outside 0 to 100 place it partly or fully off screen.'],
         'canvas.y':['Vertical position of the selected component’s top edge, as a percentage of the screen height.','Values outside 0 to 100 place it partly or fully off screen.'],
         'canvas.width':['Width as a percentage of the screen width.','Resizes this component while keeping its left edge fixed.'],
@@ -108,8 +111,8 @@
         'captions.preview-detail': ['Extra text for manual previews.', 'Appears as the smaller third line in Studio and when you run /frameui preview. It is not the join or teleport message.'],
         'elements.background': ['Choose what sits behind the screen elements.', 'Changes the effect background. None leaves the game visible behind your image, captions and indicator.'],
         'appearance.background': ['The base color in your custom palette.', 'Used directly by composed backgrounds, or by Shader template backgrounds when Custom colors is selected.'],
-        'appearance.primary': ['The main color in your custom palette.', 'Colors the main visual elements; composed screens also use it for the title.'],
-        'appearance.secondary': ['The accent color in your custom palette.', 'Adds secondary tones; composed screens also use it for the subtitle.'],
+        'appearance.primary': ['The main color in your custom palette.', 'Colors composed backgrounds, loading indicators and ambient decoration. Caption colors are set in their own menus.'],
+        'appearance.secondary': ['The accent color in your custom palette.', 'Adds secondary tones to Shader template backgrounds with Custom colors selected. Caption colors are set in their own menus.'],
         'appearance.intensity': ['Adjust the brightness of the effect.', 'Changes the rendered effect, not how long it plays.'],
         'appearance.speed': ['Adjust the speed of animated movement.', 'Changes motion inside the effect without changing its total duration.'],
         'appearance.image-fit': ['Choose how your image fits its available area.', 'Cover fills the area and may crop edges. Contain keeps the entire image visible.'],
@@ -412,6 +415,16 @@
             input.value = Number((rect[input.dataset.geometry]*100).toFixed(2));
         }
     }
+    function captionColor(kind) {
+        const path = 'captions.'+kind+'-color', wrap = element('div','field color-field caption-color'), well = element('span','color-well');
+        const picker = element('input'), hex = element('input');
+        picker.type = 'color'; picker.dataset.path = path; picker.value = pathGet(path); picker.setAttribute('aria-label','Text color');
+        hex.type = 'text'; hex.dataset.path = path; hex.value = pathGet(path); hex.maxLength = 7; hex.setAttribute('aria-label','Text hex color');
+        picker.addEventListener('input',()=>mutate(path,picker.value));
+        hex.addEventListener('input',()=>{if(/^#[0-9a-f]{6}$/i.test(hex.value)) mutate(path,hex.value);});
+        hex.addEventListener('change',()=>{hex.value=pathGet(path);sync();});
+        well.append(picker,hex); wrap.append(fieldHeading('Color','',path,'Text color'),well); return wrap;
+    }
     function renderComponent(kind) {
         const pane = $('settings-component'); pane.replaceChildren();
         const layout = section('Position & size'), fields = {};
@@ -444,6 +457,7 @@
         pane.append(layout);
         if (core.captionLines[kind]) {
             const content = element('section','settings-section caption-content');
+            content.append(captionColor(kind));
             if (kind==='detail') {
                 for (const [key,label] of [['join-detail','Joining'],['teleport-detail','Teleporting'],['preview-detail','Preview']]) content.append(field(label,'captions.'+key,{maxLength:128,component:true}));
             } else content.append(field(componentLabels[kind],'captions.'+kind,{maxLength:kind==='title'?64:96,component:true}));
@@ -758,7 +772,7 @@
             const scale = layout['text-scale'] * layout[kind+'-scale'] * grow;
             line.style.transform = `translateX(-50%) translate(${direction[0]*(1-entrance)*fit}px,${direction[1]*(1-entrance)*fit}px) scale(${layout['text-stretch-x']*layout[kind+'-stretch-x']*scale},${layout['text-stretch-y']*layout[kind+'-stretch-y']*scale})`;
         }
-        $('preview-title').style.color = layout.background === 'template' ? '#f1f4fa' : effect.appearance.primary; $('preview-subtitle').style.color = layout.background === 'template' ? '#8595ad' : effect.appearance.secondary;
+        for (const kind of Object.keys(core.captionLines)) $('preview-'+kind).style.color = effect.captions[kind+'-color'];
         const captionText = value => value.replace(/\{effect\}/g, effect.name).replace(/\{world\}/g, 'world');
         $('preview-title').textContent = captionText(effect.captions.title); $('preview-subtitle').textContent = captionText(effect.captions.subtitle); $('preview-detail').textContent = captionText(effect.captions['preview-detail']);
         $('game-hud').hidden = effect.presentation['hide-hud']; $('game-hands').hidden = !effect.presentation['show-hands'];

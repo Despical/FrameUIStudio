@@ -24,6 +24,9 @@
         "fade-out-ticks": 16
       },
       "captions": {
+        "title-color": "#D4C6A2",
+        "subtitle-color": "#E8EFE5",
+        "detail-color": "#8595ad",
         "enabled": true,
         "title": "",
         "subtitle": "YOUR WORLD. YOUR STYLE.",
@@ -153,6 +156,9 @@
         "fade-out-ticks": 16
       },
       "captions": {
+        "title-color": "#F8B3CB",
+        "subtitle-color": "#FFF1DD",
+        "detail-color": "#8595ad",
         "enabled": true,
         "title": "YOUR NEXT ADVENTURE",
         "subtitle": "A new world is waiting",
@@ -282,6 +288,9 @@
         "fade-out-ticks": 12
       },
       "captions": {
+        "title-color": "#A3D9BE",
+        "subtitle-color": "#D4DDD8",
+        "detail-color": "#8595ad",
         "enabled": true,
         "title": "YOUR SERVER",
         "subtitle": "Your next adventure is almost ready",
@@ -410,6 +419,9 @@
         "fade-out-ticks": 16
       },
       "captions": {
+        "title-color": "#FFB35B",
+        "subtitle-color": "#F5CCAB",
+        "detail-color": "#8595ad",
         "enabled": true,
         "title": "YOUR NEXT ADVENTURE",
         "subtitle": "A new world is waiting",
@@ -539,6 +551,9 @@
         "fade-out-ticks": 16
       },
       "captions": {
+        "title-color": "#C0A0FF",
+        "subtitle-color": "#DAD0E8",
+        "detail-color": "#8595ad",
         "enabled": true,
         "title": "YOUR SERVER",
         "subtitle": "Your next adventure is almost ready",
@@ -667,6 +682,9 @@
         "fade-out-ticks": 20
       },
       "captions": {
+        "title-color": "#f1f4fa",
+        "subtitle-color": "#8595ad",
+        "detail-color": "#8595ad",
         "enabled": false,
         "title": "Black Fade",
         "subtitle": "Searching the horizon",
@@ -796,6 +814,9 @@
         "fade-out-ticks": 12
       },
       "captions": {
+        "title-color": "#ED93BA",
+        "subtitle-color": "#D7C4D1",
+        "detail-color": "#8595ad",
         "enabled": true,
         "title": "YOUR SERVER",
         "subtitle": "Your next adventure is almost ready",
@@ -924,6 +945,9 @@
         "fade-out-ticks": 14
       },
       "captions": {
+        "title-color": "#65C7F7",
+        "subtitle-color": "#B8D5E8",
+        "detail-color": "#8595ad",
         "enabled": true,
         "title": "YOUR SERVER",
         "subtitle": "Your next adventure is almost ready",
@@ -1052,6 +1076,9 @@
         "fade-out-ticks": 12
       },
       "captions": {
+        "title-color": "#EDAA75",
+        "subtitle-color": "#E2D4C5",
+        "detail-color": "#8595ad",
         "enabled": true,
         "title": "YOUR SERVER",
         "subtitle": "Your next adventure is almost ready",
@@ -1180,6 +1207,9 @@
         "fade-out-ticks": 16
       },
       "captions": {
+        "title-color": "#75EDB7",
+        "subtitle-color": "#8BB8A2",
+        "detail-color": "#8595ad",
         "enabled": true,
         "title": "INITIALIZING",
         "subtitle": "Preparing the next session",
