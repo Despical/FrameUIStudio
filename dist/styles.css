@@ -425,12 +425,14 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 
 .field-heading,.switch-heading{display:flex;align-items:center;gap:8px;min-width:0}
 .field-heading{margin-bottom:7px}
-.field-heading .field-label{margin:0;flex:1;gap:8px;min-width:0}
+.field-heading .field-label{margin:0;flex:0 1 auto;gap:8px;min-width:0}
 .switch-heading>label{cursor:pointer}
-.field-info{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:24px;height:24px;padding:0;border:1px solid #43566d;border-radius:50%;background:#1c2b3b;color:#adc7dd;font:600 13px/1 Georgia,serif;cursor:help;transition:color .15s ease,border-color .15s ease,background-color .15s ease}
+.field-info{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:24px;height:24px;padding:0;border:1px solid #43566d;border-radius:50%;background:#1c2b3b;color:#adc7dd;font:600 12px/1 "Segoe UI",sans-serif;font-style:normal;cursor:default;transition:color .15s ease,border-color .15s ease,background-color .15s ease}
 .field-info:hover,.field-info[aria-expanded=true]{color:#a3fff1;border-color:#66b9ad;background:#1c3e3d}
 .field-info:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .field-help-popup{position:fixed;z-index:100;width:min(320px,calc(100vw - 24px));padding:15px 17px;border:1px solid #486078;border-radius:9px;background:#182535;box-shadow:0 12px 35px #0008;color:#d7e4ef;pointer-events:none;overflow-wrap:anywhere}
 .field-help-popup strong{display:block;font-size:14px;line-height:1.5;margin-bottom:8px;color:#f0f7ff}
 .field-help-popup p{font-size:13px;line-height:1.65;margin:0}
 .field-help-popup .help-location{margin-top:9px;padding-top:9px;border-top:1px solid #34495e;color:#adbed1}
+
+.field-heading>output{margin-left:auto;color:#c0d1de;font-size:13px;font-variant-numeric:tabular-nums}

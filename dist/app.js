@@ -203,7 +203,7 @@
         if (options.imageDelay) input.dataset.unit = 'image-delay-seconds';
         if (options.placeholder) input.placeholder = options.placeholder;
         for (const key of ['min', 'max', 'step', 'maxLength']) if (options[key] !== undefined) input[key] = options[key];
-        if (options.type === 'range') { const output = element('output'); output.htmlFor = input.id; output.dataset.output = path; caption.append(output); }
+        if (options.type === 'range') { const output = element('output'); output.htmlFor = input.id; output.dataset.output = path; heading.append(output); }
         const update = () => {
             const value = options.list ? input.value.split(/[,\n]/).map(item => item.trim()).filter(Boolean) : ['range', 'number'].includes(options.type) ? Number(input.value) : input.value;
             mutate(path, options.seconds ? Math.round(value * 20) : options.imageDelay ? Math.max(0, Math.min(.8, value * 20 / (effect.timing['fade-in-ticks'] || 1))) : value);
@@ -216,7 +216,7 @@
         const row = element('div', 'switch-field'), copy = element('div', 'switch-copy');
         const heading = element('div', 'switch-heading'), caption = element('label', '', label);
         caption.htmlFor = 'field-' + path.replaceAll('.', '-');
-        heading.append(caption, helpButton(path, label)); copy.append(heading);
+        heading.append(caption); copy.append(heading);
         if (note) copy.append(element('small', '', note));
         const slider = element('span', 'switch'), input = element('input');
         input.type = 'checkbox'; input.id = caption.htmlFor; input.checked = pathGet(path); input.dataset.path = path;
