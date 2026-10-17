@@ -939,5 +939,10 @@
         if (effect.category === core.categories[2]) await save();
         renderSettings(); renderCatalog(); sync(); previewReady=true; sizePreview(); previewLoop.invalidate(); generateThumbnails();
     }
-    start().then(connectServer);
+    start().then(connectServer).catch(error => {
+        console.error('Studio startup failed', error);
+        $('renderer-error').textContent = 'Studio could not start. Reload the page; if this continues, update the server plugin and reopen /frameui editor.';
+        $('renderer-error').hidden = false;
+        toast('Studio could not load its required files. Reload the page to retry.', true);
+    });
 })();
