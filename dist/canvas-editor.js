@@ -24,10 +24,12 @@
             name.textContent = labels[kind]; box.append(name);
             box.addEventListener('pointerdown', event => begin(event, kind, ''));
             box.addEventListener('keydown', event => nudge(event, kind));
-            for (const corner of ['nw','ne','sw','se']) {
+            for (const corner of ['nw','n','ne','e','se','s','sw','w']) {
                 const handle = document.createElement('button'); handle.type = 'button';
                 handle.className = 'canvas-handle canvas-handle-' + corner; handle.dataset.corner = corner;
-                handle.setAttribute('aria-label', 'Resize ' + labels[kind].toLowerCase() + ' ' + corner);
+                const sideNames = {n:'top edge',s:'bottom edge',e:'right edge',w:'left edge',nw:'top-left corner',ne:'top-right corner',sw:'bottom-left corner',se:'bottom-right corner'};
+                handle.setAttribute('aria-label', 'Resize ' + labels[kind].toLowerCase() + ' ' + sideNames[corner]);
+                handle.title = corner.length === 2 ? 'Resize proportionally' : corner === 'e' || corner === 'w' ? 'Change width only' : kind === 'progress' ? 'Change thickness only' : 'Change height only';
                 handle.addEventListener('pointerdown', event => begin(event, kind, corner));
                 handle.addEventListener('keydown', event => nudge(event, kind, corner));
                 box.append(handle);
@@ -51,10 +53,10 @@
                 if (!text.trim()) continue;
                 const pixels = size * fit * scale;
                 measure.font = `${key === 'title' ? 500 : 400} ${pixels}px "Segoe UI",sans-serif`;
-                const lineWidth = Math.max(18, measure.measureText(text).width);
-                const x = e['text-x'] * width, y = (e['text-y'] + delta * scale) * height;
+                const lineWidth = Math.max(18, measure.measureText(text).width) * e['text-stretch-x'];
+                const x = e['text-x'] * width, y = (e['text-y'] + delta * scale * e['text-stretch-y']) * height;
                 left = Math.min(left, x - lineWidth / 2); right = Math.max(right, x + lineWidth / 2);
-                top = Math.min(top, y); bottom = Math.max(bottom, y + pixels * 1.3);
+                top = Math.min(top, y); bottom = Math.max(bottom, y + pixels * 1.3 * e['text-stretch-y']);
             }
             return Number.isFinite(left) ? {x: left / width, y: top / height, width: (right-left)/width, height: (bottom-top)/height} : null;
         }
@@ -65,13 +67,13 @@
             if (image && definition.appearance.image) {
                 const ratio = (width / height) / (image.width / image.height);
                 const contain = definition.appearance['image-fit'] === 'contain';
-                const w = (contain ? Math.min(1 / ratio, 1) : Math.max(1 / ratio, 1)) * e['image-scale'];
-                const h = (contain ? Math.min(ratio, 1) : Math.max(ratio, 1)) * e['image-scale'];
+                const w = (contain ? Math.min(1 / ratio, 1) : Math.max(1 / ratio, 1)) * e['image-scale'] * e['image-stretch-x'];
+                const h = (contain ? Math.min(ratio, 1) : Math.max(ratio, 1)) * e['image-scale'] * e['image-stretch-y'];
                 rects.set('image', {x: e['image-x']-w/2, y: e['image-y']-h/2, width:w, height:h});
             }
             if (definition.captions.enabled) { const rect = textRect(definition,width,height); if(rect) rects.set('text',rect); }
             if (e.progress !== 'none') {
-                const h = e.progress === 'ring' ? e['progress-width'] * width / height : Math.max(14, 9 * width / 640 * e['progress-scale']) / height;
+                const h = e.progress === 'ring' ? e['progress-width'] * width / height : Math.max(32, 9 * width / 640 * e['progress-scale']) / height;
                 rects.set('progress', {x:e['progress-x']-e['progress-width']/2,y:e['progress-y']-h/2,width:e['progress-width'],height:h});
             }
             for (const [kind, box] of boxes) {

@@ -443,3 +443,8 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .field.is-disabled .field-info{color:#7e8b9d}
 .field.is-disabled,.segmented.is-disabled{cursor:default}
 .field.is-disabled:focus-visible,.segmented.is-disabled:focus-visible{outline:1px solid #75899f;outline-offset:4px;border-radius:4px}
+
+.canvas-handle-n{left:calc(50% - 6px);top:-6px;cursor:ns-resize}
+.canvas-handle-s{left:calc(50% - 6px);bottom:-6px;cursor:ns-resize}
+.canvas-handle-e{right:-6px;top:calc(50% - 6px);cursor:ew-resize}
+.canvas-handle-w{left:-6px;top:calc(50% - 6px);cursor:ew-resize}

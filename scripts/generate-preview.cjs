@@ -40,6 +40,7 @@ uniform vec4 uPlacement;
 uniform vec4 uIndicator;
 uniform int uDecoration;
 uniform float uProgressScale;
+uniform vec2 uImageStretch;
 vec4 frameTextPlacement(int effect) { return vec4(0.64, 1.0, 0.5, uProgressScale); }
 int frameBackgroundStyle(int effect) { return uBackgroundStyle; }
 int frameDecoration(int effect) { return uDecoration; }
@@ -82,11 +83,13 @@ void main() {
         if (uImageAnimation == 7) offset.x = (1.0 - progress) * 0.35;
         if (uImageAnimation == 8) offset.y = -(1.0 - progress) * 0.24;
         float grow = uImageAnimation == 2 ? max(0.001, 1.0 - pow(1.0 - progress, 3.0)) : 1.0;
-        vec2 point = (sampleUv - uPlacement.xy - offset) / (uPlacement.z * grow) * scale + 0.5;
+        vec2 point = (sampleUv - uPlacement.xy - offset) / (uPlacement.z * grow * uImageStretch) * scale + 0.5;
         if (point.x >= 0.0 && point.x <= 1.0 && point.y >= 0.0 && point.y <= 1.0) {
             vec4 picture = texture2D(uImage, point);
             float reveal = uBackgroundStyle == 6 ? abs(frameLoadingTransition) : effect.a;
-            if (uImageAnimation > 0) {
+            if (uImageAnimation == 9) {
+                reveal = 1.0;
+            } else if (uImageAnimation > 0) {
                 reveal *= uImageAnimation == 1 ? progress : smoothstep(0.0, 0.15, progress);
                 if (uImageAnimation == 5) reveal *= frameCover(uv.x, progress);
                 if (uImageAnimation == 6) reveal *= frameCover(uv.x * 0.65 + uv.y * 0.35, progress);

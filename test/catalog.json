@@ -66,7 +66,11 @@
         "progress-width": 0.28,
         "decoration": "none",
         "text-x": 0.5,
-        "progress-scale": 1
+        "progress-scale": 1,
+        "image-stretch-x": 1,
+        "image-stretch-y": 1,
+        "text-stretch-x": 1,
+        "text-stretch-y": 1
       },
       "filters": {
         "permission": "",
@@ -176,7 +180,11 @@
         "progress-width": 0.16,
         "decoration": "petals",
         "text-x": 0.5,
-        "progress-scale": 1
+        "progress-scale": 1,
+        "image-stretch-x": 1,
+        "image-stretch-y": 1,
+        "text-stretch-x": 1,
+        "text-stretch-y": 1
       },
       "filters": {
         "permission": "",
@@ -286,7 +294,11 @@
         "progress-width": 0.34,
         "decoration": "none",
         "text-x": 0.5,
-        "progress-scale": 1
+        "progress-scale": 1,
+        "image-stretch-x": 1,
+        "image-stretch-y": 1,
+        "text-stretch-x": 1,
+        "text-stretch-y": 1
       },
       "filters": {
         "permission": "",
@@ -395,7 +407,11 @@
         "progress-width": 0.34,
         "decoration": "embers",
         "text-x": 0.5,
-        "progress-scale": 1
+        "progress-scale": 1,
+        "image-stretch-x": 1,
+        "image-stretch-y": 1,
+        "text-stretch-x": 1,
+        "text-stretch-y": 1
       },
       "filters": {
         "permission": "",
@@ -505,7 +521,11 @@
         "progress-width": 0.11,
         "decoration": "none",
         "text-x": 0.5,
-        "progress-scale": 1
+        "progress-scale": 1,
+        "image-stretch-x": 1,
+        "image-stretch-y": 1,
+        "text-stretch-x": 1,
+        "text-stretch-y": 1
       },
       "filters": {
         "permission": "",
@@ -614,7 +634,11 @@
         "progress-width": 0.34,
         "decoration": "none",
         "text-x": 0.5,
-        "progress-scale": 1
+        "progress-scale": 1,
+        "image-stretch-x": 1,
+        "image-stretch-y": 1,
+        "text-stretch-x": 1,
+        "text-stretch-y": 1
       },
       "filters": {
         "permission": "",
@@ -724,7 +748,11 @@
         "progress-width": 0.18,
         "decoration": "pulse",
         "text-x": 0.5,
-        "progress-scale": 1
+        "progress-scale": 1,
+        "image-stretch-x": 1,
+        "image-stretch-y": 1,
+        "text-stretch-x": 1,
+        "text-stretch-y": 1
       },
       "filters": {
         "permission": "",
@@ -833,7 +861,11 @@
         "progress-width": 0.42,
         "decoration": "scan",
         "text-x": 0.5,
-        "progress-scale": 1
+        "progress-scale": 1,
+        "image-stretch-x": 1,
+        "image-stretch-y": 1,
+        "text-stretch-x": 1,
+        "text-stretch-y": 1
       },
       "filters": {
         "permission": "",
@@ -942,7 +974,11 @@
         "progress-width": 0.28,
         "decoration": "none",
         "text-x": 0.5,
-        "progress-scale": 1
+        "progress-scale": 1,
+        "image-stretch-x": 1,
+        "image-stretch-y": 1,
+        "text-stretch-x": 1,
+        "text-stretch-y": 1
       },
       "filters": {
         "permission": "",
@@ -1051,7 +1087,11 @@
         "progress-width": 0.46,
         "decoration": "scan",
         "text-x": 0.5,
-        "progress-scale": 1
+        "progress-scale": 1,
+        "image-stretch-x": 1,
+        "image-stretch-y": 1,
+        "text-stretch-x": 1,
+        "text-stretch-y": 1
       },
       "filters": {
         "permission": "",

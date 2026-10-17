@@ -377,3 +377,23 @@ test('every image slide direction exports alongside instant captions', async () 
         assert.equal(imported.elements['text-animation'], 'none');
     }
 });
+
+test('side handles resize one axis while preserving thickness, scale and the opposite edge', () => {
+    const effect = core.createEffect('aurora'), e = effect.elements;
+    e['progress-width'] = .3; e['progress-scale'] = 1;
+    const p = core.transformElement(e, 'progress', .1, .7, 'e', { x:.35, y:.7, width:.3, height:.03 });
+    assert.equal(p['progress-width'], .4); assert.equal(p['progress-scale'], 1); assert.equal(p['progress-y'], e['progress-y']);
+    const image = core.transformElement(e, 'image', .1, .6, 'e', {x:.4,y:.4,width:.2,height:.2});
+    assert.equal(image['image-stretch-x'], 1.5); assert.equal(image['image-stretch-y'], 1); assert.equal(image['image-scale'], e['image-scale']);
+    const text = core.transformElement(e, 'text', .5, -.1, 'n', {x:.4,y:.4,width:.2,height:.1});
+    assert.equal(text['text-stretch-y'], 2); assert.equal(text['text-stretch-x'], 1); assert.equal(text['text-x'], e['text-x']);
+    const t = core.transformElement(e, 'progress', .6, .03, 's', {x:.35,y:.7,width:.3,height:.03});
+    assert.equal(t['progress-scale'], 2); assert.equal(t['progress-width'], .3);
+});
+
+test('instant images and independent axis dimensions survive portable effect export', async () => {
+    const effect = core.createEffect('aurora');
+    Object.assign(effect.elements, {'image-animation':'none','image-stretch-x':1.8,'image-stretch-y':.7,'text-stretch-x':1.4,'text-stretch-y':.8});
+    const entries = await core.unzip(core.zip({['effects/aurora.yml']:core.toYaml(effect)}));
+    assert.deepEqual(core.fromYaml(core.decoder.decode(entries['effects/aurora.yml'])), effect);
+});

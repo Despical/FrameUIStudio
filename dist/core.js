@@ -95,6 +95,7 @@
         }
         if (!effect.captions.enabled) block(['captions.title', 'captions.subtitle', 'captions.join-detail', 'captions.teleport-detail', 'captions.preview-detail', 'elements.text-x', 'elements.text-y', 'elements.text-scale', 'elements.text-animation'], 'Show captions is off. Enable it to edit the on-screen text and its placement.');
         if (!hasImage) block(['appearance.image-fit', 'appearance.image-opacity', 'appearance.image-motion', 'elements.image-scale', 'elements.image-x', 'elements.image-y', 'elements.image-animation', 'elements.image-delay'], 'Add an image in Design before adjusting its appearance, placement or movement.');
+        if (e['image-animation'] === 'none') block(['elements.image-delay'], 'Image entrance is None (instant), so there is no entrance animation to delay.');
         if (effect.timing['fade-in-ticks'] === 0) block(['elements.image-delay'], 'Fade in is zero seconds, so there is no entrance phase to delay.');
         if (e.progress === 'none') block(['elements.progress-x', 'elements.progress-y', 'elements.progress-width', 'elements.progress-scale'], 'Loading indicator is None. Choose an indicator style to adjust its placement and size.');
         return disabled;
@@ -126,7 +127,7 @@
             captions: { enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
             presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
             appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1, 'image-motion': 'still', 'title-motion': 'still' },
-            elements: { background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1 },
+            elements: { background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1, 'image-stretch-x': 1, 'image-stretch-y': 1, 'text-stretch-x': 1, 'text-stretch-y': 1 },
             filters: { permission: '', 'deny-permissions': [], worlds: { include: [], exclude: [] }, 'source-worlds': { include: [], exclude: [] }, 'addon-targets': { include: [], exclude: [] }, 'game-modes': { include: [], exclude: [] }, 'teleport-causes': [], triggers: [...triggers], distance: { min: 0, max: -1 }, height: { min: -30000000, max: 30000000 }, time: { min: 0, max: 23999 }, weather: [], 'cooldown-ticks': 0 }
         };
     }
@@ -190,13 +191,14 @@
         const e = effect.elements;
         const choice = (key, values) => { if (!values.includes(e[key])) fail(`Invalid element ${key}.`); };
         choice('background', ['template', 'solid', 'split', 'grid', 'terminal', 'pulse', 'none']);
-        choice('image-animation', ['inherit', 'fade', 'grow', 'slide-up', 'slide-left', 'wipe', 'page', 'slide-right', 'slide-down']);
+        choice('image-animation', ['inherit', 'fade', 'grow', 'slide-up', 'slide-left', 'wipe', 'page', 'slide-right', 'slide-down', 'none']);
         choice('text-animation', ['still', 'grow', 'slide-up', 'slide-down', 'slide-left', 'slide-right', 'none']);
         choice('progress', ['none', 'bar', 'segments', 'dots', 'ring']);
         choice('decoration', ['none', 'embers', 'petals', 'scan', 'pulse']);
         for (const key of ['image-x', 'image-y', 'text-x']) number(e[key], key, 0, 1, false);
         for (const key of ['text-y', 'progress-x', 'progress-y']) number(e[key], key, 0.1, 0.9, false);
         number(e['image-scale'], 'Image scale', 0.1, 2, false); number(e['image-delay'], 'Image delay', 0, 0.8, false);
+        for (const key of ['image-stretch-x', 'image-stretch-y', 'text-stretch-x', 'text-stretch-y']) number(e[key], key, .1, 4, false);
         number(e['progress-scale'], 'Indicator scale', 0.5, 3, false);
         number(e['text-scale'], 'Text scale', 0.5, 2, false); number(e['progress-width'], 'Indicator width', 0.08, 0.8, false);
         string(a.image, 'Image path', 180);
@@ -226,6 +228,22 @@
         const xKey = kind + '-x', yKey = kind + '-y';
         const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
         if (!corner) { next[xKey] += dx; next[yKey] += dy; }
+        else if (['n','s','e','w'].includes(corner)) {
+            if (!rect || rect.width <= 0 || rect.height <= 0) throw new Error('Invalid resize bounds.');
+            const horizontal = corner === 'e' || corner === 'w', sign = corner === 'e' || corner === 's' ? 1 : -1;
+            const dimension = horizontal ? rect.width : rect.height, delta = horizontal ? dx : dy;
+            const key = kind === 'progress' ? (horizontal ? 'progress-width' : 'progress-scale') : kind + '-stretch-' + (horizontal ? 'x' : 'y');
+            const min = kind === 'progress' ? (horizontal ? .08 : .5) : .1;
+            const max = kind === 'progress' ? (horizontal ? .8 : 3) : 4;
+            const previous = elements[key] || 1;
+            const ratio = clamp(1 + sign * delta / dimension, min / previous, max / previous);
+            next[key] = previous * ratio;
+            const position = horizontal ? xKey : yKey, start = horizontal ? rect.x : rect.y;
+            const anchor = start + (sign < 0 ? dimension : 0);
+            if (!(kind === 'progress' && !horizontal)) {
+                next[position] = anchor + sign * dimension * ratio / 2 - (start + dimension / 2 - elements[position]) * ratio;
+            }
+        }
         else {
             if (!['nw','ne','sw','se'].includes(corner) || !rect || rect.width <= 0 || rect.height <= 0) throw new Error('Invalid resize handle.');
             const sx = corner.endsWith('e') ? 1 : -1, sy = corner.startsWith('s') ? 1 : -1;
