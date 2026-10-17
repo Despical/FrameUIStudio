@@ -13,14 +13,34 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-function fixture(responses, connected = true) {
-    const calls = [], context = { window: {}, location: new URL(connected ? 'http://localhost/studio/#server='+'a'.repeat(43) : 'https://studio.example/'),
+function fixture(responses, connected = true, address) {
+    const calls = [], context = { window: {}, location: new URL(address || (connected ? 'http://localhost/studio/#server='+'a'.repeat(43) : 'https://studio.example/')),
         document: {querySelectorAll: () => []}, URL, URLSearchParams, Uint8Array,
         fetch: async (url, options) => { calls.push({url:String(url),...options}); return responses.shift(); } };
     vm.runInNewContext(fs.readFileSync(require.resolve('../dist/server-link.js'),'utf8'),context);
     return {api:context.window.FrameStudioServer,calls};
 }
 const response = (json,status=200) => ({ok:status===200,status,json:async()=>json});
+
+test('hosted Studio connects directly to the server endpoint using fragment-only credentials', async () => {
+    const address='https://frameui.despical.dev/?lang=tr#server='+'a'.repeat(43)+'&endpoint='+encodeURIComponent('https://mc.example:8443/studio/');
+    const {api,calls}=fixture([response({player:'Admin'})],true,address);
+    assert.equal(api.available,true); await api.connect();
+    assert.equal(calls[0].url,'https://mc.example:8443/studio/api/session');
+    assert.equal(calls[0].headers.Authorization,'Bearer '+'a'.repeat(43));
+    assert.equal(calls[0].referrerPolicy,'no-referrer'); assert.equal(calls[0].mode,'cors');
+    assert.equal(calls[0].credentials,'omit'); assert.equal(calls[0].redirect,'error');
+});
+
+test('hosted Studio rejects malformed and insecure public endpoints before sending credentials', async () => {
+    for(const endpoint of ['http://public.example/studio/','https://user:password@mc.example/studio/',
+        'https://mc.example/studio/?token=secret','https://mc.example/other/','file:///studio/']) {
+        const {api,calls}=fixture([],true,'https://frameui.despical.dev/#server='+'a'.repeat(43)+'&endpoint='+encodeURIComponent(endpoint));
+        await assert.rejects(api.connect(),/HTTPS|Invalid server/); assert.equal(calls.length,0,endpoint);
+    }
+    const {api,calls}=fixture([response({player:'Admin'})],true,'https://frameui.despical.dev/#server='+'a'.repeat(43)+'&endpoint='+encodeURIComponent('http://127.0.0.1:25645/studio/'));
+    await api.connect(); assert.equal(calls[0].targetAddressSpace,'loopback');
+});
 test('connected library requests keep bearer capabilities out of URLs and bind saves to revisions', async () => {
     const {api,calls}=fixture([response({player:'Admin'}),response({effects:[{id:'custom'}]}),response({revision:'next'}),response({revision:'created'})]);
     await api.connect(); assert.equal((await api.listEffects())[0].id,'custom');

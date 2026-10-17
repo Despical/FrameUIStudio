@@ -62,6 +62,12 @@ The public editor is available at **https://frameui.despical.dev/**. Cloudflare 
 
 The website is independent of the plugin project. Deploying this repository does not publish plugin source code or JARs. Browser storage belongs to each origin: export designs from another hosted copy before moving them to this URL.
 
+## Connect a Minecraft server
+
+Run `/frameui editor` on a FrameUI server and open the personal link. It opens this public website, connects to that server, and enables importing and saving effects. Each player keeps a separate expiring capability; the link's fragment contains the server endpoint and token, and neither is sent to the website host or Google Analytics. Server API calls use the Authorization header with no cookies or referrer.
+
+The server owner must expose the resource-pack host over reachable HTTPS and forward `/studio/` through the same reverse proxy. Set the plugin's `resource-pack.public-url` to that HTTPS pack address and `editor.public-url` to `https://frameui.despical.dev/`. Remote plain HTTP addresses are blocked by browsers; local loopback development may require a browser permission. The server accepts cross-origin API requests only from its configured Studio origin, while preserving player permissions, session expiry and revision checks. Keep personal links private. Clicking **Connect server** retries an existing personal connection if the server becomes available again.
+
 ## Security and support
 
 Report vulnerabilities privately using [SECURITY.md](SECURITY.md). For ordinary bugs, use the issue templates and include the browser, screen size and interface language. Never post a personal `/frameui editor` link, private server address, or exported private artwork in a public issue.

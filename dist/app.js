@@ -825,7 +825,11 @@
         sync();
     }
     async function importToServer() {
-        if (!server.session) { $('connect-dialog').showModal(); return; }
+        if (!server.session) {
+            if (server.available) await connectServer();
+            else $('connect-dialog').showModal();
+            return;
+        }
         if (serverBusy || libraryBusy) return;
         const updating = isServerEffect();
         serverBusy = true; serverStatus(updating ? 'Saving changes to your server…' : 'Importing your effect…'); sync();
@@ -845,7 +849,8 @@
                 remote: true, loaded: true, revision: result.revision, dirty: changed, synced: sent });
             linkedEffectId = id;
             renderCatalog();
-            serverStatus(`${updating ? 'Saved' : 'Imported'} ${id} · Your selected events are active`);
+            serverStatus(updating ? t('Saved {0} · Your selected events are active', id)
+                : t('Imported {0} · Your selected events are active', id));
             toast(updating ? 'Server effect updated.' : 'Effect imported to your server. The resource pack refreshes automatically.');
         } catch (error) { if (error.status === 409 && isServerEffect()) serverEffects.get(effect.id).conflicted = true; serverStatus(error.message, true); toast(error.message, true); }
         finally {
