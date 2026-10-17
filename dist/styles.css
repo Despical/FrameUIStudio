@@ -34,7 +34,6 @@ h1,h2,h3,p{margin:0}
 .catalog-panel{border-right:1px solid var(--border);height:calc(100dvh - 84px);position:sticky;top:0}
 .panel-heading{padding:27px 20px 22px}
 h1{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:20px;letter-spacing:-.4px;font-weight:600}
-h1 span{font-size:14px;display:inline-flex;align-items:center;justify-content:center;min-width:30px;line-height:1.4;background:#1b2635;border-radius:4px;padding:3px 6px;color:var(--muted)}
 .search-field{display:flex;align-items:center;margin:0 17px 12px;gap:8px;border:1px solid var(--border);background:#0d141f;border-radius:6px;padding:9px 10px;color:var(--subtle)}
 .search-field svg{width:15px;height:15px}
 .search-field input{width:100%;background:none;border:0;outline:none;padding:0;color:var(--text);font-size:14px;min-width:0}

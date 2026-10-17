@@ -347,7 +347,7 @@
         animation.append(field('Animation speed', 'appearance.speed', { type: 'range', min: .05, max: 8, step: .05 }), note('Changes the animation movement without changing total duration.'));
         motion.append(animation);
         const entrances = section('Element entrances');
-        entrances.append(field('Text entrance', 'elements.text-animation', { options: [['still','Fade'],['grow','Grow'],['slide-up','Slide up']] }), field('Image entrance', 'elements.image-animation', { options: [['inherit','Follow template'],['fade','Fade'],['grow','Grow from center'],['slide-up','Slide up'],['slide-left','Slide from left'],['wipe','Left-to-right reveal'],['page','Diagonal page']] }), field('Image entrance delay · seconds', 'elements.image-delay', { type: 'number', min: 0, max: .8 * effect.timing['fade-in-ticks'] / 20, step: .01, imageDelay: true }), note('Time after fade in begins before the image appears. Limited to 80% of the fade-in duration.'));
+        entrances.append(field('Text entrance', 'elements.text-animation', { options: [['still','Fade'],['grow','Grow'],['slide-up','From bottom'],['slide-down','From top'],['slide-left','From left'],['slide-right','From right']] }), field('Image entrance', 'elements.image-animation', { options: [['inherit','Follow template'],['fade','Fade'],['grow','Grow from center'],['slide-up','Slide up'],['slide-left','Slide from left'],['wipe','Left-to-right reveal'],['page','Diagonal page']] }), field('Image entrance delay · seconds', 'elements.image-delay', { type: 'number', min: 0, max: .8 * effect.timing['fade-in-ticks'] / 20, step: .01, imageDelay: true }), note('Time after fade in begins before the image appears. Limited to 80% of the fade-in duration.'));
         motion.append(entrances);
         const imageMotion = section('Image movement');
         imageMotion.append(field('Ambient image motion', 'appearance.image-motion', { options: [['still','Still'],['panorama','Slow zoom and pan'],['page','Legacy page reveal']] }), note('Add or replace your image in Design. These settings animate it after placement.'));
@@ -385,7 +385,7 @@
         }
         select.value = activeCategory;
         dropdowns.refresh();
-        document.querySelector('.panel-heading h1 span').textContent = core.catalog.length + libraryEntries().size;
+        document.querySelector('.panel-heading h1').textContent = `Effect library (${core.catalog.length + libraryEntries().size})`;
         $('catalog-footer').hidden = activeCategory !== core.categories[2];
         $('trash-button').textContent = `Trash (${deletedEffects.size + serverTrash.size})`;
     }
@@ -644,7 +644,8 @@
         caption.style.transformOrigin = `50% ${layout['text-y'] * 100}%`;
         const fit = $('stage').clientWidth / 640;
         for (const [id, offset, size] of [['preview-title', .004, 14], ['preview-subtitle', .069, 8], ['preview-detail', .246, 7]]) { const line = $(id); line.style.position = 'absolute'; line.style.left = '0'; line.style.right = '0'; line.style.top = ((layout['text-y'] + offset) * 100) + '%'; line.style.margin = '0'; line.style.fontSize = (size * fit) + 'px'; }
-        caption.style.transform = `translateY(${layout['text-animation'] === 'slide-up' ? (1 - entrance) * 30 : 0}px) scale(${layout['text-scale'] * (layout['text-animation'] === 'grow' ? 1 - Math.pow(1 - entrance, 3) : 1)})`;
+        const direction = { 'slide-up': [0, 30], 'slide-down': [0, -30], 'slide-left': [-40, 0], 'slide-right': [40, 0] }[layout['text-animation']] || [0, 0];
+        caption.style.transform = `translate(${direction[0] * (1 - entrance) * fit}px, ${direction[1] * (1 - entrance) * fit}px) scale(${layout['text-scale'] * (layout['text-animation'] === 'grow' ? 1 - Math.pow(1 - entrance, 3) : 1)})`;
         $('preview-title').style.color = layout.background === 'template' ? '#f1f4fa' : effect.appearance.primary; $('preview-subtitle').style.color = layout.background === 'template' ? '#8595ad' : effect.appearance.secondary;
         const captionText = value => value.replace(/\{effect\}/g, effect.name).replace(/\{world\}/g, 'world');
         $('preview-title').textContent = captionText(effect.captions.title); $('preview-subtitle').textContent = captionText(effect.captions.subtitle); $('preview-detail').textContent = captionText(effect.captions['preview-detail']);

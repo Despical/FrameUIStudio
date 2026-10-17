@@ -357,3 +357,12 @@ test('composed layouts use direct color endpoints independently of palette mode'
     assert.ok(disabled['appearance.palette']); assert.ok(disabled['appearance.intensity']);
     assert.ok(disabled['appearance.primary']); assert.ok(disabled['appearance.speed']);
 });
+
+test('all caption entrance directions survive YAML and ZIP round trips', async () => {
+    for (const direction of ['still', 'grow', 'slide-up', 'slide-down', 'slide-left', 'slide-right']) {
+        const effect = core.createEffect('aurora'); effect.elements['text-animation'] = direction;
+        assert.deepEqual(core.fromYaml(core.toYaml(effect)), effect);
+        const entries = await core.unzip(core.zip({ ['effects/' + effect.id + '.yml']: core.toYaml(effect) }));
+        assert.equal(core.fromYaml(core.decoder.decode(entries['effects/' + effect.id + '.yml'])).elements['text-animation'], direction);
+    }
+});
