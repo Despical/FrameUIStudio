@@ -498,10 +498,10 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 /* Translated labels may be longer; canvas coordinates always stay left-to-right. */
 .language-control{min-width:130px;max-width:180px}
 .language-control{min-width:0;max-width:none;flex:0 0 auto}
-.language-picker .select-trigger{width:auto;min-width:70px;gap:8px;padding:10px 12px;justify-content:center;border-radius:6px;background:transparent}
+.language-picker .select-trigger{width:auto;min-width:70px;gap:8px;padding:10px 12px;justify-content:center;border:0;border-radius:6px;background:transparent;box-shadow:none}
 .language-picker .select-trigger>svg{width:19px;height:19px;stroke-width:1.6;color:inherit}
 .language-picker .select-value{flex:0 0 auto;font-size:13px;font-weight:650;letter-spacing:.3px}
-.language-picker .select-trigger[aria-expanded=true]{border-color:#a18bd2;box-shadow:0 0 0 1px #a18bd240}
+.language-picker .select-trigger[aria-expanded=true]{box-shadow:none}
 .language-menu{padding:0;background:#0d111a;border-color:#2a3040;border-radius:10px;box-shadow:0 12px 32px #0008;overscroll-behavior:contain}
 .language-menu .select-option{min-height:46px;padding:12px 15px;gap:12px;border-bottom:1px solid #242a36;font-size:14px;font-weight:550}
 .language-menu .select-option:last-child{border-bottom:0}
