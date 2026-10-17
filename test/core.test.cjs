@@ -57,7 +57,7 @@ test('backend enum normalization and indentationless block lists import', () => 
 
 test('generated preview excludes Minecraft wrappers and includes all shader branches', () => {
     const script = fs.readFileSync(path.resolve(__dirname, '../dist/shaders.js'), 'utf8');
-    assert.doesNotMatch(script, /frameSpeed\(|frameTemplate\(|framePalette\(|frameIntensity\(|frameImage\(|Sampler0|texCoord0|GameTime/);
+    assert.doesNotMatch(script, /frameSpeed\(|frameSeconds\(|Sampler0|texCoord0|GameTime/);
     assert.match(script, /vec4 frameEffect\(\)/);
     assert.match(script, /effect == 49/);
     assert.match(script, /uImageOpacity/);

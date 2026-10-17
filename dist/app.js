@@ -648,12 +648,6 @@
         if (previewReady) previewLoop.invalidate();
     }
     function duration() { return Math.max(1, effect.timing['minimum-ticks'] + effect.timing['fade-out-ticks']); }
-    function coverageAt(tick) {
-        const t = effect.timing, fadeIn = t['fade-in-ticks'], minimum = t['minimum-ticks'];
-        if (fadeIn > 0 && tick < fadeIn) return Math.max(0, tick / fadeIn);
-        if (tick < minimum) return 1;
-        return -Math.max(0, 1 - (tick - minimum) / Math.max(1, t['fade-out-ticks']));
-    }
     class ShaderRenderer {
         constructor(canvas) {
             this.canvas = canvas; const gl = this.gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false, preserveDrawingBuffer: true, antialias: false });
@@ -661,10 +655,11 @@
             function compile(type, code) { const shader = gl.createShader(type); gl.shaderSource(shader, code); gl.compileShader(shader); if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error('Shader preview failed: ' + gl.getShaderInfoLog(shader)); return shader; }
             const program = this.program = gl.createProgram(); gl.attachShader(program, compile(gl.VERTEX_SHADER, 'attribute vec2 position; void main(){gl_Position=vec4(position,0.0,1.0);}')); gl.attachShader(program, compile(gl.FRAGMENT_SHADER, window.FrameStudioShader)); gl.linkProgram(program); if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error('Shader preview could not link. Editing and export still work.'); gl.useProgram(program);
             const buffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW); const position = gl.getAttribLocation(program, 'position'); gl.enableVertexAttribArray(position); gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-            this.uniforms = Object.fromEntries(['ScreenSize','uTime','uSpeed','frameLoadingEffect','frameLoadingTransition','uCustom','uBackground','uPrimary','uSecondary','uIntensity','uImage','uHasImage','uImageSize','uContain','uImageOpacity','uBackgroundStyle','uImageAnimation','uImageMotion','uPlacement','uIndicator','uDecoration','uProgressScale','uImageStretch'].map(name => [name, gl.getUniformLocation(program, name)]));
-            this.texture = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.texture); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0])); this.picture = null;
+            this.uniforms = Object.fromEntries(['ScreenSize','uTime','uSpeed','frameLoadingEffect','frameLoadingTransition','uCustom','uBackground','uPrimary','uSecondary','uIntensity','uImage','uHasImage','uImageSize','uContain','uImageOpacity','uBackgroundStyle','uImageAnimation','uImageMotion','uGrowingTitle','uPlacement','uIndicator','uDecoration','uProgressScale','uImageStretch'].map(name => [name, gl.getUniformLocation(program, name)]));
+            this.texture = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.texture); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0])); this.picture = null;
         }
         setImage(image) { this.picture = image; const gl = this.gl; gl.bindTexture(gl.TEXTURE_2D, this.texture); if (image) { gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image); } }
+        clear() { this.gl.clear(this.gl.COLOR_BUFFER_BIT); }
         draw(definition, seconds, transition) {
             const gl = this.gl, u = this.uniforms, a = definition.appearance, c = this.canvas;
             const rgb = hex => /^#[0-9a-f]{6}$/i.test(hex) ? [1,3,5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) : [0,0,0];
@@ -673,7 +668,8 @@
             gl.uniform1i(u.uBackgroundStyle, ['template','solid','split','grid','terminal','pulse','none'].indexOf(e.background));
             gl.uniform2f(u.uImageStretch, e['image-stretch-x'], e['image-stretch-y']);
             gl.uniform1i(u.uImageAnimation, ['inherit','fade','grow','slide-up','slide-left','wipe','page','slide-right','slide-down','none'].indexOf(e['image-animation']));
-            gl.uniform1i(u.uImageMotion, ['still','panorama','page'].indexOf(a['image-motion']));
+            gl.uniform1i(u.uImageMotion, this.picture ? ['still','panorama','page'].indexOf(a['image-motion']) : 0);
+            gl.uniform1i(u.uGrowingTitle,a['title-motion'] === 'grow');
             gl.uniform4f(u.uPlacement, e['image-x'], e['image-y'], e['image-scale'], e['image-delay']);
             gl.uniform4f(u.uIndicator, ['none','bar','segments','dots','ring'].indexOf(e.progress), e['progress-x'], e['progress-y'], e['progress-width']);
             gl.uniform1f(u.uProgressScale, e['progress-scale']);
@@ -693,34 +689,32 @@
                 else { playTick = duration(); playing = false; sync(); }
             }
         }
-        const raw = coverageAt(playTick), value = Math.abs(raw), transition = Math.sign(raw)*value*value*(3-2*value), opacity = Math.abs(transition);
-        if (renderer) renderer.draw(effect,playTick/20,transition);
+        const transition = core.coverageAt(effect,playTick), opacity = Math.abs(transition);
+        const active = playTick < duration();
+        if (renderer) { if (active) renderer.draw(effect,playTick/20,transition); else renderer.clear(); }
         $('preview-canvas').dataset.renderCount = String(++previewDraws);
         const phase = playTick < effect.timing['fade-in-ticks'] ? 'FADE IN' : playTick < effect.timing['minimum-ticks'] ? 'HOLD' : 'FADE OUT';
         if ($('stage-phase').textContent !== phase) $('stage-phase').textContent = phase;
         const caption = $('caption-preview'), layout = effect.elements;
-        const delay = Math.max(.12,layout['image-delay']), t = Math.max(0,Math.min(1,(opacity-delay)/(1-delay))), entrance = t*t*(3-2*t);
+        caption.hidden = !active || !effect.captions.enabled;
+        $('game-hud').hidden = active && effect.presentation['hide-hud'];
+        $('game-hands').hidden = active && !effect.presentation['show-hands'];
         if (changed) {
-            previewFit = $('stage').clientWidth/640;
-            caption.hidden = !effect.captions.enabled; caption.style.inset = '0'; caption.style.transform = 'none'; caption.style.opacity = '1';
-            const captionText = text => text.replace(/\{effect\}/g,effect.name).replace(/\{world\}/g,'world');
+            previewFit = Math.min($('stage').clientWidth/640,$('stage').clientHeight/360);
+            caption.style.inset = '0'; caption.style.transform = 'none'; caption.style.opacity = '1';
+            const captionText = text => text.replace(/\{effect\}/g,effect.name).replace(/\{world\}/g,'world').replace(/\{player\}/g,server.session?.player || 'Player');
             for (const [kind,definition] of Object.entries(core.captionLines)) {
                 const line = $('preview-'+kind), anchor = core.elementAnchor(layout,kind);
                 line.style.position = 'absolute'; line.style.left = anchor.x*100+'%'; line.style.right = 'auto';
-                line.style.width = 'max-content'; line.style.top = anchor.y*100+'%'; line.style.margin = '0';
-                line.style.fontSize = definition.size*previewFit+'px'; line.style.lineHeight = '1.3'; line.style.transformOrigin = '50% 0';
-                line.style.color = effect.captions[kind+'-color']; line.textContent = captionText(effect.captions[definition.key]);
+                line.style.top = anchor.y*100+'%'; line.style.margin = '0'; line.style.transformOrigin = '50% 0';
+                window.FrameStudioFont.render(line,captionText(effect.captions[definition.key]),effect.captions[kind+'-color'],definition.size*previewFit);
             }
-            $('game-hud').hidden = effect.presentation['hide-hud']; $('game-hands').hidden = !effect.presentation['show-hands'];
             directEditor?.render();
         }
         for (const kind of Object.keys(core.captionLines)) {
-            const line = $('preview-'+kind), animation = layout[kind+'-animation'];
-            const direction = {'slide-up':[0,30],'slide-down':[0,-30],'slide-left':[-40,0],'slide-right':[40,0]}[animation] || [0,0];
-            const grow = animation === 'grow' ? 1-Math.pow(1-entrance,3) : 1;
-            const scale = layout['text-scale']*layout[kind+'-scale']*grow;
-            const alpha = String(animation === 'none' ? 1 : entrance);
-            const transform = `translateX(-50%) translate(${direction[0]*(1-entrance)*previewFit}px,${direction[1]*(1-entrance)*previewFit}px) scale(${layout['text-stretch-x']*layout[kind+'-stretch-x']*scale},${layout['text-stretch-y']*layout[kind+'-stretch-y']*scale})`;
+            const line = $('preview-'+kind), frame = core.captionFrame(effect,kind,opacity);
+            const scale = layout['text-scale']*layout[kind+'-scale']*frame.grow, alpha = String(frame.alpha);
+            const transform = `translateX(-50%) translate(${frame.x*previewFit}px,${frame.y*previewFit}px) scale(${layout['text-stretch-x']*layout[kind+'-stretch-x']*scale},${layout['text-stretch-y']*layout[kind+'-stretch-y']*scale})`;
             if (line.style.opacity !== alpha) line.style.opacity = alpha;
             if (line.style.transform !== transform) line.style.transform = transform;
         }
@@ -921,6 +915,7 @@
         commit: before => { const previous = snapshot(); previous.effect.elements = before; commitChange(previous); }
     });
     async function start() {
+        await window.FrameStudioFont.load();
         const renamed = new Map();
         try {
             for (const entry of await window.FrameStudioLibrary.listDeleted()) {

@@ -8,7 +8,6 @@
         toolbar.setAttribute('role', 'toolbar'); toolbar.setAttribute('aria-label', 'Arrange screen elements');
         const overlay = document.createElement('div'); overlay.className = 'canvas-editor';
         const boxes = new Map(), buttons = new Map(), rects = new Map();
-        const measure = document.createElement('canvas').getContext('2d');
         let selected = '', gesture = null, renderedKey = '';
         const guides = {};
         for (const axis of ['x', 'y']) {
@@ -66,11 +65,11 @@
             const e = definition.elements, line = core.captionLines[kind], anchor = core.elementAnchor(e,kind);
             const text = definition.captions[line.key].replaceAll('{effect}',definition.name).replaceAll('{world}','world');
             if (!text.trim()) return null;
-            const scale = e['text-scale'] * e[kind+'-scale'], pixels = line.size * width / 640 * scale;
-            measure.font = `${kind === 'title' ? 500 : 400} ${pixels}px "Segoe UI",sans-serif`;
-            const w = Math.max(1,measure.measureText(text).width) * e['text-stretch-x'] * e[kind+'-stretch-x'] / width;
-            const h = pixels * 1.3 * e['text-stretch-y'] * e[kind+'-stretch-y'] / height;
-            return {x:anchor.x-w/2,y:anchor.y,width:w,height:h};
+            const fit = Math.min(width/640,height/360), scale = e['text-scale'] * e[kind+'-scale'];
+            const pixels = line.size / 10 * fit * scale, metrics = scope.FrameStudioFont.measure(text);
+            const w = Math.max(1,metrics.width) * pixels * e['text-stretch-x'] * e[kind+'-stretch-x'] / width;
+            const yScale = pixels * e['text-stretch-y'] * e[kind+'-stretch-y'] / height;
+            return {x:anchor.x-w/2,y:anchor.y+metrics.top*yScale,width:w,height:metrics.height*yScale};
         }
         function render() {
             const definition = options.effect(), e = definition.elements, width = stage.clientWidth, height = stage.clientHeight;

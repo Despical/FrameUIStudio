@@ -148,11 +148,11 @@
         const template = input.template || input.id || 'aurora';
         if (!catalog.some(entry => entry.id === template && !entry.definition)) throw new Error(`Unknown template: ${template}. Choose one of the 50 built-in templates.`);
         const result = merge(createEffect(template), input);
-        for (const kind of ['title','subtitle','detail']) if (!Object.hasOwn(input.elements || {},kind+'-animation')) result.elements[kind+'-animation'] = result.elements['text-animation'];
+        for (const kind of ['title','subtitle','detail']) if (!Object.hasOwn(input.elements || {},kind+'-animation')) result.elements[kind+'-animation'] = kind === 'title' && result.appearance['title-motion'] === 'grow' && !Object.hasOwn(input.elements || {},'text-animation') ? 'grow' : result.elements['text-animation'];
         // Resolve legacy palette-linked caption colors once; subsequent palette edits are independent.
         const templateBackground = result.elements.background === 'template';
         const legacyGrow = result.appearance['title-motion'] === 'grow' && ['title','subtitle','detail'].every(kind =>
-            ['offset-x','offset-y'].every(key => result.elements[kind+'-'+key] === 0) && ['scale','stretch-x','stretch-y'].every(key => result.elements[kind+'-'+key] === 1) && result.elements[kind+'-animation'] === 'still');
+            ['offset-x','offset-y'].every(key => result.elements[kind+'-'+key] === 0) && ['scale','stretch-x','stretch-y'].every(key => result.elements[kind+'-'+key] === 1) && (input.elements?.[kind+'-animation'] || input.elements?.['text-animation'] || 'still') === 'still');
         const defaults = {'title-color':legacyGrow?'#e8efe5':templateBackground?'#f1f4fa':result.appearance.primary,
             'subtitle-color':templateBackground?'#8595ad':result.appearance.secondary,'detail-color':'#8595ad'};
         for (const [key,value] of Object.entries(defaults)) if (!Object.hasOwn(input.captions || {},key)) result.captions[key] = value;
@@ -237,6 +237,21 @@
     // The same normalized coordinates are exported to the plugin. One transform can be committed
     // as one history entry by any input surface (pointer, touch or keyboard).
     const captionLines = {title: {key:'title', delta:.004, size:14}, subtitle: {key:'subtitle', delta:.069, size:8}, detail: {key:'preview-detail', delta:.246, size:7}};
+    const smooth = value => { const t = Math.max(0,Math.min(1,value)); return t*t*(3-2*t); };
+    function coverageAt(effect,tick) {
+        const t = effect.timing, minimum = t['minimum-ticks'];
+        const entrance = t['fade-in-ticks'] ? smooth(tick/t['fade-in-ticks']) : 1;
+        const release = 1-smooth((tick-minimum)/t['fade-out-ticks']);
+        return entrance*release*(tick>=minimum?-1:1);
+    }
+    function captionFrame(effect,kind,opacity) {
+        const e = effect.elements, animation = e[kind+'-animation'];
+        const encoded = animation === 'none' ? 1 : Math.round(opacity*255)/255;
+        const delay = Math.max(.12,e['image-delay']), progress = smooth((encoded-delay)/(1-delay));
+        const direction = {'slide-up':[0,30],'slide-down':[0,-30],'slide-left':[-40,0],'slide-right':[40,0]}[animation] || [0,0];
+        return {alpha:progress<.1?0:progress,grow:animation==='grow'?1-Math.pow(1-progress,3):1,
+            x:direction[0]*(1-progress),y:direction[1]*(1-progress)};
+    }
     function resetComponent(effect, kind) {
         if (!['image','progress',...Object.keys(captionLines)].includes(kind)) throw new Error('Unknown canvas element.');
         const next = clone(effect), defaults = createEffect(effect.template);
@@ -398,7 +413,7 @@
             }
             if (quote || !part.trim()) error(); parts.push(parseScalar(part.trim(), line)); return parts;
         }
-        if (!text || /[\[\]{}]|:\s/.test(text)) error();
+        if (!text || /^[\[{]|:\s/.test(text)) error();
         return text;
     }
     function fromYaml(text) {
@@ -486,6 +501,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1-2048 pixels.');
         return { width, height };
     }
-    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, captionLines, resetComponent, elementAnchor, translateElement, transformElement, snapElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, captionLines, coverageAt, captionFrame, resetComponent, elementAnchor, translateElement, transformElement, snapElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

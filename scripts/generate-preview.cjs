@@ -31,15 +31,14 @@ function templateUsesMotion(id) {
 }
 for (const template of catalog) template.ambientMotion = templateUsesMotion(template.shaderId);
 const begin = source.indexOf('vec3 frameLoadingBackground()');
-const modern = source.includes('vec4 frameTemplateEffect(int effect)');
-const end = source.indexOf('\n// FRAMEUI_COMPOSITION_BEGIN', begin);
+const end = source.indexOf('\nvoid main()',begin);
 if (begin < 0 || end < 0) throw new Error('Plugin shader routines could not be found.');
-const functions = source.slice(begin, end)
-    .replace(/GameTime\s*\*\s*1200\.0(?:\s*\*\s*frameSpeed\(frameLoadingEffect\))?/g, 'uTime * uSpeed')
-    .replace('vec4 frameTemplateEffect(int effect) {', 'vec4 frameEffect() {\n    int effect = frameLoadingEffect;');
-if (/GameTime|frameSpeed\(|frameTemplate\(|framePalette\(|frameIntensity\(|frameImage\(|Sampler0|texCoord0/.test(functions)) {
-    throw new Error('Preview extraction retained a Minecraft-specific shader dependency.');
-}
+// Keep the complete background, image reveal and widget composition routines shared.
+// Only texture sampling and vertex placement differ between WebGL and Minecraft.
+const functions = source.slice(begin,end)
+    .replace(/frameSeconds\(\)\s*\*\s*frameSpeed\(frameLoadingEffect\)/g,'uTime * uSpeed')
+    .replace(/vec4 framePicture\(\) \{[\s\S]*?\n\}/,'');
+if (/GameTime|Sampler0|texCoord0/.test(functions)) throw new Error('Preview retained a Minecraft texture dependency.');
 const fragment = `precision highp float;
 uniform vec2 ScreenSize;
 uniform float uTime;
@@ -59,6 +58,7 @@ uniform float uImageOpacity;
 uniform int uBackgroundStyle;
 uniform int uImageAnimation;
 uniform int uImageMotion;
+uniform bool uGrowingTitle;
 uniform vec4 uPlacement;
 uniform vec4 uIndicator;
 uniform int uDecoration;
@@ -70,18 +70,21 @@ int frameDecoration(int effect) { return uDecoration; }
 vec4 frameIndicator(int effect) { return uIndicator; }
 vec3 frameElementBase(int effect) { return uBackground; }
 vec3 frameElementAccent(int effect) { return uPrimary; }
-
+int frameTemplate(int effect) { return effect; }
+float frameIntensity(int effect) { return uIntensity; }
+bool frameGrowingTitle(int effect) { return uGrowingTitle; }
+float frameImageMotion(int effect) { return uImageMotion == 2 ? -uSpeed : uImageMotion == 1 ? uSpeed : 0.0; }
+int frameImageAnimation(int effect) { return uImageAnimation; }
+vec4 frameImagePlacement(int effect) { return uPlacement; }
+vec3 frameImage(int effect) { return vec3(uImageSize.x / uImageSize.y, uContain ? 1.0 : 0.0, uImageOpacity); }
+vec3 framePalette(int effect, vec3 color) {
+    if (uCustom == 0) return color;
+    float luma = clamp(dot(color, vec3(0.2126, 0.7152, 0.0722)), 0.0, 1.0);
+    return luma < 0.5 ? mix(uBackground,uPrimary,luma*2.0) : mix(uPrimary,uSecondary,(luma-0.5)*2.0);
+}
 ${functions}
-${source.slice(source.indexOf('// FRAMEUI_COMPOSITION_BEGIN'), source.indexOf('// FRAMEUI_COMPOSITION_END')).replace(/GameTime\s*\*\s*1200\.0\s*\*\s*frameSpeed\(frameLoadingEffect\)/g, 'uTime * uSpeed')}
 void main() {
-    vec4 effect = uBackgroundStyle > 0 ? frameCompositionBackground() : frameEffect();
-    if (uImageMotion == 2 && uBackgroundStyle == 0) effect.a = 0.0;
-    vec3 color = effect.rgb;
-    if (uCustom == 1 && uBackgroundStyle == 0) {
-        float luma = clamp(dot(color, vec3(0.2126, 0.7152, 0.0722)), 0.0, 1.0);
-        color = luma < 0.5 ? mix(uBackground, uPrimary, luma * 2.0) : mix(uPrimary, uSecondary, (luma - 0.5) * 2.0);
-    }
-    color = clamp(color * uIntensity, 0.0, 1.0);
+    vec4 effect = frameEffect();
     if (uHasImage) {
         vec2 uv = vec2(gl_FragCoord.x / ScreenSize.x, 1.0 - gl_FragCoord.y / ScreenSize.y);
         float screenAspect = ScreenSize.x / ScreenSize.y;
@@ -108,29 +111,10 @@ void main() {
         float grow = uImageAnimation == 2 ? max(0.001, 1.0 - pow(1.0 - progress, 3.0)) : 1.0;
         vec2 point = (sampleUv - uPlacement.xy - offset) / (uPlacement.z * grow * uImageStretch) * scale + 0.5;
         if (point.x >= 0.0 && point.x <= 1.0 && point.y >= 0.0 && point.y <= 1.0) {
-            vec4 picture = texture2D(uImage, point);
-            float reveal = uBackgroundStyle == 6 ? abs(frameLoadingTransition) : effect.a;
-            if (uImageAnimation == 9) {
-                reveal = 1.0;
-            } else if (uImageAnimation > 0) {
-                reveal *= uImageAnimation == 1 ? progress : smoothstep(0.0, 0.15, progress);
-                if (uImageAnimation == 5) reveal *= frameCover(uv.x, progress);
-                if (uImageAnimation == 6) reveal *= frameCover(uv.x * 0.65 + uv.y * 0.35, progress);
-            } else if (uImageMotion == 2) {
-                float edge = abs(frameLoadingTransition) * 1.12 - 0.06;
-                reveal = 1.0 - smoothstep(edge - 0.025, edge + 0.025, uv.x * 0.65 + uv.y * 0.35);
-            }
-            float pictureAlpha = picture.a * uImageOpacity * reveal;
-            float combinedAlpha = effect.a + pictureAlpha * (1.0 - effect.a);
-            vec3 premultiplied = picture.rgb * pictureAlpha + color * effect.a * (1.0 - pictureAlpha);
-            color = combinedAlpha > 0.00001 ? premultiplied / combinedAlpha : vec3(0.0);
-            effect.a = combinedAlpha;
+            effect = frameOver(effect,framePictureColor(texture2D(uImage,point)));
         }
     }
-    vec4 widget = frameWidgets();
-    float alpha = effect.a + widget.a * (1.0 - effect.a);
-    color = alpha > 0.00001 ? (widget.rgb * widget.a + color * effect.a * (1.0 - widget.a)) / alpha : vec3(0.0);
-    gl_FragColor = vec4(color, alpha);
+    gl_FragColor = frameOver(effect,frameWidgets());
 }`;
 // Ship the ready-made compositions and their replaceable images beside the standalone editor.
 const core = require(path.join(site, 'dist/core.js'));
