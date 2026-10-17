@@ -186,9 +186,13 @@ code{font-family:"Cascadia Code",Consolas,monospace;color:#9bb1c9;font-size:.95e
 .check-grid label{display:flex;align-items:center;gap:6px;font-size:12px;color:#9caec1}
 .check-grid input{accent-color:var(--accent);margin:0;width:12px;height:12px}
 .advanced-details{border-top:1px solid var(--border);margin:0;padding:0}
-.advanced-details summary{cursor:pointer;font-size:14px;color:#becbdb;margin:0;padding:16px 0}
-.advanced-details summary::marker{color:var(--subtle);font-size:12px}
-.addon-state{float:right;margin:1px 0 0 8px;color:var(--subtle);font-size:11px;font-weight:400;letter-spacing:.2px}
+.advanced-details summary{cursor:pointer;font-size:14px;color:#becbdb;margin:0;padding:16px 0;display:flex;align-items:center;gap:7px;list-style:none;border-bottom:1px solid transparent;transition:border-color .2s ease}
+.advanced-details summary::-webkit-details-marker{display:none}
+.details-chevron{width:14px;height:14px;flex:0 0 14px;color:var(--subtle);transition:transform .2s ease}
+.advanced-details[open]>summary .details-chevron{transform:rotate(180deg)}
+.advanced-details[open]>summary{border-bottom-color:var(--border);margin-bottom:12px}
+@media(prefers-reduced-motion:reduce){.details-chevron,.advanced-details summary{transition:none}}
+.addon-state{margin:1px 0 0 auto;color:var(--subtle);font-size:11px;font-weight:400;letter-spacing:.2px}
 .addon-state.active{color:var(--accent)}
 .chip-note{font-size:11px;letter-spacing:.3px;color:var(--subtle)}
 .full-width{width:100%}

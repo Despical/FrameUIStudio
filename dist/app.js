@@ -295,7 +295,13 @@
         for (const value of values) { const label = element('label'), input = element('input'); input.type = 'checkbox'; input.checked = pathGet(path).includes(value); input.dataset.checkPath = path; input.value = value; input.addEventListener('change', () => { const current = pathGet(path).filter(entry => entry !== value); if (input.checked) current.push(value); mutate(path, current); }); label.append(input, element('span', '', names[value] || value.toLowerCase().replace(/[_-]+/g, ' ').replace(/\b[a-z]/g, letter => letter.toUpperCase()))); grid.append(label); }
         return grid;
     }
-    function details(title, ...children) { const result = element('details', 'advanced-details'); result.append(element('summary', '', title), ...children); return result; }
+    function details(title, ...children) {
+        const result = element('details', 'advanced-details'), summary = element('summary');
+        const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        chevron.setAttribute('viewBox', '0 0 16 16'); chevron.setAttribute('aria-hidden', 'true'); chevron.classList.add('details-chevron');
+        const path = document.createElementNS(chevron.namespaceURI, 'path'); path.setAttribute('d', 'm4 6 4 4 4-4'); chevron.append(path);
+        summary.append(chevron, document.createTextNode(title)); result.append(summary, ...children); return result;
+    }
     function renderSettings() {
         directEditor?.select('');
         closeFieldHelp();
