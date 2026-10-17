@@ -46,7 +46,9 @@
         return true;
     }
     function mutate(path, value) {
+        const restart = /^elements\.(?:image|title|subtitle|detail)-animation$/.test(path) && pathGet(path) !== value;
         const previous = snapshot(); pathSet(path, value);
+        if (restart) { previewLoop?.suspend(); playTick = 0; playing = true; }
         if (path === 'presentation.show-hands' && value) effect.presentation['hide-hud'] = false;
         if (path === 'presentation.hide-hud' && value) effect.presentation['show-hands'] = false;
         if (path === 'id' && imageBytes) effect.appearance.image = `images/${effect.id}.png`;
