@@ -545,11 +545,35 @@ test('indicator Reset restores style and every dimension without resetting the i
     assert.deepEqual(effect,original); core.validate(result);
 });
 
-test('caption Reset retains the wording and other captions while restoring its color and placement', () => {
+test('caption Reset restores wording color and placement while retaining other captions', () => {
     const effect=core.createEffect('aurora'); effect.captions.title='Keep this title'; effect.captions['title-color']='#ff0000';
     effect.captions['subtitle-color']='#00ff00'; effect.elements['title-offset-x']=.2; effect.elements['title-stretch-y']=2;
     const result=core.resetComponent(effect,'title');
-    assert.equal(result.captions.title,'Keep this title'); assert.equal(result.captions['title-color'],'#f1f4fa');
+    assert.equal(result.captions.title,core.createEffect(effect.template).captions.title); assert.equal(result.captions['title-color'],'#f1f4fa');
     assert.equal(result.captions['subtitle-color'],'#00ff00'); assert.equal(result.elements['title-offset-x'],0); assert.equal(result.elements['title-stretch-y'],1);
     assert.throws(()=>core.resetComponent(effect,'unknown')); core.validate(result);
+});
+
+
+test('extra-line Reset restores all three event messages without changing the other captions', () => {
+    const effect=core.createEffect('aurora'), defaults=core.createEffect(effect.template);
+    for(const key of ['join-detail','teleport-detail','preview-detail']) effect.captions[key]='Custom '+key;
+    effect.captions['detail-color']='#ff0000'; effect.elements['detail-offset-y']=.2;
+    const result=core.resetComponent(effect,'detail');
+    for(const key of ['join-detail','teleport-detail','preview-detail','detail-color']) assert.equal(result.captions[key],defaults.captions[key]);
+    assert.equal(result.elements['detail-offset-y'],0); assert.equal(result.captions.title,effect.captions.title);
+    effect.captions.subtitle='Custom subtitle';
+    assert.equal(core.resetComponent(effect,'subtitle').captions.subtitle,defaults.captions.subtitle);
+});
+
+test('motion speed is disabled for transition-only screens and enabled for actual ambient movement', () => {
+    const effect=core.createEffect('fade-black');
+    assert.ok(core.disabledSettings(effect,false)['appearance.speed']);
+    effect.elements.progress='ring'; assert.equal(core.disabledSettings(effect,false)['appearance.speed'],undefined);
+    effect.elements.progress='none'; effect.appearance['image-motion']='panorama';
+    assert.equal(core.disabledSettings(effect,true)['appearance.speed'],undefined);
+    effect.appearance['image-motion']='still'; effect.template='aurora';
+    assert.equal(core.disabledSettings(effect,false)['appearance.speed'],undefined);
+    assert.equal(core.catalog.find(e=>e.id==='fade-black').ambientMotion,false);
+    assert.equal(core.catalog.find(e=>e.id==='aurora').ambientMotion,true);
 });

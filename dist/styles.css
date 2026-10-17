@@ -487,3 +487,7 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .caption-color .color-well{display:grid;grid-template-columns:36px minmax(0,1fr);align-items:center;gap:12px;padding:6px}
 #settings-component .caption-color input[type=color]{width:36px;height:36px}
 #settings-component .caption-color input[type=text]{height:36px;padding:0;border:0;border-radius:0;font:14px Consolas,monospace;text-align:left}
+
+.canvas-toolbar{gap:8px;margin-bottom:14px}
+.canvas-toolbar button{min-height:42px;padding:9px 12px;font-size:14px;font-weight:500;line-height:20px}
+[data-caption-entry]:disabled{cursor:default}

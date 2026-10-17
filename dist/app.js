@@ -114,7 +114,7 @@
         'appearance.primary': ['The main color in your custom palette.', 'Colors composed backgrounds, loading indicators and ambient decoration. Caption colors are set in their own menus.'],
         'appearance.secondary': ['The accent color in your custom palette.', 'Adds secondary tones to Shader template backgrounds with Custom colors selected. Caption colors are set in their own menus.'],
         'appearance.intensity': ['Adjust the brightness of the effect.', 'Changes the rendered effect, not how long it plays.'],
-        'appearance.speed': ['Adjust the speed of animated movement.', 'Changes motion inside the effect without changing its total duration.'],
+        'appearance.speed': ['Speed of continuous movement in the background, loading indicator, decoration and panorama image.', '0.5× plays that movement at half speed; 2× plays it twice as fast. A 1.2-second effect still lasts 1.2 seconds. Fade and entrance timings are unchanged. Play the preview to compare.'],
         'appearance.image-fit': ['Choose how your image fits its available area.', 'Cover fills the area and may crop edges. Contain keeps the entire image visible.'],
         'appearance.image-opacity': ['Adjust the visibility of your image.', 'Lower values reveal the background or game beneath the image. Zero makes the image invisible.'],
         'appearance.image-motion': ['Choose continuous movement for your image.', 'Still keeps it fixed. Panorama slowly moves it. This is separate from its entrance animation.'],
@@ -309,8 +309,8 @@
         for (const kind of ['title','subtitle','detail']) {
             const key = core.captionLines[kind].key, wrap = element('div','field');
             const input = element('input'); input.id = 'caption-entry-'+kind; input.readOnly = true;
-            input.dataset.captionEntry = key; input.value = effect.captions[key];
-            const open = () => { directEditor.select(kind); const target=$('component-field-captions-'+key); target?.focus({preventScroll:true}); };
+            input.dataset.captionEntry = key; input.dataset.path = 'captions.'+key; input.value = effect.captions[key];
+            const open = () => { if (input.disabled) return; directEditor.select(kind); const target=$('component-field-captions-'+key); target?.focus({preventScroll:true}); };
             input.addEventListener('click',open);
             input.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' ') {event.preventDefault();open();}});
             wrap.append(fieldHeading(componentLabels[kind],input.id,'captions.'+key),input); captions.append(wrap);
@@ -369,7 +369,7 @@
         }
         durationSection.append(timing);
         const animation = section('Animation');
-        animation.append(field('Animation speed', 'appearance.speed', { type: 'range', min: .05, max: 8, step: .05 }), note('Changes the animation movement without changing total duration.'));
+        animation.append(field('Ambient motion speed', 'appearance.speed', { type: 'range', min: .05, max: 8, step: .05 }), note('0.5× = half-speed motion; 2× = double speed. Duration and entrances stay the same. Play the preview to compare.'));
         motion.append(animation);
         const entrances = section('Caption entrance');
         entrances.append(field('Text entrance','elements.text-animation',{options:[['none','None (instant)'],['still','Fade'],['grow','Grow'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right']]}));

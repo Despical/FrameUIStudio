@@ -1321,7 +1321,8 @@
     "fadeIn": 8,
     "minimum": 38,
     "fadeOut": 12,
-    "captions": true
+    "captions": true,
+    "ambientMotion": true
   },
   {
     "id": "fade-in",
@@ -1331,7 +1332,8 @@
     "fadeIn": 0,
     "minimum": 0,
     "fadeOut": 20,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "fade-out",
@@ -1341,7 +1343,8 @@
     "fadeIn": 14,
     "minimum": 16,
     "fadeOut": 8,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "color-wipe",
@@ -1351,7 +1354,8 @@
     "fadeIn": 10,
     "minimum": 16,
     "fadeOut": 12,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "iris",
@@ -1361,7 +1365,8 @@
     "fadeIn": 12,
     "minimum": 22,
     "fadeOut": 14,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "aurora",
@@ -1371,7 +1376,8 @@
     "fadeIn": 14,
     "minimum": 64,
     "fadeOut": 16,
-    "captions": true
+    "captions": true,
+    "ambientMotion": true
   },
   {
     "id": "fade-black",
@@ -1381,7 +1387,8 @@
     "fadeIn": 10,
     "minimum": 18,
     "fadeOut": 12,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "fade-rose",
@@ -1391,7 +1398,8 @@
     "fadeIn": 10,
     "minimum": 20,
     "fadeOut": 12,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "wipe-right",
@@ -1401,7 +1409,8 @@
     "fadeIn": 8,
     "minimum": 12,
     "fadeOut": 10,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "wipe-down",
@@ -1411,7 +1420,8 @@
     "fadeIn": 10,
     "minimum": 14,
     "fadeOut": 12,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "wipe-up",
@@ -1421,7 +1431,8 @@
     "fadeIn": 12,
     "minimum": 22,
     "fadeOut": 12,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "diagonal-wipe",
@@ -1431,7 +1442,8 @@
     "fadeIn": 12,
     "minimum": 24,
     "fadeOut": 14,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "blinds",
@@ -1441,7 +1453,8 @@
     "fadeIn": 8,
     "minimum": 15,
     "fadeOut": 10,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "vertical-blinds",
@@ -1451,7 +1464,8 @@
     "fadeIn": 10,
     "minimum": 23,
     "fadeOut": 12,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "checkerboard",
@@ -1461,7 +1475,8 @@
     "fadeIn": 14,
     "minimum": 28,
     "fadeOut": 14,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "mosaic",
@@ -1471,7 +1486,8 @@
     "fadeIn": 18,
     "minimum": 36,
     "fadeOut": 16,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "diamond",
@@ -1481,7 +1497,8 @@
     "fadeIn": 14,
     "minimum": 27,
     "fadeOut": 14,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "hexagon",
@@ -1491,7 +1508,8 @@
     "fadeIn": 14,
     "minimum": 30,
     "fadeOut": 14,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "split-horizontal",
@@ -1501,7 +1519,8 @@
     "fadeIn": 10,
     "minimum": 17,
     "fadeOut": 12,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "split-vertical",
@@ -1511,7 +1530,8 @@
     "fadeIn": 16,
     "minimum": 32,
     "fadeOut": 14,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "zoom-square",
@@ -1521,7 +1541,8 @@
     "fadeIn": 10,
     "minimum": 15,
     "fadeOut": 12,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "shutter",
@@ -1531,7 +1552,8 @@
     "fadeIn": 10,
     "minimum": 19,
     "fadeOut": 12,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "ripple",
@@ -1541,7 +1563,8 @@
     "fadeIn": 18,
     "minimum": 38,
     "fadeOut": 18,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "radar",
@@ -1551,7 +1574,8 @@
     "fadeIn": 16,
     "minimum": 54,
     "fadeOut": 16,
-    "captions": true
+    "captions": true,
+    "ambientMotion": true
   },
   {
     "id": "sonar",
@@ -1561,7 +1585,8 @@
     "fadeIn": 18,
     "minimum": 54,
     "fadeOut": 18,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "starfield",
@@ -1571,7 +1596,8 @@
     "fadeIn": 24,
     "minimum": 70,
     "fadeOut": 20,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "warp",
@@ -1581,7 +1607,8 @@
     "fadeIn": 10,
     "minimum": 28,
     "fadeOut": 12,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "nebula",
@@ -1591,7 +1618,8 @@
     "fadeIn": 26,
     "minimum": 78,
     "fadeOut": 22,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "eclipse",
@@ -1601,7 +1629,8 @@
     "fadeIn": 20,
     "minimum": 54,
     "fadeOut": 20,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "solar-flare",
@@ -1611,7 +1640,8 @@
     "fadeIn": 14,
     "minimum": 34,
     "fadeOut": 14,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "ocean",
@@ -1621,7 +1651,8 @@
     "fadeIn": 22,
     "minimum": 68,
     "fadeOut": 20,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "lava",
@@ -1631,7 +1662,8 @@
     "fadeIn": 18,
     "minimum": 46,
     "fadeOut": 18,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "snowflakes",
@@ -1641,7 +1673,8 @@
     "fadeIn": 26,
     "minimum": 74,
     "fadeOut": 22,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "rain",
@@ -1651,7 +1684,8 @@
     "fadeIn": 18,
     "minimum": 50,
     "fadeOut": 18,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "sakura",
@@ -1661,7 +1695,8 @@
     "fadeIn": 24,
     "minimum": 70,
     "fadeOut": 22,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "fireflies",
@@ -1671,7 +1706,8 @@
     "fadeIn": 24,
     "minimum": 76,
     "fadeOut": 22,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "matrix",
@@ -1681,7 +1717,8 @@
     "fadeIn": 12,
     "minimum": 40,
     "fadeOut": 14,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "scanlines",
@@ -1691,7 +1728,8 @@
     "fadeIn": 12,
     "minimum": 29,
     "fadeOut": 14,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "glitch",
@@ -1701,7 +1739,8 @@
     "fadeIn": 6,
     "minimum": 13,
     "fadeOut": 8,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "pixel-dissolve",
@@ -1711,7 +1750,8 @@
     "fadeIn": 16,
     "minimum": 31,
     "fadeOut": 16,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "ink",
@@ -1721,7 +1761,8 @@
     "fadeIn": 20,
     "minimum": 44,
     "fadeOut": 18,
-    "captions": false
+    "captions": false,
+    "ambientMotion": false
   },
   {
     "id": "paper",
@@ -1731,7 +1772,8 @@
     "fadeIn": 12,
     "minimum": 23,
     "fadeOut": 14,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "film-grain",
@@ -1741,7 +1783,8 @@
     "fadeIn": 16,
     "minimum": 42,
     "fadeOut": 16,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "prism",
@@ -1751,7 +1794,8 @@
     "fadeIn": 20,
     "minimum": 58,
     "fadeOut": 18,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "gradient-sunset",
@@ -1761,7 +1805,8 @@
     "fadeIn": 26,
     "minimum": 72,
     "fadeOut": 22,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "gradient-ocean",
@@ -1771,7 +1816,8 @@
     "fadeIn": 24,
     "minimum": 64,
     "fadeOut": 20,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "monochrome",
@@ -1781,7 +1827,8 @@
     "fadeIn": 14,
     "minimum": 31,
     "fadeOut": 14,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "pulse",
@@ -1791,7 +1838,8 @@
     "fadeIn": 14,
     "minimum": 37,
     "fadeOut": 14,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "ribbon",
@@ -1801,7 +1849,8 @@
     "fadeIn": 22,
     "minimum": 66,
     "fadeOut": 20,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   },
   {
     "id": "spiral",
@@ -1811,6 +1860,7 @@
     "fadeIn": 18,
     "minimum": 43,
     "fadeOut": 16,
-    "captions": false
+    "captions": false,
+    "ambientMotion": true
   }
 ]

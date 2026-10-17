@@ -90,8 +90,10 @@
             block(['appearance.secondary'], 'Accent only affects Shader template backgrounds with Custom colors selected. Caption colors are set in their own menus.');
         }
         if (!template) block(['appearance.intensity'], 'Brightness adjusts the Shader template background. This background layout does not use that setting.');
-        if (none || e.background === 'solid') {
-            if (!overlay && !(hasImage && a['image-motion'] === 'panorama')) block(['appearance.speed'], 'There is no moving background, indicator, decoration or panorama image using animation speed.');
+        const templateMotion = catalog.find(entry => entry.id === effect.template && !entry.definition)?.ambientMotion !== false;
+        const backgroundMotion = template ? templateMotion : ['split','grid','terminal','pulse'].includes(e.background);
+        if (!backgroundMotion && !overlay && !(hasImage && a['image-motion'] === 'panorama')) {
+            block(['appearance.speed'], 'This screen has no ambient movement. Motion speed does not change fades, entrances or total duration.');
         }
         if (!effect.captions.enabled) block(['captions.title-color', 'captions.subtitle-color', 'captions.detail-color', 'captions.title', 'captions.subtitle', 'captions.join-detail', 'captions.teleport-detail', 'captions.preview-detail', 'elements.text-x', 'elements.text-y', 'elements.text-scale', 'elements.text-animation'], 'Show captions is off. Enable it to edit the on-screen text and its placement.');
         if (!hasImage) block(['appearance.image-fit', 'appearance.image-opacity', 'appearance.image-motion', 'elements.image-scale', 'elements.image-x', 'elements.image-y', 'elements.image-animation', 'elements.image-delay'], 'Add an image in Design before adjusting its appearance, placement or movement.');
@@ -244,6 +246,7 @@
         } else {
             for (const key of ['offset-x','offset-y','scale','stretch-x','stretch-y']) next.elements[kind+'-'+key] = defaults.elements[kind+'-'+key];
             next.captions[kind+'-color'] = defaults.captions[kind+'-color'];
+            for (const key of kind === 'detail' ? ['join-detail','teleport-detail','preview-detail'] : [kind]) next.captions[key] = defaults.captions[key];
         }
         return next;
     }

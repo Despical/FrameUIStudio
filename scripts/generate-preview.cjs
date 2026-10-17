@@ -7,6 +7,29 @@ const source = fs.readFileSync(path.join(plugin, 'src/main/resources/pack/assets
 const java = fs.readFileSync(path.join(plugin, 'src/main/java/dev/despical/frameui/loading/LoadingEffect.java'), 'utf8');
 const catalog = [...java.matchAll(/\w+\("([^"]+)", "([^"]+)", "([^"]+)", (\d+), (\d+), (\d+), (\d+), (true|false)\)/g)].map(match => ({ id: match[1], name: match[2], category: match[3], shaderId: Number(match[4]), fadeIn: Number(match[5]), minimum: Number(match[6]), fadeOut: Number(match[7]), captions: match[8] === 'true' }));
 if (catalog.length !== 50) throw new Error('Expected 50 stable effect templates.');
+// Detect whether each template actually consumes the speed-scaled clock. Transition-only
+// shaders use coverage instead, so Studio must not offer a speed slider for those screens.
+function templateUsesMotion(id) {
+    const body = source.slice(source.indexOf('vec4 frameTemplateEffect(int effect)'), source.indexOf('// FRAMEUI_COMPOSITION_BEGIN'));
+    for (const match of body.matchAll(/^    if \((effect [^)\n]+)\)\s*/gm)) {
+        const matches = match[1].split('||').some(or => or.split('&&').every(part => {
+            const comparison = part.trim().match(/^effect\s*(==|>=|<=|>|<)\s*(\d+)$/);
+            if (!comparison) throw new Error('Unrecognized template condition: '+part);
+            const number = Number(comparison[2]);
+            return comparison[1] === '==' ? id === number : comparison[1] === '>=' ? id >= number : comparison[1] === '<=' ? id <= number : comparison[1] === '>' ? id > number : id < number;
+        }));
+        if (!matches) continue;
+        const start = match.index + match[0].length;
+        let end = body.indexOf('\n',start);
+        if (body[start] === '{') {
+            let depth = 1; end = start + 1;
+            while (depth && end < body.length) { if (body[end] === '{') depth++; if (body[end] === '}') depth--; end++; }
+        }
+        return /\bseconds\b|frameLoadingBackground\s*\(/.test(body.slice(start,end));
+    }
+    return id === 0;
+}
+for (const template of catalog) template.ambientMotion = templateUsesMotion(template.shaderId);
 const begin = source.indexOf('vec3 frameLoadingBackground()');
 const modern = source.includes('vec4 frameTemplateEffect(int effect)');
 const end = source.indexOf('\n// FRAMEUI_COMPOSITION_BEGIN', begin);
