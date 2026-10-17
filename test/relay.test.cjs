@@ -31,7 +31,7 @@ test('relay preserves binary ZIP, bearer and revision headers without persisting
 });
 test('pack downloads and effect bundles retain bytes and ETags',async t=>{
     const f=await fixture(t), bytes=Buffer.from([80,75,255,42]), etag='"'+'b'.repeat(64)+'"';
-    for (const url of [f.root+'servers/'+f.id+'/frameui.zip?frameui=hash',f.root+'servers/'+f.id+'/studio/api/effects/test']) {
+    for (const url of [f.root+'servers/'+f.id+'/pack?frameui=hash',f.root+'servers/'+f.id+'/studio/api/effects/test']) {
         const pending=fetch(url,{headers:{Authorization:'Bearer '+f.bearer}});
         const poll=await f.channel('/poll');
         assert.equal((await f.channel('/result/'+poll.headers.get('X-Relay-Request'),{method:'POST',body:encode(['200','application/zip',etag],bytes)})).status,204);
@@ -48,7 +48,7 @@ test('channel secrets isolate servers and result IDs cannot cross channels',asyn
 });
 test('simultaneous players share a versioned pack transfer and its bounded memory cache',async t=>{
     const f=await fixture(t), hash='d'.repeat(40), bytes=Buffer.from([80,75,5,6]);
-    const url=f.root+'servers/'+f.id+'/frameui.zip?frameui='+hash;
+    const url=f.root+'servers/'+f.id+'/pack?frameui='+hash;
     const players=Array.from({length:12},()=>fetch(url));
     const poll=await f.channel('/poll');
     await new Promise(resolve=>setTimeout(resolve,30));

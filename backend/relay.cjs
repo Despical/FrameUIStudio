@@ -108,7 +108,7 @@ function createRelay({origin = 'https://frameui.despical.dev', pollMs = 25000, r
         if (!match) return reply(res,404,{error:'Not found'});
         const [, kind, id, tail] = match;
         const isApi = /^\/studio\/api\/(session|effects(?:\/[a-z0-9][a-z0-9_-]{0,63})?|import)$/.test(tail);
-        const isPack = tail === '/frameui.zip';
+        const isPack = tail === '/pack' || tail === '/frameui.zip';
         const allowed = isApi && (req.method === 'GET' && tail !== '/studio/api/import'
             || req.method === 'POST' && tail === '/studio/api/import'
             || req.method === 'DELETE' && /^\/studio\/api\/effects\//.test(tail));
@@ -194,7 +194,7 @@ function createRelay({origin = 'https://frameui.despical.dev', pollMs = 25000, r
                 try { body = await read(req, req.method === 'POST' ? UPLOAD : 0); }
                 finally { if (req.method === 'POST') uploadReaders--; }
                 if (!channel.pending.has(key)) return;
-                item.bytes = encode([req.method,tail,req.headers.authorization || '',req.headers['content-type'] || '',req.headers['if-match'] || '',req.headers['if-none-match'] || ''],body);
+                item.bytes = encode([req.method,isPack ? '/frameui.zip' : tail,req.headers.authorization || '',req.headers['content-type'] || '',req.headers['if-match'] || '',req.headers['if-none-match'] || ''],body);
                 if (buffered + item.bytes.length > 48*1024*1024) { item.bytes=Buffer.alloc(0); return finish(channel,key,429,{error:'Studio is busy. Try again in a moment.'}); }
                 buffered += item.bytes.length; channel.queue.push(key); deliver(channel);
             } catch (error) { finish(channel,key,error.status || 400,{error:'Invalid request body'}); }
