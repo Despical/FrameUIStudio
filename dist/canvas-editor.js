@@ -10,6 +10,14 @@
         const boxes = new Map(), buttons = new Map(), rects = new Map();
         const measure = document.createElement('canvas').getContext('2d');
         let selected = '', gesture = null;
+        const guides = {};
+        for (const axis of ['x', 'y']) {
+            const line = document.createElement('div'); line.className = 'canvas-guide canvas-guide-' + axis;
+            line.hidden = true; line.setAttribute('aria-hidden', 'true'); overlay.append(line); guides[axis] = line;
+        }
+        function showGuides(active = {}) {
+            for (const axis of ['x', 'y']) guides[axis].hidden = !active[axis];
+        }
 
         for (const kind of ['image', 'text', 'progress']) {
             const button = document.createElement('button'); button.type = 'button';
@@ -96,12 +104,17 @@
         function move(event) {
             const g = gesture; if (!g || event.pointerId !== g.pointer) return;
             event.preventDefault();
-            options.update(core.transformElement(g.before,g.kind,(event.clientX-g.x)/g.width,(event.clientY-g.y)/g.height,g.corner,g.rect));
+            let next = core.transformElement(g.before,g.kind,(event.clientX-g.x)/g.width,(event.clientY-g.y)/g.height,g.corner,g.rect);
+            if (!g.corner && !event.altKey) {
+                const snapped = core.snapElement(g.before,next,g.kind,g.rect,g.width,g.height);
+                next = snapped.elements; showGuides(snapped.guides);
+            } else showGuides();
+            options.update(next);
             render();
         }
         function finish(cancel) {
             const g = gesture; if (!g) return;
-            gesture = null; stage.classList.remove('canvas-transforming');
+            gesture = null; showGuides(); stage.classList.remove('canvas-transforming');
             if (cancel) options.update(g.before); else options.commit(g.before);
             if (g.target.hasPointerCapture(g.pointer)) g.target.releasePointerCapture(g.pointer);
             render();

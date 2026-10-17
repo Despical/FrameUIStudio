@@ -197,10 +197,10 @@
         choice('decoration', ['none', 'embers', 'petals', 'scan', 'pulse']);
         for (const key of ['image-x', 'image-y', 'text-x']) number(e[key], key, 0, 1, false);
         for (const key of ['text-y', 'progress-x', 'progress-y']) number(e[key], key, 0.1, 0.9, false);
-        number(e['image-scale'], 'Image scale', 0.1, 2, false); number(e['image-delay'], 'Image delay', 0, 0.8, false);
-        for (const key of ['image-stretch-x', 'image-stretch-y', 'text-stretch-x', 'text-stretch-y']) number(e[key], key, .1, 4, false);
-        number(e['progress-scale'], 'Indicator scale', 0.5, 3, false);
-        number(e['text-scale'], 'Text scale', 0.5, 2, false); number(e['progress-width'], 'Indicator width', 0.08, 0.8, false);
+        number(e['image-scale'], 'Image scale', 0.01, 10, false); number(e['image-delay'], 'Image delay', 0, 0.8, false);
+        for (const key of ['image-stretch-x', 'image-stretch-y', 'text-stretch-x', 'text-stretch-y']) number(e[key], key, .01, 10, false);
+        number(e['progress-scale'], 'Indicator scale', 0.05, 20, false);
+        number(e['text-scale'], 'Text scale', 0.01, 10, false); number(e['progress-width'], 'Indicator width', 0.01, 2, false);
         string(a.image, 'Image path', 180);
         if (a.image && (!a.image.startsWith('images/') || !/\.png$/i.test(a.image) || /[\\:\u0000]/.test(a.image) || a.image.split('/').some(part => !part.trim() || part === '.' || part === '..'))) fail('Image must be a safe PNG path inside images/, such as images/my-effect.png.');
         const f = effect.filters;
@@ -233,8 +233,8 @@
             const horizontal = corner === 'e' || corner === 'w', sign = corner === 'e' || corner === 's' ? 1 : -1;
             const dimension = horizontal ? rect.width : rect.height, delta = horizontal ? dx : dy;
             const key = kind === 'progress' ? (horizontal ? 'progress-width' : 'progress-scale') : kind + '-stretch-' + (horizontal ? 'x' : 'y');
-            const min = kind === 'progress' ? (horizontal ? .08 : .5) : .1;
-            const max = kind === 'progress' ? (horizontal ? .8 : 3) : 4;
+            const min = kind === 'progress' ? (horizontal ? .01 : .05) : .01;
+            const max = kind === 'progress' ? (horizontal ? 2 : 20) : 10;
             const previous = elements[key] || 1;
             const ratio = clamp(1 + sign * delta / dimension, min / previous, max / previous);
             next[key] = previous * ratio;
@@ -249,9 +249,9 @@
             const sx = corner.endsWith('e') ? 1 : -1, sy = corner.startsWith('s') ? 1 : -1;
             let ratio = (rect.width * (rect.width + sx * dx) + rect.height * (rect.height + sy * dy)) / (rect.width ** 2 + rect.height ** 2);
             const scaleKey = kind === 'progress' ? 'progress-scale' : kind + '-scale';
-            const min = kind === 'image' ? .1 : .5, max = kind === 'progress' ? 3 : 2;
+            const min = kind === 'progress' ? .05 : .01, max = kind === 'progress' ? 20 : 10;
             let lower = min / elements[scaleKey], upper = max / elements[scaleKey];
-            if (kind === 'progress') { lower = Math.max(lower, .08 / elements['progress-width']); upper = Math.min(upper, .8 / elements['progress-width']); }
+            if (kind === 'progress') { lower = Math.max(lower, .01 / elements['progress-width']); upper = Math.min(upper, 2 / elements['progress-width']); }
             ratio = clamp(ratio, lower, upper);
             next[scaleKey] *= ratio;
             if (kind === 'progress') next['progress-width'] *= ratio;
@@ -265,6 +265,25 @@
         next[yKey] = clamp(next[yKey], kind === 'image' ? 0 : .1, kind === 'image' ? 1 : .9);
         for (const key of Object.keys(next)) if (typeof next[key] === 'number') next[key] = Math.round(next[key] * 10000) / 10000;
         return next;
+    }
+
+    // Snap the visible bounds, including the caption group's offset from its anchor.
+    // Tolerance is in screen pixels so the magnetic area feels the same at any viewport size.
+    function snapElement(before, candidate, kind, rect, width, height, tolerance = 8) {
+        const next = clone(candidate), guides = {x: false, y: false};
+        for (const [axis, size, dimension] of [['x', width, 'width'], ['y', height, 'height']]) {
+            const key = kind + '-' + axis;
+            const center = rect[axis] + rect[dimension] / 2 + candidate[key] - before[key];
+            const offset = .5 - center;
+            if (Math.abs(offset) * size > tolerance) continue;
+            const minimum = kind === 'progress' || (kind === 'text' && axis === 'y') ? .1 : 0;
+            const maximum = minimum === .1 ? .9 : 1;
+            const snapped = next[key] + offset;
+            if (snapped < minimum || snapped > maximum) continue;
+            next[key] = Math.round(snapped * 1000000) / 1000000;
+            guides[axis] = true;
+        }
+        return {elements: next, guides};
     }
 
     function toYaml(effect) {
@@ -400,6 +419,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1-2048 pixels.');
         return { width, height };
     }
-    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, snapElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

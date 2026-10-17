@@ -169,7 +169,7 @@ test('corner resizing preserves aspect and fixes the opposite corner', () => {
     const bar = core.transformElement(original,'progress',.17,.02,'se',{x:.33,y:.64,width:.34,height:.04});
     assert.equal(bar['progress-width'],.51); assert.equal(bar['progress-scale'],1.5);
     const bounded = core.transformElement(original,'image',100,100,'se',{x:.3,y:.4,width:.4,height:.2});
-    assert.equal(bounded['image-scale'],2);
+    assert.equal(bounded['image-scale'],10);
     assert.throws(() => core.transformElement(original,'text',1,1,'bad',{x:0,y:0,width:1,height:1}));
 });
 
@@ -396,4 +396,33 @@ test('instant images and independent axis dimensions survive portable effect exp
     Object.assign(effect.elements, {'image-animation':'none','image-stretch-x':1.8,'image-stretch-y':.7,'text-stretch-x':1.4,'text-stretch-y':.8});
     const entries = await core.unzip(core.zip({['effects/aurora.yml']:core.toYaml(effect)}));
     assert.deepEqual(core.fromYaml(core.decoder.decode(entries['effects/aurora.yml'])), effect);
+});
+
+
+test('center snapping uses a pixel tolerance and the visible caption bounds', () => {
+    const before = core.createEffect('clean-loader').elements;
+    const rect = {x:.4,y:.45,width:.2,height:.2};
+    const near = core.transformElement(before, 'text', .006, -.046);
+    const snapped = core.snapElement(before, near, 'text', rect, 1000, 500);
+    assert.deepEqual(snapped.guides, {x:true,y:true});
+    assert.equal(snapped.elements['text-x'], .5);
+    assert.ok(Math.abs(rect.y + rect.height/2 + snapped.elements['text-y'] - before['text-y'] - .5) < .000001);
+    assert.equal(near['text-x'], .506);
+    const far = core.snapElement(before, core.transformElement(before,'text',.02,.02), 'text', rect,1000,500);
+    assert.deepEqual(far.guides,{x:false,y:false});
+    assert.deepEqual(core.snapElement(before,near,'text',rect,2000,500).guides,{x:false,y:true});
+});
+
+test('expanded resize bounds remain finite and survive YAML validation', () => {
+    const effect = core.createEffect('clean-loader');
+    for (const kind of ['image','text','progress']) {
+        const rect = {x:.3,y:.3,width:.4,height:.2};
+        const large = core.transformElement(effect.elements,kind,100,100,'se',rect);
+        effect.elements = large;
+        assert.ok(large[kind+'-scale'] > 2);
+        core.validate(core.fromYaml(core.toYaml(effect)));
+        const small = core.transformElement(large,kind,-100,-100,'se',rect);
+        assert.ok(small[kind+'-scale'] > 0 && small[kind+'-scale'] < .1);
+        core.validate({...effect,elements:small});
+    }
 });
