@@ -491,5 +491,6 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 #connect-dialog .dialog-note{margin:0;padding-top:20px;border-top:1px solid var(--border);font-size:14px;line-height:1.65}
 @media(min-width:1241px){.center-scroll{height:calc(100% + 20px)}.preview-panel{padding-bottom:0}}
 
+.switch-copy .field-heading{margin-bottom:0;align-items:center}
 .switch-copy .field-heading .field-label{font-size:15px;color:inherit}
 .section-heading h3:has(.field-info){display:inline-flex;align-items:center;gap:6px}
