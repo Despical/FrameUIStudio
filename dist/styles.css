@@ -210,7 +210,7 @@ code{font-family:"Cascadia Code",Consolas,monospace;color:#9bb1c9;font-size:.95e
 .renderer-error{position:absolute;inset:0;z-index:6;display:grid;place-items:center;text-align:center;padding:40px;background:#0b1220e8;line-height:1.7;color:var(--muted);font-size:14px}
 .renderer-error[hidden]{display:none}
 .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-dialog{width:min(540px,calc(100vw - 30px));border:1px solid #30465b;border-radius:15px;background:#111a27;color:var(--text);padding:29px;box-shadow:0 20px 100px #0008}
+dialog{width:min(540px,calc(100% - 24px));max-width:calc(100% - 24px);max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain;overflow-wrap:anywhere;border:1px solid #30465b;border-radius:15px;background:#111a27;color:var(--text);padding:29px;box-shadow:0 20px 100px #0008}
 dialog::backdrop{background:#030711aa;backdrop-filter:blur(4px)}
 .dialog-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:18px}
 .dialog-heading h2{margin:0;line-height:1.3}
@@ -544,3 +544,19 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 [dir=rtl] .component-back svg{transform:scaleX(-1)}
 @media(max-width:760px){.app-header{padding-inline:14px}.header-actions{width:100%;justify-content:flex-start;gap:7px}.header-actions .button{flex:1;min-width:120px;padding:8px}.language-control{max-width:none;flex:1;min-width:130px}.header-divider{display:none}}
 @media(max-width:760px){.header-actions .language-control{min-width:0;flex:0 0 auto}}
+
+/* Narrow screens keep dialog text readable and all actions reachable. */
+@media(max-width:480px){
+    dialog,#connect-dialog{padding:20px}
+    .dialog-heading,.connection-heading{gap:12px;margin-bottom:18px}
+    dialog h2,.connection-heading h2{font-size:23px;min-width:0}
+    dialog code{overflow-wrap:anywhere;white-space:normal}
+    dialog li{padding-left:32px}
+    .cookie-category{align-items:flex-start;flex-direction:column;gap:10px;padding:18px 0}
+    .cookie-actions{width:100%;min-width:0}
+    .cookie-actions .button{width:100%;height:auto;min-height:44px;padding:10px 12px;white-space:normal;text-align:center;justify-content:center}
+    .cookie-banner{max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain}
+    .footer-link-group{min-width:0;overflow-wrap:anywhere}
+    .footer-links a,.footer-links button{max-width:100%}
+    .footer-links a span{min-width:0}
+}
