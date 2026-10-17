@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Standalone browser editor for FrameUI effects",
-  "license": "GPL-3.0-or-later",
+  "license": "UNLICENSED",
   "scripts": {
     "dev": "node scripts/serve.cjs",
     "start": "node scripts/serve.cjs",

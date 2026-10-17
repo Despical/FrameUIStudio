@@ -32,7 +32,7 @@ npm run refresh -- ../FrameUI
 
 Regenerate `dist/shaders.js`, `test/catalog.json` and the reference YAML fixtures when the plugin's shader functions or built-in catalog change. Pass the plugin project directory to `npm run refresh`; it defaults to the sibling `../FrameUI`. The generator copies source routines rather than maintaining independent visual approximations. Serving, editing and tests use this project's own files and do not require the plugin checkout.
 
-Copyright (C) 2026 Berke Akçen. GPL-3.0-or-later, matching FrameUI.
+Copyright (C) 2026 Berke Akçen. All rights reserved. Proprietary and confidential, matching FrameUI. See [LICENSE](LICENSE).
 
 Ready-made layouts include the generated 3D FrameUI logo, six reusable text/indicator layouts, two new landscapes and Overworld. The Design tab edits background style, image entrance/motion/size/position/delay, caption animation/position/scale, loading indicator and decoration. Indicators animate continuously rather than reporting a server loading percentage. The preset artwork is included in complete effect exports; replacing a logo or photo preserves its configurable animation. Run the local HTTP server to load bundled preset images reliably.
 

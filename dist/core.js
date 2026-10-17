@@ -1,4 +1,4 @@
-/* FrameUI Studio — Copyright (C) 2026 Berke Akçen. GPL-3.0-or-later. */
+/* FrameUI Studio — Copyright (C) 2026 Berke Akçen. All rights reserved. Proprietary and confidential. */
 (function (scope) {
     'use strict';
     const VERSION = 1;
