@@ -1,0 +1,28 @@
+# Copyright (C) 2026 Berke Akçen
+# SPDX-License-Identifier: GPL-3.0-only
+services:
+  relay:
+    build: .
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 384m
+    cpus: 1.0
+    pids_limit: 64
+    environment:
+      TRUST_PROXY: '1'
+      NODE_OPTIONS: --max-old-space-size=256
+    networks:
+      edge:
+        aliases: [frameui-relay]
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: '2'
+networks:
+  edge:
+    external: true
+    name: plugins-hub-edge

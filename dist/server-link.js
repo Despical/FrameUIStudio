@@ -12,15 +12,34 @@
 (function () {
     'use strict';
     // The capability stays in memory and the URL fragment, never in cookies, storage or request URLs.
-    const token = location.pathname.endsWith('/studio/') ? new URLSearchParams(location.hash.slice(1)).get('server') : null;
+    const parameters = new URLSearchParams(location.hash.slice(1));
+    const token = parameters.get('server');
+    const endpointValue = parameters.get('endpoint');
+    let endpoint = null, connectionError = null;
+    if (token) {
+        try {
+            endpoint = endpointValue ? new URL(endpointValue) : location.pathname.endsWith('/studio/') ? new URL('./', location.href) : null;
+            if (!endpoint || !['http:','https:'].includes(endpoint.protocol) || endpoint.username || endpoint.password
+                || endpoint.search || endpoint.hash || !endpoint.pathname.endsWith('/studio/')) throw new Error();
+            const loopback = endpoint.hostname === 'localhost' || endpoint.hostname === '127.0.0.1' || endpoint.hostname === '[::1]';
+            if (location.protocol === 'https:' && endpoint.protocol !== 'https:' && !loopback) {
+                connectionError = 'Your server needs an HTTPS resource-pack public URL to connect from the hosted Studio. Configure a reverse proxy, then run /frameui editor again.';
+            }
+        } catch { endpoint = null; connectionError = 'Invalid server connection link. Run /frameui editor for a new link.'; }
+    }
     let session = null;
     if (token) for (const brand of document.querySelectorAll('a.brand')) brand.href = location.pathname + location.search + location.hash;
     async function request(path, bytes, options = {}) {
         if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) throw new Error('Run /frameui editor to open your personal server connection.');
+        if (connectionError) throw new Error(connectionError);
+        if (!endpoint) throw new Error('Run /frameui editor to open your personal server connection.');
         let response;
         try {
-            response = await fetch(new URL('api/' + path, location.href), {
+            response = await fetch(new URL('api/' + path, endpoint), {
                 method: options.method || (bytes ? 'POST' : 'GET'), credentials: 'omit', cache: 'no-store', redirect: 'error',
+                mode: 'cors', referrerPolicy: 'no-referrer',
+                ...(endpoint.protocol === 'http:' && ['localhost','127.0.0.1','[::1]'].includes(endpoint.hostname)
+                    ? {targetAddressSpace:'loopback'} : {}),
                 headers: { Authorization: 'Bearer ' + token, ...(bytes ? { 'Content-Type': 'application/zip' } : {}),
                     ...(options.revision ? { 'If-Match': '"' + options.revision + '"' } : bytes ? { 'If-None-Match': '*' } : {}) },
                 body: bytes

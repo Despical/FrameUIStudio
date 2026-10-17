@@ -1,0 +1,31 @@
+# Copyright (C) 2026 Berke Akçen
+# SPDX-License-Identifier: GPL-3.0-only
+name: Backend container
+on:
+  push:
+    branches: [main]
+    paths: ['backend/**', 'test/relay.test.cjs', '.github/workflows/backend.yml']
+  pull_request:
+    paths: ['backend/**', 'test/relay.test.cjs', '.github/workflows/backend.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - run: docker build -t frameui-relay backend
+      - run: |
+          docker run -d --name relay --read-only --cap-drop ALL --security-opt no-new-privileges -p 127.0.0.1:8094:8094 frameui-relay
+          for attempt in $(seq 1 20); do
+            if curl --fail http://127.0.0.1:8094/frameui-relay/v1/health; then exit 0; fi
+            sleep 1
+          done
+          docker logs relay
+          exit 1
+      - if: always()
+        run: docker rm -f relay || true

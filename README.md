@@ -17,23 +17,24 @@
   <a href="https://discord.gg/uXVU8jmtpU">Discord</a>
 </p>
 
-FrameUI Studio is a free browser editor for FrameUI loading screens: 50 animated shaders, 10 editable presets, and your own saved designs. This repository contains the website only. The paid Minecraft plugin has its own project and is not included here.
+FrameUI Studio is a free browser editor for FrameUI loading screens, with 50 animations, 10 editable presets and your own saved designs.
 
 ## Features
 
-- Preview the plugin's shader functions and edit colors, timing, captions, images and indicators.
+- Preview loading screens and edit colors, timing, text, images and indicators.
 - Drag and resize screen elements directly on the preview, with undo and redo.
 - Import YAML or Studio ZIPs; export a complete effect with its PNG and installation instructions.
-- Keep drafts and image libraries in your browser. No Studio account, backend or subscription is required.
-- Use 28 bundled interface languages, translated language names, flags, and Arabic/Hebrew RTL layouts.
-- Edit on desktop, tablet or mobile. Longer dialogs scroll inside the viewport.
+- Keep drafts and image libraries in your browser. No Studio account or subscription is required.
+- Connect to your Minecraft server with `/frameui editor` and save effects directly.
+- Choose from 28 interface languages.
+- Edit on desktop, tablet or mobile.
 - Allow all cookies or essential storage only; reopen **Cookie settings** in the footer at any time.
 
-The shader preview is illustrative: check HUD, hands, captions and final positioning in Minecraft. Optional Google Analytics starts only after consent on the published editor; authored content and personal server links are excluded.
+Check your finished effect in Minecraft to confirm its appearance and positioning.
 
 ## Run locally
 
-Use a current Node.js LTS release (22 or 24). No dependency installation or build step is required.
+Install Node.js 22 or 24, then run:
 
 ```sh
 git clone https://github.com/Despical/FrameUIStudio.git
@@ -41,33 +42,37 @@ cd FrameUIStudio
 npm run dev
 ```
 
-Open **http://127.0.0.1:5173**. The static files are in `dist/`. Editing and exporting also work offline; a local HTTP server is recommended for bundled preset images.
+Open **http://127.0.0.1:5173** in your browser.
+
+To run the project checks:
 
 ```sh
 npm test
 npm run check
 ```
 
-Neither serving nor testing requires the plugin checkout. Shader/catalog regeneration is an optional maintainer operation: `npm run refresh -- /path/to/FrameUI`.
-
 ## Languages
 
-English is the default. Choose a language in the header or open `?lang=tr`. Explicit preferences persist in this browser; authored names, captions, IDs and exported effect values keep their original content.
+English is the default. Choose a language in the header; Studio remembers your choice. Your effect names and text stay as you wrote them.
 
 English · Spanish · Russian · German · French · Portuguese · Polish · Turkish · Chinese · Indonesian · Italian · Vietnamese · Dutch · Korean · Czech · Thai · Hungarian · Arabic · Japanese · Ukrainian · Swedish · Danish · Romanian · Slovak · Hebrew · Lithuanian · Malay · Tamil
 
-## Deployment
+## Connect your server
 
-The public editor is available at **https://frameui.despical.dev/**. Cloudflare DNS connects this subdomain to GitHub Pages. GitHub Actions validates the project before deploying only `dist/` to GitHub Pages. Pull requests run checks without deployment privileges. Pushes to `main` and manual dispatches publish the verified static artifact. No deployment token is stored in this repository: Pages uses GitHub's short-lived OIDC credentials.
+1. Run `/frameui editor` in Minecraft and open your personal link.
+2. Create an effect or open one from **My Effects**.
+3. Click **Import to server** or **Save to server** to apply your changes.
 
-The website is independent of the plugin project. Deploying this repository does not publish plugin source code or JARs. Browser storage belongs to each origin: export designs from another hosted copy before moving them to this URL.
+Keep your Minecraft account online while editing. Personal links last 30 minutes; run the command again for a new one. Keep these links private.
+
+You can also use Studio on its own and export effects as ZIP files.
 
 ## Security and support
 
-Report vulnerabilities privately using [SECURITY.md](SECURITY.md). For ordinary bugs, use the issue templates and include the browser, screen size and interface language. Never post a personal `/frameui editor` link, private server address, or exported private artwork in a public issue.
+Report vulnerabilities privately using [SECURITY.md](SECURITY.md). For bugs, open an issue with the steps to reproduce the problem, your browser and your interface language.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development, [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards, and [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES) for bundled asset notices.
 
 ## License
 
-Copyright © 2026 Berke Akçen. FrameUI Studio source code is licensed under the GNU General Public License version 3 ([GPL-3.0-only](LICENSE)). Third-party assets retain their own terms and notices. This license applies to Studio; the separate FrameUI plugin is not included or relicensed by this repository.
+Copyright © 2026 Berke Akçen. FrameUI Studio is licensed under the GNU General Public License version 3 ([GPL-3.0-only](LICENSE)). Third-party assets retain their own terms and notices.

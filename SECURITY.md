@@ -9,6 +9,7 @@ Include the affected commit or URL, browser and operating system, reproduction s
 - Unsafe rendering of imported YAML, effect names, captions or translations.
 - ZIP traversal, decompression limits, image parsing and browser storage.
 - Personal editor capabilities, server import authentication and revision handling.
+- Relay channel isolation, outbound transport framing, limits and private traffic handling.
 - Cookie consent, unexpected analytics collection or disclosure of private content.
 - Repository workflows, deployment artifacts and third-party assets.
 
