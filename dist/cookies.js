@@ -2,10 +2,11 @@
 (function () {
     'use strict';
     const MEASUREMENT_ID = 'G-ENNPRLYB7P';
-    const HOST = 'https://frameui-studio.berkeakcen.chatgpt.site';
+    const PUBLIC_URLS = ['https://despical.github.io/FrameUIStudio/', 'https://frameui-studio.berkeakcen.chatgpt.site/'];
+    const canonical = PUBLIC_URLS.find(url => location.origin + location.pathname === url || location.origin + location.pathname === url + 'index.html');
     const KEY = 'frameui-studio-cookie-consent';
     const MAX_AGE = 180 * 24 * 60 * 60 * 1000;
-    const hosted = location.origin === HOST && !location.hash.includes('server=') && (location.pathname === '/' || location.pathname === '/index.html');
+    const hosted = !!canonical && !location.hash.includes('server=');
     const banner = document.getElementById('cookie-banner');
     const dialog = document.getElementById('cookie-dialog');
     let loaded = false;
@@ -51,7 +52,7 @@
         gtag('js', new Date());
         // Only the public editor's canonical URL is measured, never query strings,
         // personal server capabilities, authored effect names or imported content.
-        gtag('config', MEASUREMENT_ID, {page_location:HOST + '/',page_referrer:'',page_title:'FrameUI Studio',
+        gtag('config', MEASUREMENT_ID, {page_location:canonical,page_referrer:'',page_title:'FrameUI Studio',
             send_page_view:true,cookie_domain:'none',cookie_flags:'SameSite=Lax;Secure',
             allow_google_signals:false,allow_ad_personalization_signals:false});
         const script = document.createElement('script');

@@ -36,6 +36,14 @@ test('analytics waits for consent, uses canonical public URL, and never sends pr
         privateEditor.click('cookie-accept'); assert.equal(privateEditor.scripts.length,0,url);
     }
 });
+test('GitHub Pages analytics stays confined to the canonical public project path',()=>{
+    const f=fixture({url:'https://despical.github.io/FrameUIStudio/?lang=tr',consent:accepted()});
+    const config=f.window.dataLayer.find(args=>args[0]==='config');
+    assert.equal(config[2].page_location,'https://despical.github.io/FrameUIStudio/');
+    for(const url of ['https://despical.github.io/another-project/','https://despical.github.io/FrameUIStudio/#server=private'])
+        assert.equal(fixture({url,consent:accepted()}).scripts.length,0,url);
+});
+
 test('rejection and revocation stop analytics and preserve authored storage',()=>{
     const f=fixture(); f.click('cookie-reject');
     assert.equal(f.scripts.length,0); assert.equal(f.writes.at(-1).value.analytics,false);
