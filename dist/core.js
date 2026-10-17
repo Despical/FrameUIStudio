@@ -238,12 +238,19 @@
         }
         return next;
     }
-    function transformElement(elements, kind, dx, dy, corner = '', rect = null) {
+    function transformElement(elements, kind, dx, dy, corner = '', rect = null, limits = {}) {
         if (captionLines[kind]) {
             const anchor = elementAnchor(elements, kind), proxy = clone(elements);
             Object.assign(proxy, {'image-x':anchor.x,'image-y':anchor.y,'image-scale':elements[kind+'-scale'],
                 'image-stretch-x':elements[kind+'-stretch-x'],'image-stretch-y':elements[kind+'-stretch-y']});
-            const transformed = transformElement(proxy,'image',dx,dy,corner,rect);
+            const floor = Math.min(8,captionLines[kind].size) / captionLines[kind].size;
+            const baseX = elements['text-scale'] * elements['text-stretch-x'];
+            const baseY = elements['text-scale'] * elements['text-stretch-y'];
+            const minimums = {
+                scale:Math.max(floor/(baseX*elements[kind+'-stretch-x']),floor/(baseY*elements[kind+'-stretch-y'])),
+                x:floor/(baseX*elements[kind+'-scale']),y:floor/(baseY*elements[kind+'-scale'])
+            };
+            const transformed = transformElement(proxy,'image',dx,dy,corner,rect,minimums);
             const next = translateElement(elements,kind,transformed['image-x']-anchor.x,transformed['image-y']-anchor.y);
             for (const key of ['scale','stretch-x','stretch-y']) next[kind+'-'+key] = transformed['image-'+key];
             return next;
@@ -259,7 +266,7 @@
             const horizontal = corner === 'e' || corner === 'w', sign = corner === 'e' || corner === 's' ? 1 : -1;
             const dimension = horizontal ? rect.width : rect.height, delta = horizontal ? dx : dy;
             const key = kind === 'progress' ? (horizontal ? 'progress-width' : 'progress-scale') : kind + '-stretch-' + (horizontal ? 'x' : 'y');
-            const min = kind === 'progress' ? (horizontal ? .01 : .05) : .01;
+            const min = kind === 'progress' ? (horizontal ? .01 : .05) : Math.max(.01,Math.min(10,limits[horizontal?'x':'y'] || .01));
             const max = kind === 'progress' ? (horizontal ? 2 : 20) : 10;
             const previous = elements[key] || 1;
             const ratio = clamp(1 + sign * delta / dimension, min / previous, max / previous);
@@ -275,7 +282,7 @@
             const sx = corner.endsWith('e') ? 1 : -1, sy = corner.startsWith('s') ? 1 : -1;
             let ratio = (rect.width * (rect.width + sx * dx) + rect.height * (rect.height + sy * dy)) / (rect.width ** 2 + rect.height ** 2);
             const scaleKey = kind === 'progress' ? 'progress-scale' : kind + '-scale';
-            const min = kind === 'progress' ? .05 : .01, max = kind === 'progress' ? 20 : 10;
+            const min = kind === 'progress' ? .05 : Math.max(.01,Math.min(10,limits.scale || .01)), max = kind === 'progress' ? 20 : 10;
             let lower = min / elements[scaleKey], upper = max / elements[scaleKey];
             if (kind === 'progress') { lower = Math.max(lower, .01 / elements['progress-width']); upper = Math.min(upper, 2 / elements['progress-width']); }
             ratio = clamp(ratio, lower, upper);

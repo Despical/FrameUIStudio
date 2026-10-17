@@ -463,3 +463,19 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .component-entry{display:flex;align-items:center;justify-content:space-between;width:100%;padding:12px 14px;margin-top:8px;background:#151f2b;border:1px solid var(--border);border-radius:8px;text-align:left;color:#d5deeb;font-size:14px}
 .component-entry:hover{border-color:#68bfb1;background:#192b32}
 .component-entry span{font-size:20px;color:#95afa9}
+
+/* Keep resize handles outside the content and spaced apart even for a single letter. */
+.canvas-object::before{inset:calc(-1 * var(--hit-padding,0px)) calc(-1 * var(--hit-padding-x,0px))}
+.canvas-object.selected,.canvas-object:focus-visible{border-color:transparent;box-shadow:none}
+.canvas-object::after{content:"";position:absolute;inset:calc(-1 * var(--handle-pad-y,8px)) calc(-1 * var(--handle-pad-x,8px));border:1px solid transparent;pointer-events:none}
+.canvas-object.selected::after,.canvas-object:focus-visible::after{border-color:#8bdace;box-shadow:0 0 0 1px #06191599}
+.canvas-handle-nw,.canvas-handle-sw,.canvas-handle-w{left:calc(-1 * var(--handle-pad-x,8px) - 6px)}
+.canvas-handle-ne,.canvas-handle-se,.canvas-handle-e{right:calc(-1 * var(--handle-pad-x,8px) - 6px)}
+.canvas-handle-nw,.canvas-handle-ne,.canvas-handle-n{top:calc(-1 * var(--handle-pad-y,8px) - 6px)}
+.canvas-handle-sw,.canvas-handle-se,.canvas-handle-s{bottom:calc(-1 * var(--handle-pad-y,8px) - 6px)}
+.inspector-heading.component-heading{border-bottom:1px solid var(--border);padding-bottom:22px}
+.component-back{display:inline-flex;align-items:center;gap:7px;min-height:36px;margin:-4px 0 12px -6px;padding:5px 6px;font-size:15px;line-height:1.5}
+.component-back svg{width:22px;height:22px;flex-shrink:0}
+.component-back:hover{color:#bafff2}
+[data-caption-entry]{cursor:text}
+.caption-content{padding-top:20px}

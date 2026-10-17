@@ -96,6 +96,9 @@
                 box.style.left = rect.x * 100 + '%'; box.style.top = rect.y * 100 + '%';
                 box.style.width = rect.width * 100 + '%'; box.style.height = rect.height * 100 + '%';
                 box.style.setProperty('--hit-padding', Math.max(0,(28-rect.height*height)/2)+'px');
+                box.style.setProperty('--hit-padding-x', Math.max(0,(28-rect.width*width)/2)+'px');
+                box.style.setProperty('--handle-pad-x', Math.max(8,(56-rect.width*width)/2)+'px');
+                box.style.setProperty('--handle-pad-y', Math.max(8,(44-rect.height*height)/2)+'px');
             }
             options.geometry?.(selected,rects.get(selected));
         }

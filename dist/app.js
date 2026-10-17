@@ -304,8 +304,13 @@
         visual.append(identity);
         const captions = section('Captions'); captions.append(toggle('Show captions','captions.enabled'));
         for (const kind of ['title','subtitle','detail']) {
-            const button = element('button','component-entry',componentLabels[kind]);
-            button.append(element('span','','›')); button.addEventListener('click',()=>directEditor.select(kind)); captions.append(button);
+            const key = core.captionLines[kind].key, wrap = element('div','field');
+            const input = element('input'); input.id = 'caption-entry-'+kind; input.readOnly = true;
+            input.dataset.captionEntry = key; input.value = effect.captions[key];
+            const open = () => { directEditor.select(kind); const target=$('component-field-captions-'+key); target?.focus({preventScroll:true}); };
+            input.addEventListener('click',open);
+            input.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' ') {event.preventDefault();open();}});
+            wrap.append(fieldHeading(componentLabels[kind],input.id,'captions.'+key),input); captions.append(wrap);
         }
         visual.append(captions);
         const background = section('Background');
@@ -393,7 +398,7 @@
     function showComponent(kind) {
         selectedComponent = kind; closeFieldHelp(); dropdowns.close();
         $('inspector-title').textContent = componentLabels[kind] || 'Effect settings';
-        $('component-back').hidden = !kind; document.querySelector('.inspector-tabs').hidden = !!kind;
+        $('component-back').hidden = !kind; document.querySelector('.inspector-heading').classList.toggle('component-heading',!!kind); document.querySelector('.inspector-tabs').hidden = !!kind;
         $('settings-component').hidden = !kind;
         $('reset-button').textContent = kind ? 'Reset layout' : 'Reset';
         for (const pane of document.querySelectorAll('.settings-pane:not(#settings-component)')) pane.hidden = !!kind || pane.id !== 'settings-'+activeTab;
@@ -438,7 +443,7 @@
         }
         pane.append(layout);
         if (core.captionLines[kind]) {
-            const content = section(kind==='detail'?'Text by event':'Text');
+            const content = element('section','settings-section caption-content');
             if (kind==='detail') {
                 for (const [key,label] of [['join-detail','Joining'],['teleport-detail','Teleporting'],['preview-detail','Preview']]) content.append(field(label,'captions.'+key,{maxLength:128,component:true}));
             } else content.append(field(componentLabels[kind],'captions.'+kind,{maxLength:kind==='title'?64:96,component:true}));
@@ -665,6 +670,7 @@
         $('server-import-button').querySelector('span').textContent = serverButtonLabel();
         $('export-button').disabled = !!error; $('yaml-download').disabled = !!error; $('guide-export').disabled = !!error;
         $('effect-heading').textContent = effect.name || 'Untitled effect';
+        for (const input of document.querySelectorAll('[data-caption-entry]')) input.value = effect.captions[input.dataset.captionEntry];
         $('summary-in').textContent = `${Number((effect.timing['fade-in-ticks'] / 20).toFixed(2))} s`; $('summary-hold').textContent = `${Number(((effect.timing['minimum-ticks'] - effect.timing['fade-in-ticks']) / 20).toFixed(2))} s`; $('summary-out').textContent = `${Number((effect.timing['fade-out-ticks'] / 20).toFixed(2))} s`; $('summary-triggers').textContent = effect['play-on'].length ? `${effect['play-on'].length} ${effect['play-on'].length === 1 ? 'event' : 'events'}` : 'Manual only';
         $('duration-label').textContent = `${Number((duration() / 20).toFixed(2))} s`; $('undo-button').disabled = !undo.length; $('redo-button').disabled = !redo.length;
         if ($('duration-seconds') && document.activeElement !== $('duration-seconds')) $('duration-seconds').value = duration() / 20;

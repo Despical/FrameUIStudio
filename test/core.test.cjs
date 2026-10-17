@@ -474,3 +474,23 @@ test('alignment snaps to component edges and centers without changing its target
     const edge=core.snapElement(e,core.transformElement(e,'image',.302,.1),'image',rect,1000,500,8,[target]);
     assert.ok(Math.abs(edge.elements['image-x']-.8)<.00001);
 });
+
+
+test('caption resizing keeps a readable minimum on both axes and preserves resize anchors', () => {
+    for (const kind of ['title','subtitle','detail']) {
+        const e = core.createEffect('aurora').elements, anchor = core.elementAnchor(e,kind);
+        const rect = {x:anchor.x-.2,y:anchor.y,width:.4,height:.1};
+        for (const corner of ['e','s','se']) {
+            const resized = core.transformElement(e,kind,-100,-100,corner,rect);
+            const size = core.captionLines[kind].size;
+            for (const axis of ['x','y']) {
+                const effective = size * resized['text-scale'] * resized['text-stretch-'+axis] * resized[kind+'-scale'] * resized[kind+'-stretch-'+axis];
+                assert.ok(effective >= Math.min(8,size)-.002,kind+' '+axis+' '+corner);
+            }
+            assert.ok(Math.abs(core.elementAnchor(resized,kind).y-rect.y)<.0002);
+        }
+        const moved=core.transformElement(e,kind,.01,.02);
+        assert.equal(moved[kind+'-scale'],e[kind+'-scale']);
+        assert.equal(moved[kind+'-stretch-x'],e[kind+'-stretch-x']);
+    }
+});
