@@ -1,6 +1,7 @@
 /* Shared, keyboard-accessible dropdowns for FrameUI Studio. */
 (function () {
     'use strict';
+    const t = window.FrameStudioI18n?.t || (value => value);
     const controls = new WeakMap();
     let opened = null;
 
@@ -24,8 +25,8 @@
             trigger.setAttribute('role', 'combobox');
             trigger.setAttribute('aria-haspopup', 'listbox');
             trigger.setAttribute('aria-expanded', 'false');
-            const label = select.getAttribute('aria-label') || select.closest('.field')?.querySelector('.field-label')?.textContent || 'Choose an option';
-            trigger.setAttribute('aria-label', label);
+            let label = select.getAttribute('aria-label') || select.closest('.field')?.querySelector('.field-label')?.textContent || 'Choose an option';
+            trigger.setAttribute('aria-label', t(label));
             const value = document.createElement('span');
             value.className = 'select-value';
             const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -39,7 +40,9 @@
             wrapper.append(select, trigger);
             select.hidden = true;
             const update = () => {
-                value.textContent = select.selectedOptions[0]?.textContent || 'Choose an option';
+                label = select.getAttribute('aria-label') || label;
+                trigger.setAttribute('aria-label', t(label));
+                value.textContent = t(select.selectedOptions[0]?.textContent || 'Choose an option');
                 trigger.disabled = select.disabled;
             };
             controls.set(select, update);
@@ -75,7 +78,7 @@
                 popup.className = 'select-menu';
                 popup.id = select.id + '-options';
                 popup.setAttribute('role', 'listbox');
-                popup.setAttribute('aria-label', label + ' options');
+                popup.setAttribute('aria-label', t(label + ' options'));
                 choices = [...select.options].map((option, index) => {
                     const choice = document.createElement('div');
                     choice.id = popup.id + '-' + index;
@@ -84,10 +87,10 @@
                     choice.setAttribute('aria-selected', String(option.selected));
                     choice.setAttribute('aria-disabled', String(option.disabled));
                     const text = document.createElement('span');
-                    text.textContent = option.textContent;
+                    text.textContent = t(option.textContent);
                     const check = document.createElement('span');
                     check.className = 'select-check';
-                    check.textContent = '✓';
+                    check.textContent = t('✓');
                     check.setAttribute('aria-hidden', 'true');
                     choice.append(text, check);
                     choice.addEventListener('pointermove', () => { if (!option.disabled) highlight(index, false); });

@@ -4,7 +4,7 @@
     // The capability stays in memory and the URL fragment, never in cookies, storage or request URLs.
     const token = location.pathname.endsWith('/studio/') ? new URLSearchParams(location.hash.slice(1)).get('server') : null;
     let session = null;
-    if (token) for (const brand of document.querySelectorAll('a.brand')) brand.href = location.pathname + location.hash;
+    if (token) for (const brand of document.querySelectorAll('a.brand')) brand.href = location.pathname + location.search + location.hash;
     async function request(path, bytes, options = {}) {
         if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) throw new Error('Run /frameui editor to open your personal server connection.');
         let response;

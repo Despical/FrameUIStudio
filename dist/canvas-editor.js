@@ -1,11 +1,12 @@
 /* FrameUI Studio - direct manipulation of the exported composition coordinates. */
 (function (scope) {
     'use strict';
+    const t = window.FrameStudioI18n?.t || (value => value);
     function create(options) {
         const core = scope.FrameStudioCore, stage = options.stage;
         const labels = {image:'Image', title:'Title', subtitle:'Subtitle', detail:'Extra line', progress:'Indicator'};
         const toolbar = document.createElement('div'); toolbar.className = 'canvas-toolbar';
-        toolbar.setAttribute('role', 'toolbar'); toolbar.setAttribute('aria-label', 'Arrange screen elements');
+        toolbar.setAttribute('role', 'toolbar'); toolbar.setAttribute('aria-label', t('Arrange screen elements'));
         const overlay = document.createElement('div'); overlay.className = 'canvas-editor';
         const boxes = new Map(), buttons = new Map(), rects = new Map();
         let selected = '', gesture = null, renderedKey = '';
@@ -28,21 +29,21 @@
 
         for (const kind of Object.keys(labels)) {
             const button = document.createElement('button'); button.type = 'button';
-            button.textContent = labels[kind]; button.dataset.canvasSelect = kind;
+            button.textContent = t(labels[kind]); button.dataset.canvasSelect = kind;
             button.setAttribute('aria-pressed', 'false');
             button.addEventListener('click', () => { options.pause(); select(kind); render(); });
             toolbar.append(button); buttons.set(kind, button);
             const box = document.createElement('div'); box.className = 'canvas-object';
             box.dataset.canvasObject = kind; box.tabIndex = 0; box.setAttribute('role', 'button');
-            box.setAttribute('aria-label', 'Move ' + labels[kind].toLowerCase());
+            box.setAttribute('aria-label', t('Move ' + labels[kind].toLowerCase()));
             box.addEventListener('pointerdown', event => begin(event, kind, ''));
             box.addEventListener('keydown', event => nudge(event, kind));
             for (const corner of ['nw','n','ne','e','se','s','sw','w']) {
                 const handle = document.createElement('button'); handle.type = 'button';
                 handle.className = 'canvas-handle canvas-handle-' + corner; handle.dataset.corner = corner;
                 const sideNames = {n:'top edge',s:'bottom edge',e:'right edge',w:'left edge',nw:'top-left corner',ne:'top-right corner',sw:'bottom-left corner',se:'bottom-right corner'};
-                handle.setAttribute('aria-label', 'Resize ' + labels[kind].toLowerCase() + ' ' + sideNames[corner]);
-                handle.title = corner.length === 2 ? 'Resize proportionally' : corner === 'e' || corner === 'w' ? 'Change width only' : kind === 'progress' ? 'Change thickness only' : 'Change height only';
+                handle.setAttribute('aria-label', t('Resize ' + labels[kind].toLowerCase() + ' ' + sideNames[corner]));
+                handle.title = t(corner.length === 2 ? 'Resize proportionally' : corner === 'e' || corner === 'w' ? 'Change width only' : kind === 'progress' ? 'Change thickness only' : 'Change height only');
                 handle.addEventListener('pointerdown', event => begin(event, kind, corner));
                 handle.addEventListener('keydown', event => nudge(event, kind, corner));
                 box.append(handle);
@@ -50,6 +51,29 @@
             boxes.set(kind, box); overlay.append(box);
         }
         stage.parentElement.before(toolbar); stage.append(overlay);
+        const translatedAttributes = [...toolbar.querySelectorAll('[aria-label]'), toolbar, ...overlay.querySelectorAll('[aria-label],[title]')].map(node => ({node,
+            aria:node.getAttribute('aria-label'), title:node.getAttribute('title')}));
+        // Store English sources so switching repeatedly never translates a previous translation.
+        for (const entry of translatedAttributes) {
+            if (entry.node === toolbar) entry.aria = 'Arrange screen elements';
+            const kind = entry.node.dataset.canvasObject;
+            if (kind) entry.aria = 'Move ' + labels[kind].toLowerCase();
+            const handle = entry.node.dataset.corner;
+            if (handle) {
+                const owner = entry.node.parentElement.dataset.canvasObject;
+                const sides = {n:'top edge',s:'bottom edge',e:'right edge',w:'left edge',nw:'top-left corner',ne:'top-right corner',sw:'bottom-left corner',se:'bottom-right corner'};
+                entry.aria = 'Resize ' + labels[owner].toLowerCase() + ' ' + sides[handle];
+                entry.title = handle.length === 2 ? 'Resize proportionally' : handle === 'e' || handle === 'w' ? 'Change width only' : owner === 'progress' ? 'Change thickness only' : 'Change height only';
+            }
+        }
+        toolbar.setAttribute('aria-label',t('Arrange screen elements'));
+        scope.addEventListener('frameui:language', () => {
+            for (const [kind, button] of buttons) button.textContent = t(labels[kind]);
+            for (const entry of translatedAttributes) {
+                if (entry.aria) entry.node.setAttribute('aria-label',t(entry.aria));
+                if (entry.title) entry.node.setAttribute('title',t(entry.title));
+            }
+        });
 
         function select(kind) {
             const changed = selected !== kind;

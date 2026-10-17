@@ -1,6 +1,7 @@
 /* FrameUI Studio - Copyright (C) 2026 Berke Akçen. All rights reserved. Proprietary and confidential. */
 (function () {
     'use strict';
+    const t = window.FrameStudioI18n?.t || (value => value);
     const core = window.FrameStudioCore;
     const dropdowns = window.FrameStudioDropdowns;
     const server = window.FrameStudioServer;
@@ -18,9 +19,9 @@
     let undo = [], redo = [], playing = !reducedMotion, playTick = 24, saveTimer, toastTimer;
     const thumbs = new Map(), savedEffects = new Map(), legacyDeletedIds = new Set(), savedThumbnails = new Map();
     let activeCategory = core.categories[1], selectionVersion = 0, libraryBusy = false, pendingDelete = null;
-    function element(tag, classes, text) { const node = document.createElement(tag); if (classes) node.className = classes; if (text !== undefined) node.textContent = text; return node; }
+    function element(tag, classes, text, literal = false) { const node = document.createElement(tag); if (classes) node.className = classes; if (text !== undefined) node.textContent = literal ? text : t(text); return node; }
     function icon(id) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', `#icon-${id}`); svg.append(use); return svg; }
-    function toast(message, error = false) { clearTimeout(toastTimer); $('toast').textContent = message; $('toast').classList.toggle('error', error); $('toast').hidden = false; toastTimer = setTimeout(() => { $('toast').hidden = true; }, error ? 6500 : 3500); }
+    function toast(message, error = false) { clearTimeout(toastTimer); $('toast').textContent = t(message); $('toast').classList.toggle('error', error); $('toast').hidden = false; toastTimer = setTimeout(() => { $('toast').hidden = true; }, error ? 6500 : 3500); }
     function pathGet(path) { return path.split('.').reduce((value, key) => value[key], effect); }
     function pathSet(path, value) { const parts = path.split('.'); const key = parts.pop(); const owner = parts.reduce((entry, part) => entry[part], effect); owner[key] = value; }
     function snapshot() { return { effect: core.clone(effect), image: imageBytes }; }
@@ -163,7 +164,7 @@
     }
     function showFieldHelp(anchor, text) {
         if (!helpPopup) { helpPopup = element('div', 'field-help-popup'); helpPopup.id = 'field-help-popup'; helpPopup.role = 'tooltip'; document.body.append(helpPopup); }
-        helpPopup.textContent = text; helpPopup.hidden = false;
+        helpPopup.textContent = t(text); helpPopup.hidden = false;
         const rect = anchor.getBoundingClientRect(), box = helpPopup.getBoundingClientRect();
         helpPopup.style.left = Math.max(12, Math.min(innerWidth - box.width - 12, rect.right - box.width)) + 'px';
         helpPopup.style.top = Math.max(12, rect.bottom + box.height + 10 <= innerHeight ? rect.bottom + 10 : rect.top - box.height - 10) + 'px';
@@ -177,7 +178,7 @@
             if (!wrapper) continue;
             wrapper.classList.toggle('is-disabled', !!reason);
             wrapper.dataset.disabledReason = reason;
-            if (reason) { wrapper.tabIndex = 0; wrapper.setAttribute('aria-description', reason); }
+            if (reason) { wrapper.tabIndex = 0; wrapper.setAttribute('aria-description', t(reason)); }
             else { wrapper.removeAttribute('tabindex'); wrapper.removeAttribute('aria-disabled'); wrapper.removeAttribute('aria-description'); }
         }
         const modes = document.querySelector('.segmented');
@@ -186,7 +187,7 @@
             modes.classList.toggle('is-disabled', !!reason); modes.dataset.disabledReason = reason;
             modes.tabIndex = reason ? 0 : -1;
             for (const button of modes.querySelectorAll('button')) button.disabled = !!reason;
-            if (reason) { modes.setAttribute('aria-disabled', 'true'); modes.setAttribute('aria-description', reason); }
+            if (reason) { modes.setAttribute('aria-disabled', 'true'); modes.setAttribute('aria-description', t(reason)); }
             else { modes.removeAttribute('aria-disabled'); modes.removeAttribute('aria-description'); }
         }
     }
@@ -205,7 +206,7 @@
         const match = path.match(/^filters\.(worlds|source-worlds|addon-targets)\.(include|exclude)$/);
         if (match) {
             const target = { worlds: 'destination worlds', 'source-worlds': 'worlds the player leaves', 'addon-targets': 'named homes, warps, portals, towns, nations, lands or islands' }[match[1]];
-            return [match[2] === 'include' ? 'Allow matching ' + target + '.' : 'Block matching ' + target + '.', 'Separate names with commas. * and ? are wildcards. Empty includes allow all; exclusions always win. Applies in Minecraft, not to Studio playback.'];
+            return [t(match[2] === 'include' ? 'Allow matching {0}.' : 'Block matching {0}.', t(target)), 'Separate names with commas. * and ? are wildcards. Empty includes allow all; exclusions always win. Applies in Minecraft, not to Studio playback.'];
         }
         return null;
     }
@@ -220,12 +221,12 @@
         const dot = document.createElementNS(svg.namespaceURI, 'circle'); dot.setAttribute('cx', '8'); dot.setAttribute('cy', '4.9'); dot.setAttribute('r', '.7'); dot.setAttribute('class', 'info-dot');
         svg.append(circle, stem, dot); button.append(svg);
         button.type = 'button'; button.dataset.helpFor = path;
-        button.setAttribute('aria-label', 'About ' + label); button.setAttribute('aria-expanded', 'false');
+        button.setAttribute('aria-label', t('About {0}', t(label))); button.setAttribute('aria-expanded', 'false');
         function open() {
             if (helpOwner !== button) closeFieldHelp();
             helpOwner = button;
             const reason = button.closest('[data-disabled-reason]')?.dataset.disabledReason;
-            showFieldHelp(button, reason || explanation.join(' '));
+            showFieldHelp(button, reason ? t(reason) : explanation.map(value => t(value)).join(' '));
             button.setAttribute('aria-expanded', 'true'); button.setAttribute('aria-describedby', helpPopup.id);
         }
         button.addEventListener('pointerenter', open);
@@ -240,6 +241,7 @@
     document.addEventListener('scroll', closeFieldHelp, true);
     window.addEventListener('resize', closeFieldHelp);
     function fieldHeading(label, controlId, path, helpLabel = label) {
+        label = t(label);
         const heading = element('div', 'field-heading'), caption = element('span', 'field-label');
         const split = label.lastIndexOf(' '), tail = element('span', 'field-label-tail');
         function text(value) {
@@ -282,7 +284,7 @@
         if (note) copy.append(element('small', '', note));
         const slider = element('span', 'switch'), input = element('input');
         input.type = 'checkbox'; input.id = caption.htmlFor; input.checked = pathGet(path); input.dataset.path = path;
-        input.setAttribute('aria-label', label); input.addEventListener('change', () => mutate(path, input.checked));
+        input.setAttribute('aria-label', t(label)); input.addEventListener('change', () => mutate(path, input.checked));
         slider.append(input, element('span')); row.append(copy, slider);
         row.addEventListener('click', event => { if (!event.target.closest('button,input,label')) input.click(); });
         return row;
@@ -300,7 +302,7 @@
         const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         chevron.setAttribute('viewBox', '0 0 16 16'); chevron.setAttribute('aria-hidden', 'true'); chevron.classList.add('details-chevron');
         const path = document.createElementNS(chevron.namespaceURI, 'path'); path.setAttribute('d', 'm4 6 4 4 4-4'); chevron.append(path);
-        summary.append(chevron, document.createTextNode(title)); result.append(summary, ...children); return result;
+        summary.append(chevron, document.createTextNode(t(title))); result.append(summary, ...children); return result;
     }
     function renderSettings() {
         directEditor?.select('');
@@ -329,10 +331,10 @@
         const segments = element('div', 'segmented');
         for (const [value, label] of [['original', 'Original'], ['custom', 'Custom colors']]) { const button = element('button', effect.appearance.palette === value ? 'active' : '', label); button.dataset.palette = value; button.addEventListener('click', () => mutate('appearance.palette', value)); segments.append(button); }
         const colors = element('div', 'colors-row'); colors.id = 'custom-colors';
-        for (const [key, label] of [['background', 'Base'], ['primary', 'Primary'], ['secondary', 'Accent']]) { const wrap = element('div', 'field color-field'), well = element('span', 'color-well'), input = element('input'), text = element('input'); input.type = 'color'; input.value = effect.appearance[key]; input.dataset.path = `appearance.${key}`; input.setAttribute('aria-label', label + ' color'); text.type = 'text'; text.value = effect.appearance[key]; text.maxLength = 7; text.dataset.path = `appearance.${key}`; text.setAttribute('aria-label', label + ' hex color'); input.addEventListener('input', () => mutate(`appearance.${key}`, input.value)); text.addEventListener('input', () => { if (/^#[0-9a-f]{6}$/i.test(text.value)) mutate(`appearance.${key}`, text.value); }); text.addEventListener('change', () => mutate(`appearance.${key}`, text.value)); well.append(input, text); const heading = fieldHeading(label, '', 'appearance.' + key, label + ' color'); wrap.append(heading, well); colors.append(wrap); }
+        for (const [key, label] of [['background', 'Base'], ['primary', 'Primary'], ['secondary', 'Accent']]) { const wrap = element('div', 'field color-field'), well = element('span', 'color-well'), input = element('input'), text = element('input'); input.type = 'color'; input.value = effect.appearance[key]; input.dataset.path = `appearance.${key}`; input.setAttribute('aria-label', t(label + ' color')); text.type = 'text'; text.value = effect.appearance[key]; text.maxLength = 7; text.dataset.path = `appearance.${key}`; text.setAttribute('aria-label', t(label + ' hex color')); input.addEventListener('input', () => mutate(`appearance.${key}`, input.value)); text.addEventListener('input', () => { if (/^#[0-9a-f]{6}$/i.test(text.value)) mutate(`appearance.${key}`, text.value); }); text.addEventListener('change', () => mutate(`appearance.${key}`, text.value)); well.append(input, text); const heading = fieldHeading(label, '', 'appearance.' + key, label + ' color'); wrap.append(heading, well); colors.append(wrap); }
         palette.append(segments, colors, field('Brightness', 'appearance.intensity', { type: 'range', min: 0, max: 4, step: 0.05 })); visual.append(palette);
         const picture = section('Your image'), upload = element('button', 'image-upload'); upload.id = 'upload-image'; upload.append(icon('image'), element('strong', '', 'Choose an image'), element('span', '', 'Add a logo, artwork or your own photo'), element('small', '', 'PNG / JPEG · up to 8 MB · resized to 2048 px')); upload.addEventListener('click', () => $('image-file').click());
-        const info = element('div', 'image-info'); info.id = 'image-info'; const thumbnail = element('img'); thumbnail.id = 'image-thumbnail'; thumbnail.alt = 'Uploaded effect image'; const label = element('span'); label.id = 'image-description'; const remove = element('button', 'icon-button', '×'); remove.setAttribute('aria-label', 'Remove image'); remove.addEventListener('click', async () => { const previous = snapshot(); await setImage(null); effect.appearance.image = ''; commitChange(previous); renderSettings(); sync(); }); info.append(thumbnail, label, remove);
+        const info = element('div', 'image-info'); info.id = 'image-info'; const thumbnail = element('img'); thumbnail.id = 'image-thumbnail'; thumbnail.alt = t('Uploaded effect image'); const label = element('span'); label.id = 'image-description'; const remove = element('button', 'icon-button', '×'); remove.setAttribute('aria-label', t('Remove image')); remove.addEventListener('click', async () => { const previous = snapshot(); await setImage(null); effect.appearance.image = ''; commitChange(previous); renderSettings(); sync(); }); info.append(thumbnail, label, remove);
         const editImage = element('button','component-entry','Edit image'); editImage.append(element('span','','›'));
         editImage.id = 'edit-image'; editImage.addEventListener('click',()=>directEditor.select('image'));
         picture.append(info,upload,editImage); visual.append(picture);
@@ -403,10 +405,10 @@
     }
     function showComponent(kind) {
         selectedComponent = kind; closeFieldHelp(); dropdowns.close();
-        $('inspector-title').textContent = componentLabels[kind] || 'Effect settings';
+        $('inspector-title').textContent = t(componentLabels[kind] || 'Effect settings');
         $('component-back').hidden = !kind; document.querySelector('.inspector-heading').classList.toggle('component-heading',!!kind); document.querySelector('.inspector-tabs').hidden = !!kind;
         $('settings-component').hidden = !kind;
-        $('reset-button').textContent = 'Reset';
+        $('reset-button').textContent = t('Reset');
         for (const pane of document.querySelectorAll('.settings-pane:not(#settings-component)')) pane.hidden = !!kind || pane.id !== 'settings-'+activeTab;
         document.querySelector('.inspector-scroll').scrollTop = 0;
         if (kind) renderComponent(kind);
@@ -421,8 +423,8 @@
     function captionColor(kind) {
         const path = 'captions.'+kind+'-color', wrap = element('div','field color-field caption-color'), well = element('span','color-well');
         const picker = element('input'), hex = element('input');
-        picker.type = 'color'; picker.dataset.path = path; picker.value = pathGet(path); picker.setAttribute('aria-label','Text color');
-        hex.type = 'text'; hex.dataset.path = path; hex.value = pathGet(path); hex.maxLength = 7; hex.setAttribute('aria-label','Text hex color');
+        picker.type = 'color'; picker.dataset.path = path; picker.value = pathGet(path); picker.setAttribute('aria-label',t('Text color'));
+        hex.type = 'text'; hex.dataset.path = path; hex.value = pathGet(path); hex.maxLength = 7; hex.setAttribute('aria-label',t('Text hex color'));
         picker.addEventListener('input',()=>mutate(path,picker.value));
         hex.addEventListener('input',()=>{if(/^#[0-9a-f]{6}$/i.test(hex.value)) mutate(path,hex.value);});
         hex.addEventListener('change',()=>{hex.value=pathGet(path);sync();});
@@ -499,11 +501,11 @@
         for (const category of core.categories) {
             const count = category === core.categories[2] ? libraryEntries().size : core.catalog.filter(item => item.category === category).length;
             const option = [...select.options].find(option => option.value === category);
-            option.textContent = `${category} (${count})`;
+            option.textContent = t(`${t(category)} (${count})`);
         }
         select.value = activeCategory;
         dropdowns.refresh();
-        document.querySelector('.panel-heading h1').textContent = `Effect library (${core.catalog.length + libraryEntries().size})`;
+        document.querySelector('.panel-heading h1').textContent = t(`Effect library (${core.catalog.length + libraryEntries().size})`);
     }
     async function openLibraryItem(item, saved) {
         const version = ++selectionVersion;
@@ -553,7 +555,7 @@
             const button = element('button', 'template-card'); button.dataset.template = item.id; button.dataset.libraryGroup = activeCategory;
             button.setAttribute('aria-pressed', String(effect.id === item.id && effect.category === activeCategory));
             button.classList.toggle('active', effect.id === item.id && effect.category === activeCategory);
-            const thumb = element('img', 'template-thumb'); thumb.alt = '';
+            const thumb = element('img', 'template-thumb'); thumb.alt = t('');
             const saved = own ? libraryEntries().get(item.id) : null;
             if (saved?.image) {
                 let preview = savedThumbnails.get(item.id);
@@ -564,13 +566,13 @@
                 thumb.src = preview.url;
             } else if (thumbs.has(saved?.effect.template || item.id)) thumb.src = thumbs.get(saved?.effect.template || item.id);
             const seconds = catalogDuration(item) / 20;
-            const copy = element('span', 'template-copy'); copy.append(element('b', '', item.name), element('small', '', `${seconds.toFixed(1)} s`));
+            const copy = element('span', 'template-copy'); copy.append(element('b', '', item.name, true), element('small', '', `${seconds.toFixed(1)} s`));
             if (saved?.remote) copy.append(element('span', 'server-effect-badge', saved.dirty ? 'Unsaved changes' : 'Server'));
             button.title = item.name;
             button.append(thumb, copy); button.addEventListener('click', () => openLibraryItem(item, saved));
             if (own) {
                 const entry = element('div', 'template-row'), remove = element('button', 'icon-button effect-delete');
-                remove.append(icon('trash')); remove.title = 'Delete effect'; remove.setAttribute('aria-label', `Delete ${item.name}`);
+                remove.append(icon('trash')); remove.title = t('Delete effect'); remove.setAttribute('aria-label', t(`Delete ${item.name}`));
                 remove.addEventListener('click', () => requestDelete(item.id)); entry.append(button, remove); list.append(entry);
             } else list.append(button);
         }
@@ -581,7 +583,7 @@
         if (libraryBusy || serverBusy) return;
         const entry=libraryEntries().get(id); if (!entry) return;
         pendingDelete={id,name:entry.effect.name,remote:!!entry.remote,revision:entry.revision};
-        $('purge-description').textContent=`Permanently delete “${pendingDelete.name}”? This action cannot be undone.`;
+        $('purge-description').textContent=t(`Permanently delete “${pendingDelete.name}”? This action cannot be undone.`);
         $('purge-dialog').showModal();
     }
     async function confirmDelete() {
@@ -611,14 +613,14 @@
     }
     function validState() {try {core.validate(effect);return '';} catch(error) {return error.message;}}
     function sync() {
-        const error = validState(); $('validation-status').textContent = error || (effect.appearance.image && !imageBytes ? 'Image file needs to be supplied' : isServerEffect() ? (serverBusy ? 'Saving to server…' : snapshotMatches(serverEffects.get(effect.id).synced, snapshot()) ? 'Saved on server' : 'Changes not saved to server') : 'Ready to export'); document.querySelector('.inspector-footer').classList.toggle('invalid', !!error || !!(effect.appearance.image && !imageBytes));
+        const error = validState(); $('validation-status').textContent = t(error || (effect.appearance.image && !imageBytes ? 'Image file needs to be supplied' : isServerEffect() ? (serverBusy ? 'Saving to server…' : snapshotMatches(serverEffects.get(effect.id).synced, snapshot()) ? 'Saved on server' : 'Changes not saved to server') : 'Ready to export')); document.querySelector('.inspector-footer').classList.toggle('invalid', !!error || !!(effect.appearance.image && !imageBytes));
         $('server-import-button').disabled = serverBusy || libraryBusy || (!!server.session && !!error);
-        $('server-import-button').querySelector('span').textContent = serverButtonLabel();
+        $('server-import-button').querySelector('span').textContent = t(serverButtonLabel());
         $('export-button').disabled = !!error; $('yaml-download').disabled = !!error; $('guide-export').disabled = !!error;
-        $('effect-heading').textContent = effect.name || 'Untitled effect';
+        $('effect-heading').textContent = effect.name || t('Untitled effect');
         for (const input of document.querySelectorAll('[data-caption-entry]')) input.value = effect.captions[input.dataset.captionEntry];
-        $('summary-in').textContent = `${Number((effect.timing['fade-in-ticks'] / 20).toFixed(2))} s`; $('summary-hold').textContent = `${Number(((effect.timing['minimum-ticks'] - effect.timing['fade-in-ticks']) / 20).toFixed(2))} s`; $('summary-out').textContent = `${Number((effect.timing['fade-out-ticks'] / 20).toFixed(2))} s`; $('summary-triggers').textContent = effect['play-on'].length ? `${effect['play-on'].length} ${effect['play-on'].length === 1 ? 'event' : 'events'}` : 'Manual only';
-        $('duration-label').textContent = `${Number((duration() / 20).toFixed(2))} s`; $('undo-button').disabled = !undo.length; $('redo-button').disabled = !redo.length;
+        $('summary-in').textContent = t(`${Number((effect.timing['fade-in-ticks'] / 20).toFixed(2))} s`); $('summary-hold').textContent = t(`${Number(((effect.timing['minimum-ticks'] - effect.timing['fade-in-ticks']) / 20).toFixed(2))} s`); $('summary-out').textContent = t(`${Number((effect.timing['fade-out-ticks'] / 20).toFixed(2))} s`); $('summary-triggers').textContent = t(effect['play-on'].length ? `${effect['play-on'].length} ${t(effect['play-on'].length === 1 ? 'event' : 'events')}` : 'Manual only');
+        $('duration-label').textContent = t(`${Number((duration() / 20).toFixed(2))} s`); $('undo-button').disabled = !undo.length; $('redo-button').disabled = !redo.length;
         if ($('duration-seconds') && document.activeElement !== $('duration-seconds')) $('duration-seconds').value = duration() / 20;
         for (const input of document.querySelectorAll('[data-path]')) { if (document.activeElement === input) continue; const value = pathGet(input.dataset.path); if (input.type === 'checkbox') input.checked = value; else input.value = Array.isArray(value) ? value.join(', ') : input.dataset.unit === 'seconds' ? value / 20 : input.dataset.unit === 'image-delay-seconds' ? Number((value * effect.timing['fade-in-ticks'] / 20).toFixed(3)) : value; }
         for (const input of document.querySelectorAll('[data-unit="image-delay-seconds"]')) {
@@ -633,15 +635,15 @@
             const group = document.querySelector(`[data-addon="${addon.id}"]`);
             if (group) {
                 const count = Object.keys(addon.events).filter(key => effect['play-on'].includes(key)).length;
-                group.querySelector('summary').setAttribute('aria-label', addon.name + (count ? ` · ${count} selected` : ''));
+                group.querySelector('summary').setAttribute('aria-label', t(addon.name + (count ? ` · ${count} selected` : '')));
             }
         }
         updateAvailability();
         dropdowns.refresh();
-        for (const output of document.querySelectorAll('[data-output]')) { const value = pathGet(output.dataset.output); output.textContent = output.dataset.output.endsWith('image-opacity') ? `${Math.round(value * 100)}%` : `${value.toFixed(2).replace(/0$/, '')}×`; }
+        for (const output of document.querySelectorAll('[data-output]')) { const value = pathGet(output.dataset.output); output.textContent = t(output.dataset.output.endsWith('image-opacity') ? `${Math.round(value * 100)}%` : `${value.toFixed(2).replace(/0$/, '')}×`); }
         for (const button of document.querySelectorAll('[data-palette]')) button.classList.toggle('active', button.dataset.palette === effect.appearance.palette);
         if ($('image-info')) { $('image-info').hidden = !effect.appearance.image; $('upload-image').hidden = !!imageBytes; if (imageUrl) $('image-thumbnail').src = imageUrl; else $('image-thumbnail').removeAttribute('src'); const label = $('image-description'); label.textContent = effect.appearance.image; label.append(element('small', '', imageElement ? `${imageElement.width} × ${imageElement.height} · ${(imageBytes.length / 1024).toFixed(0)} KB` : 'Missing image · choose the matching file')); }
-        $('play-button').setAttribute('aria-label', playing ? 'Pause preview' : 'Play preview'); $('play-button').replaceChildren(icon(playing ? 'pause' : 'play'));
+        $('play-button').setAttribute('aria-label', t(playing ? 'Pause preview' : 'Play preview')); $('play-button').replaceChildren(icon(playing ? 'pause' : 'play'));
         for (const button of document.querySelectorAll('[data-template]')) { const selected = button.dataset.template === effect.id && button.dataset.libraryGroup === effect.category; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected)); }
         if ($('edit-image')) $('edit-image').hidden = !imageBytes;
         directEditor?.render();
@@ -680,7 +682,7 @@
     let directEditor = null;
     let renderer = null, previewLoop = null, previewReady = false, previewInView = true;
     let previewFit = 1, previewDraws = 0;
-    try { renderer = new ShaderRenderer($('preview-canvas')); } catch (error) { $('renderer-error').hidden = false; $('renderer-error').textContent = error.message; }
+    try { renderer = new ShaderRenderer($('preview-canvas')); } catch (error) { $('renderer-error').hidden = false; $('renderer-error').textContent = t(error.message); }
     function previewFrame(time,elapsed,changed) {
         if (playing) {
             playTick += elapsed / 50;
@@ -693,8 +695,8 @@
         const active = playTick < duration();
         if (renderer) { if (active) renderer.draw(effect,playTick/20,transition); else renderer.clear(); }
         $('preview-canvas').dataset.renderCount = String(++previewDraws);
-        const phase = playTick < effect.timing['fade-in-ticks'] ? 'FADE IN' : playTick < effect.timing['minimum-ticks'] ? 'HOLD' : 'FADE OUT';
-        if ($('stage-phase').textContent !== phase) $('stage-phase').textContent = phase;
+        const phase = playTick < effect.timing['fade-in-ticks'] ? t('FADE IN') : playTick < effect.timing['minimum-ticks'] ? t('HOLD') : t('FADE OUT');
+        if ($('stage-phase').textContent !== phase) $('stage-phase').textContent = t(phase);
         const caption = $('caption-preview'), layout = effect.elements;
         caption.hidden = !active || !effect.captions.enabled;
         $('game-hud').hidden = active && effect.presentation['hide-hud'];
@@ -719,7 +721,7 @@
             if (line.style.transform !== transform) line.style.transform = transform;
         }
         const seconds = playTick/20, label = `00:${seconds.toFixed(1).padStart(4,'0')}`;
-        if ($('time-label').textContent !== label) $('time-label').textContent = label;
+        if ($('time-label').textContent !== label) $('time-label').textContent = t(label);
         if (document.activeElement !== $('timeline')) $('timeline').value = Math.round(playTick/duration()*1000);
     }
     previewLoop = window.FrameStudioPreviewLoop.create({fps:30,playing:()=>playing,
@@ -784,9 +786,9 @@
         catch (error) { toast(error.message, true); }
     }
     function serverStatus(message, error = false) {
-        const status = $('server-connection'); status.hidden = false; status.textContent = message;
+        const status = $('server-connection'); status.hidden = false; status.textContent = t(message);
         status.classList.toggle('connection-error', error);
-        $('server-import-button').querySelector('span').textContent = serverButtonLabel();
+        $('server-import-button').querySelector('span').textContent = t(serverButtonLabel());
     }
     async function connectServer() {
         if (!server.available) return;
@@ -830,7 +832,7 @@
         } catch (error) { if (error.status === 409 && isServerEffect()) serverEffects.get(effect.id).conflicted = true; serverStatus(error.message, true); toast(error.message, true); }
         finally {
             serverBusy = false;
-            $('server-import-button').querySelector('span').textContent = serverButtonLabel();
+            $('server-import-button').querySelector('span').textContent = t(serverButtonLabel());
             sync();
         }
     }
@@ -878,6 +880,12 @@
     $('export-button').addEventListener('click', exportEffect); $('guide-export').addEventListener('click', exportEffect); $('yaml-download').addEventListener('click', () => { try { download(core.toYaml(effect), effect.id + '.yml', 'text/yaml;charset=utf-8'); toast('YAML downloaded. Images must be supplied separately; use Export effect for a complete ZIP.'); } catch (error) { toast(error.message, true); } });
     $('guide-button').addEventListener('click', () => $('guide-dialog').showModal()); $('close-guide').addEventListener('click', () => $('guide-dialog').close()); $('guide-dialog').addEventListener('click', event => { if (event.target === $('guide-dialog')) { const rect = $('guide-dialog').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('guide-dialog').close(); } });
     $('reset-button').addEventListener('click', async () => { if (selectedComponent) { resetComponent(); return; } remember(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); activeCategory = effect.category; renderSettings(); renderCatalog(); replayPreview(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
+    window.addEventListener('frameui:language', () => {
+        const kind = selectedComponent;
+        renderSettings(); renderCatalog(); sync();
+        if (kind) directEditor.select(kind);
+        previewLoop.invalidate();
+    });
     const tabs = [...document.querySelectorAll('[data-tab]')];
     const tabScroll = new Map();
     let activeTab = null;
@@ -941,7 +949,7 @@
     }
     start().then(connectServer).catch(error => {
         console.error('Studio startup failed', error);
-        $('renderer-error').textContent = 'Studio could not start. Reload the page; if this continues, update the server plugin and reopen /frameui editor.';
+        $('renderer-error').textContent = t('Studio could not start. Reload the page; if this continues, update the server plugin and reopen /frameui editor.');
         $('renderer-error').hidden = false;
         toast('Studio could not load its required files. Reload the page to retry.', true);
     });

@@ -494,3 +494,21 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .switch-copy .field-heading{margin-bottom:0;align-items:center}
 .switch-copy .field-heading .field-label{font-size:15px;color:inherit}
 .section-heading h3:has(.field-info){display:inline-flex;align-items:center;gap:6px}
+
+/* Translated labels may be longer; canvas coordinates always stay left-to-right. */
+.language-control{min-width:130px;max-width:180px}
+.language-control .select-trigger{min-height:42px;font-size:14px}
+.app-header{height:auto;min-height:84px;padding-block:14px;flex-wrap:wrap;gap:16px}
+.header-actions{flex-wrap:wrap;justify-content:flex-end}
+.inspector-tabs button{min-width:0;overflow-wrap:anywhere;white-space:normal;line-height:1.45;padding:12px 4px}
+.stage,.timeline-control,.color-well,code,[data-path="id"]{direction:ltr}
+.template-card,.text-button{text-align:start}
+.timing-strip{flex-wrap:wrap;row-gap:12px}
+.timing-strip>div{min-width:95px}
+.field-label,.section-heading h3,.switch-copy,.button{overflow-wrap:anywhere}
+[dir=rtl] .header-actions{margin-left:0;margin-right:auto}
+[dir=rtl] .catalog-panel{border-right:0;border-left:1px solid var(--border)}
+[dir=rtl] .inspector-panel{border-left:0;border-right:1px solid var(--border)}
+[dir=rtl] .select-menu{text-align:right}
+[dir=rtl] .component-back svg{transform:scaleX(-1)}
+@media(max-width:760px){.app-header{padding-inline:14px}.header-actions{width:100%;justify-content:flex-start;gap:7px}.header-actions .button{flex:1;min-width:120px;padding:8px}.language-control{max-width:none;flex:1;min-width:130px}.header-divider{display:none}}
