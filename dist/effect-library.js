@@ -1,4 +1,14 @@
-/* Browser-local user effects. Images live in IndexedDB rather than the small localStorage quota. */
+/*
+ * FrameUI Studio
+ * Copyright (C) 2026 Berke Akçen
+ * SPDX-License-Identifier: GPL-3.0-only
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ * This program is distributed WITHOUT ANY WARRANTY; without even the
+ * implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the LICENSE file or <https://www.gnu.org/licenses/> for details.
+ */
 (function () {
     'use strict';
     let database;

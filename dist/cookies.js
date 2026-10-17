@@ -1,8 +1,18 @@
-/* FrameUI Studio - Copyright (c) 2026 Berke Akçen. All rights reserved. */
+/*
+ * FrameUI Studio
+ * Copyright (C) 2026 Berke Akçen
+ * SPDX-License-Identifier: GPL-3.0-only
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ * This program is distributed WITHOUT ANY WARRANTY; without even the
+ * implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the LICENSE file or <https://www.gnu.org/licenses/> for details.
+ */
 (function () {
     'use strict';
     const MEASUREMENT_ID = 'G-ENNPRLYB7P';
-    const PUBLIC_URLS = ['https://despical.github.io/FrameUIStudio/', 'https://frameui-studio.berkeakcen.chatgpt.site/'];
+    const PUBLIC_URLS = ['https://frameui.despical.dev/', 'https://despical.github.io/FrameUIStudio/', 'https://frameui-studio.berkeakcen.chatgpt.site/'];
     const canonical = PUBLIC_URLS.find(url => location.origin + location.pathname === url || location.origin + location.pathname === url + 'index.html');
     const KEY = 'frameui-studio-cookie-consent';
     const MAX_AGE = 180 * 24 * 60 * 60 * 1000;

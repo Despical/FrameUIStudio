@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Standalone browser editor for FrameUI effects",
-  "license": "UNLICENSED",
+  "license": "GPL-3.0-only",
   "scripts": {
     "dev": "node scripts/serve.cjs",
     "start": "node scripts/serve.cjs",
@@ -11,7 +11,7 @@
     "refresh": "node scripts/generate-preview.cjs",
     "check": "node scripts/check.cjs"
   },
-  "homepage": "https://despical.github.io/FrameUIStudio/",
+  "homepage": "https://frameui.despical.dev/",
   "repository": {
     "type": "git",
     "url": "https://github.com/Despical/FrameUIStudio.git"

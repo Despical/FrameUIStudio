@@ -1,4 +1,14 @@
-/* FrameUI Studio - Minecraft bitmap captions and their native advance widths. */
+/*
+ * FrameUI Studio
+ * Copyright (C) 2026 Berke Akçen
+ * SPDX-License-Identifier: GPL-3.0-only
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ * This program is distributed WITHOUT ANY WARRANTY; without even the
+ * implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the LICENSE file or <https://www.gnu.org/licenses/> for details.
+ */
 (function (scope) {
     'use strict';
     const data = typeof module !== 'undefined' && module.exports ? require('./font-data.js') : scope.FrameStudioFontData;

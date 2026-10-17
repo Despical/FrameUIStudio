@@ -1,4 +1,14 @@
-/* Copies plugin shader routines into the browser preview without Minecraft imports. */
+/*
+ * FrameUI Studio
+ * Copyright (C) 2026 Berke Akçen
+ * SPDX-License-Identifier: GPL-3.0-only
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ * This program is distributed WITHOUT ANY WARRANTY; without even the
+ * implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the LICENSE file or <https://www.gnu.org/licenses/> for details.
+ */
 const fs = require('node:fs');
 const path = require('node:path');
 const site = path.resolve(__dirname, '..');
@@ -136,7 +146,8 @@ for (const name of fs.readdirSync(path.join(plugin, 'src/main/resources/effects'
 }
 catalog.sort((a,b) => Number(b.id === 'frameui') - Number(a.id === 'frameui') || Number(!!b.definition) - Number(!!a.definition));
 const output = `/* Generated from the FrameUI plugin shader; run npm run refresh -- <FrameUI project path>. */\nwindow.FrameStudioCatalog = ${JSON.stringify(catalog)};\nwindow.FrameStudioShader = ${JSON.stringify(fragment)};\n`;
-fs.writeFileSync(path.join(site, 'dist/shaders.js'), output);
+const licenseHeader = fs.readFileSync(__filename, 'utf8').split(' */')[0] + ' */\n';
+fs.writeFileSync(path.join(site, 'dist/shaders.js'), licenseHeader + output);
 fs.writeFileSync(path.join(site, 'test/catalog.json'), JSON.stringify(catalog, null, 2) + '\n');
 const fixtures = path.join(site, 'test/fixtures/effects');
 fs.mkdirSync(fixtures, {recursive: true});

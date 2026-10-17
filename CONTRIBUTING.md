@@ -1,6 +1,6 @@
 # Contributing
 
-FrameUI Studio is proprietary. Opening an issue or pull request does not change the license. Discuss substantial changes with the maintainer first.
+FrameUI Studio is licensed under GPL-3.0-only. Contributions must be compatible with that license. Follow [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) and discuss substantial changes with the maintainer first.
 
 1. Use Node.js 22 or 24. No `npm install` is needed.
 2. Run `npm run dev`, then edit the static files in `dist/`.
@@ -10,4 +10,4 @@ FrameUI Studio is proprietary. Opening an issue or pull request does not change 
 
 Never commit tokens, `.env` files, private server links, exported user data or plugin source. Browser libraries are origin-specific; use disposable drafts for testing. Keep PRs focused and describe observed behavior and verification.
 
-The shader/catalog refresh tool accepts an external plugin checkout, but that checkout is optional and must stay outside this repository. See `docs/editor-guide.md` for the format and limits.
+The shader/catalog refresh tool accepts an external plugin checkout, but that checkout is optional and must stay outside this repository. Run `npm run refresh -- /path/to/FrameUI` only when intentionally refreshing shader/catalog fixtures.

@@ -1,7 +1,9 @@
+FrameUI Studio source is licensed under GPL-3.0-only. This does not replace the separate terms of third-party assets listed below.
+
 The caption preview uses the default bitmap font sheets and character mappings
 from the user's Minecraft Java Edition 26.3 installation to match the game.
 Minecraft assets are copyright Mojang AB / Microsoft. They remain the property
-of their respective owners and are not covered by FrameUI's proprietary license.
+of their respective owners and are not covered by FrameUI Studio's GPL license.
 
 
 Flag artwork: flag-icons, https://github.com/lipis/flag-icons

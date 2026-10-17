@@ -1,4 +1,15 @@
 @charset "UTF-8";
+/*
+ * FrameUI Studio
+ * Copyright (C) 2026 Berke Akçen
+ * SPDX-License-Identifier: GPL-3.0-only
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ * This program is distributed WITHOUT ANY WARRANTY; without even the
+ * implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the LICENSE file or <https://www.gnu.org/licenses/> for details.
+ */
 [hidden]{display:none!important}
 @font-face{font-family:Studio;src:local("Inter"),local("Segoe UI Variable"),local("Segoe UI");font-display:swap}
 :root{color-scheme:dark;--bg:#0b1019;--panel:#101722;--raised:#151f2d;--border:#243040;--text:#eef3f9;--muted:#a0afc1;--subtle:#8c9db3;--accent:#75e8dc;--accent-dark:#163d3b;--danger:#ffa28f;font-family:Studio,"Segoe UI",sans-serif;font-size:16px}

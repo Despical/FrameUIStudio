@@ -1,3 +1,5 @@
+# Copyright (C) 2026 Berke Akçen
+# SPDX-License-Identifier: GPL-3.0-only
 name: Deploy Pages
 on:
   push:

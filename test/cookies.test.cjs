@@ -1,3 +1,14 @@
+/*
+ * FrameUI Studio
+ * Copyright (C) 2026 Berke Akçen
+ * SPDX-License-Identifier: GPL-3.0-only
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3.
+ * This program is distributed WITHOUT ANY WARRANTY; without even the
+ * implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the LICENSE file or <https://www.gnu.org/licenses/> for details.
+ */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -19,6 +30,15 @@ function fixture({url='https://frameui-studio.berkeakcen.chatgpt.site/?lang=tr',
     return {window,elements,scripts,writes,cookies,listeners,click:id=>elements[id].events.click(),setStored:value=>stored=JSON.stringify(value)};
 }
 const accepted=()=>({version:1,analytics:true,updatedAt:Date.now()});
+
+test('custom domain measures only the canonical public editor after consent',()=>{
+    const f=fixture({url:'https://frameui.despical.dev/?lang=tr&private=value',consent:accepted()});
+    const config=f.window.dataLayer.find(args=>args[0]==='config');
+    assert.equal(config[2].page_location,'https://frameui.despical.dev/');
+    assert.equal(config[2].page_referrer,'');
+    assert.equal(fixture({url:'https://frameui.despical.dev/#server=private',consent:accepted()}).scripts.length,0);
+    assert.equal(fixture({url:'https://frameui.despical.dev/studio/',consent:accepted()}).scripts.length,0);
+});
 
 test('analytics waits for consent, uses canonical public URL, and never sends private links',()=>{
     const f=fixture();
