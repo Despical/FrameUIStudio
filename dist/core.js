@@ -127,7 +127,7 @@
             captions: { enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
             presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
             appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1, 'image-motion': 'still', 'title-motion': 'still' },
-            elements: { background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1, 'image-stretch-x': 1, 'image-stretch-y': 1, 'text-stretch-x': 1, 'text-stretch-y': 1 },
+            elements: { 'title-offset-x': 0, 'title-offset-y': 0, 'title-scale': 1, 'title-stretch-x': 1, 'title-stretch-y': 1, 'subtitle-offset-x': 0, 'subtitle-offset-y': 0, 'subtitle-scale': 1, 'subtitle-stretch-x': 1, 'subtitle-stretch-y': 1, 'detail-offset-x': 0, 'detail-offset-y': 0, 'detail-scale': 1, 'detail-stretch-x': 1, 'detail-stretch-y': 1, background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1, 'image-stretch-x': 1, 'image-stretch-y': 1, 'text-stretch-x': 1, 'text-stretch-y': 1 },
             filters: { permission: '', 'deny-permissions': [], worlds: { include: [], exclude: [] }, 'source-worlds': { include: [], exclude: [] }, 'addon-targets': { include: [], exclude: [] }, 'game-modes': { include: [], exclude: [] }, 'teleport-causes': [], triggers: [...triggers], distance: { min: 0, max: -1 }, height: { min: -30000000, max: 30000000 }, time: { min: 0, max: 23999 }, weather: [], 'cooldown-ticks': 0 }
         };
     }
@@ -195,8 +195,11 @@
         choice('text-animation', ['still', 'grow', 'slide-up', 'slide-down', 'slide-left', 'slide-right', 'none']);
         choice('progress', ['none', 'bar', 'segments', 'dots', 'ring']);
         choice('decoration', ['none', 'embers', 'petals', 'scan', 'pulse']);
-        for (const key of ['image-x', 'image-y', 'text-x']) number(e[key], key, 0, 1, false);
-        for (const key of ['text-y', 'progress-x', 'progress-y']) number(e[key], key, 0.1, 0.9, false);
+        for (const key of ['image-x', 'image-y', 'text-x', 'text-y', 'progress-x', 'progress-y']) number(e[key], key, -10, 10, false);
+        for (const kind of ['title', 'subtitle', 'detail']) {
+            for (const axis of ['x','y']) number(e[kind + '-offset-' + axis], kind + ' offset ' + axis, -20, 20, false);
+            for (const key of ['scale','stretch-x','stretch-y']) number(e[kind + '-' + key], kind + ' ' + key, .01, 10, false);
+        }
         number(e['image-scale'], 'Image scale', 0.01, 10, false); number(e['image-delay'], 'Image delay', 0, 0.8, false);
         for (const key of ['image-stretch-x', 'image-stretch-y', 'text-stretch-x', 'text-stretch-y']) number(e[key], key, .01, 10, false);
         number(e['progress-scale'], 'Indicator scale', 0.05, 20, false);
@@ -221,7 +224,30 @@
     }
     // The same normalized coordinates are exported to the plugin. One transform can be committed
     // as one history entry by any input surface (pointer, touch or keyboard).
+    const captionLines = {title: {key:'title', delta:.004, size:14}, subtitle: {key:'subtitle', delta:.069, size:8}, detail: {key:'preview-detail', delta:.246, size:7}};
+    function elementAnchor(elements, kind) {
+        if (!captionLines[kind]) return {x:elements[kind+'-x'], y:elements[kind+'-y']};
+        return {x:elements['text-x'] + elements[kind+'-offset-x'],
+            y:elements['text-y'] + captionLines[kind].delta * elements['text-scale'] * elements['text-stretch-y'] + elements[kind+'-offset-y']};
+    }
+    function translateElement(elements, kind, dx, dy) {
+        const next = clone(elements), caption = !!captionLines[kind];
+        for (const [axis, delta] of [['x',dx],['y',dy]]) {
+            const key = kind + (caption ? '-offset-' : '-') + axis;
+            next[key] = Math.round(Math.max(caption ? -20 : -10, Math.min(caption ? 20 : 10, next[key] + delta)) * 1000000) / 1000000;
+        }
+        return next;
+    }
     function transformElement(elements, kind, dx, dy, corner = '', rect = null) {
+        if (captionLines[kind]) {
+            const anchor = elementAnchor(elements, kind), proxy = clone(elements);
+            Object.assign(proxy, {'image-x':anchor.x,'image-y':anchor.y,'image-scale':elements[kind+'-scale'],
+                'image-stretch-x':elements[kind+'-stretch-x'],'image-stretch-y':elements[kind+'-stretch-y']});
+            const transformed = transformElement(proxy,'image',dx,dy,corner,rect);
+            const next = translateElement(elements,kind,transformed['image-x']-anchor.x,transformed['image-y']-anchor.y);
+            for (const key of ['scale','stretch-x','stretch-y']) next[kind+'-'+key] = transformed['image-'+key];
+            return next;
+        }
         if (!['image', 'text', 'progress'].includes(kind)) throw new Error('Unknown canvas element.');
         if (![dx, dy].every(Number.isFinite)) throw new Error('Invalid canvas movement.');
         const next = clone(elements);
@@ -260,30 +286,37 @@
             next[xKey] = centerX - (rect.x + rect.width / 2 - elements[xKey]) * ratio;
             next[yKey] = centerY - (rect.y + rect.height / 2 - elements[yKey]) * ratio;
         }
-        const minPosition = kind === 'progress' ? .1 : 0;
-        next[xKey] = clamp(next[xKey], minPosition, kind === 'progress' ? .9 : 1);
-        next[yKey] = clamp(next[yKey], kind === 'image' ? 0 : .1, kind === 'image' ? 1 : .9);
+        next[xKey] = clamp(next[xKey], -10, 10);
+        next[yKey] = clamp(next[yKey], -10, 10);
         for (const key of Object.keys(next)) if (typeof next[key] === 'number') next[key] = Math.round(next[key] * 10000) / 10000;
         return next;
     }
 
-    // Snap the visible bounds, including the caption group's offset from its anchor.
-    // Tolerance is in screen pixels so the magnetic area feels the same at any viewport size.
-    function snapElement(before, candidate, kind, rect, width, height, tolerance = 8) {
-        const next = clone(candidate), guides = {x: false, y: false};
-        for (const [axis, size, dimension] of [['x', width, 'width'], ['y', height, 'height']]) {
-            const key = kind + '-' + axis;
-            const center = rect[axis] + rect[dimension] / 2 + candidate[key] - before[key];
-            const offset = .5 - center;
-            if (Math.abs(offset) * size > tolerance) continue;
-            const minimum = kind === 'progress' || (kind === 'text' && axis === 'y') ? .1 : 0;
-            const maximum = minimum === .1 ? .9 : 1;
-            const snapped = next[key] + offset;
-            if (snapped < minimum || snapped > maximum) continue;
-            next[key] = Math.round(snapped * 1000000) / 1000000;
-            guides[axis] = true;
+    // Align visible edges and centers to the viewport or another component. Each axis
+    // selects the closest candidate within a screen-pixel tolerance, independent of zoom.
+    function snapElement(before, candidate, kind, rect, width, height, tolerance = 8, targets = []) {
+        let next = clone(candidate);
+        const guides = {x:false,y:false}, lines = [];
+        const start = elementAnchor(before,kind), end = elementAnchor(candidate,kind);
+        const moved = {...rect,x:rect.x+end.x-start.x,y:rect.y+end.y-start.y};
+        for (const [axis,size,dimension,other,otherDimension] of [['x',width,'width','y','height'],['y',height,'height','x','width']]) {
+            const candidates = [{position:.5,from:0,to:1,screen:true}];
+            for (const target of targets) {
+                for (const factor of [0,.5,1]) candidates.push({position:target[axis]+target[dimension]*factor,
+                    from:Math.min(moved[other],target[other]),to:Math.max(moved[other]+moved[otherDimension],target[other]+target[otherDimension]),screen:false});
+            }
+            let best = null;
+            for (const target of candidates) for (const factor of target.screen ? [.5] : [.5,0,1]) {
+                const offset = target.position - moved[axis] - moved[dimension]*factor;
+                const distance = Math.abs(offset)*size;
+                if (distance <= tolerance && (!best || distance < best.distance)) best = {...target,offset,distance};
+            }
+            if (!best) continue;
+            const proposed = translateElement(next,kind,axis==='x'?best.offset:0,axis==='y'?best.offset:0);
+            if (Math.abs(elementAnchor(proposed,kind)[axis]-elementAnchor(next,kind)[axis]-best.offset)>0.00001) continue;
+            next = proposed; guides[axis] = true; lines.push({axis,position:best.position,from:best.from,to:best.to});
         }
-        return {elements: next, guides};
+        return {elements:next,guides,lines};
     }
 
     function toYaml(effect) {
@@ -419,6 +452,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1-2048 pixels.');
         return { width, height };
     }
-    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, snapElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, captionLines, elementAnchor, translateElement, transformElement, snapElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

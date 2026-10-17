@@ -349,8 +349,6 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .canvas-object[data-canvas-object="progress"]{z-index:3}
 .canvas-object:hover{border-color:#80d4c980;background:#80d4c906}
 .canvas-object.selected,.canvas-object:focus-visible{border-color:#8bdace;box-shadow:0 0 0 1px #06191599}
-.canvas-object-label{display:none;position:absolute;left:0;top:-21px;padding:3px 6px;white-space:nowrap;background:#173d3b;color:#d7fff7;font:10px "Segoe UI",sans-serif;border-radius:4px;pointer-events:none}
-.canvas-object.selected>.canvas-object-label{display:block}
 .canvas-handle{display:none;position:absolute;width:12px;height:12px;padding:0;border:2px solid #163c37;border-radius:3px;background:#bbfff1;z-index:10;touch-action:none}
 .canvas-object.selected>.canvas-handle,.canvas-object:focus-within>.canvas-handle{display:block}
 .canvas-handle-nw{left:-6px;top:-6px;cursor:nwse-resize}.canvas-handle-ne{right:-6px;top:-6px;cursor:nesw-resize}
@@ -453,3 +451,15 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .canvas-guide-x{left:50%;top:0;bottom:0;width:1px;transform:translateX(-.5px)}
 .canvas-guide-y{top:50%;left:0;right:0;height:1px;transform:translateY(-.5px)}
 .canvas-guide[hidden]{display:none}
+
+.canvas-object::before{content:"";position:absolute;inset:calc(-1 * var(--hit-padding,0px)) 0;pointer-events:auto}
+.canvas-object[data-canvas-object="title"],.canvas-object[data-canvas-object="subtitle"],.canvas-object[data-canvas-object="detail"]{z-index:2}
+.canvas-object.selected{z-index:4}
+.canvas-toolbar{flex-wrap:wrap}
+.canvas-guide-x,.canvas-guide-y{right:auto;bottom:auto}
+
+.inspector-tabs[hidden],.component-back[hidden]{display:none}
+.component-back{margin-bottom:12px;color:var(--accent);font-size:13px}
+.component-entry{display:flex;align-items:center;justify-content:space-between;width:100%;padding:12px 14px;margin-top:8px;background:#151f2b;border:1px solid var(--border);border-radius:8px;text-align:left;color:#d5deeb;font-size:14px}
+.component-entry:hover{border-color:#68bfb1;background:#192b32}
+.component-entry span{font-size:20px;color:#95afa9}

@@ -4,7 +4,8 @@
     const core = window.FrameStudioCore;
     const dropdowns = window.FrameStudioDropdowns;
     const server = window.FrameStudioServer;
-    let serverBusy = false, linkedEffectId = null;
+    let serverBusy = false, linkedEffectId = null, selectedComponent = '';
+    const componentLabels = {image:'Image', title:'Title', subtitle:'Subtitle', detail:'Extra line', progress:'Loading indicator'};
     const serverEffects = new Map(), serverTrash = new Map();
     const inServerTrash = id => [...serverTrash.values()].some(entry => entry.id === id) && !serverEffects.has(id);
     const isServerEffect = () => effect.id === linkedEffectId && serverEffects.has(effect.id);
@@ -89,9 +90,14 @@
         if (renderer) renderer.setImage(imageElement);
         return true;
     }
-    async function restore(state) { const next = core.clone(state.effect); await setImage(state.image); effect = next; activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); scheduleSave(); }
+    async function restore(state) { const kind = selectedComponent, next = core.clone(state.effect); await setImage(state.image); effect = next; activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); if (kind) directEditor.select(kind); scheduleSave(); }
     async function historyStep(isRedo) { const source = isRedo ? redo : undo, destination = isRedo ? undo : redo; if (!source.length) return; const target = source.pop(); destination.push(snapshot()); await restore(target); }
     const FIELD_HELP = {
+        'canvas.x':['Horizontal position of the selected component’s left edge, as a percentage of the screen width.','Values outside 0 to 100 place it partly or fully off screen.'],
+        'canvas.y':['Vertical position of the selected component’s top edge, as a percentage of the screen height.','Values outside 0 to 100 place it partly or fully off screen.'],
+        'canvas.width':['Width as a percentage of the screen width.','Resizes this component while keeping its left edge fixed.'],
+        'canvas.height':['Height as a percentage of the screen height.','Resizes this component while keeping its top edge fixed.'],
+        'canvas.thickness':['Indicator thickness in pixels on the 640 × 360 design canvas.','Scales with the preview and the Minecraft window size.'],
         name: ['The readable name of this effect.', 'Shown in the Studio library, the in-game effect catalog and {effect} placeholders. It does not change the on-screen title.'],
         id: ['The unique ID used to identify this effect.', 'Used by /frameui preview <id>, event assignments and the YAML filename. Use lowercase words separated by hyphens.'],
         'captions.enabled': ['Show or hide all three caption lines.', 'Controls the title, subtitle and extra line on the effect screen in Minecraft and the Studio preview.'],
@@ -183,6 +189,8 @@
     }
     function wireDisabledHelp() {
         for (const wrapper of document.querySelectorAll('.field, .segmented')) {
+            if (wrapper.dataset.disabledHelpReady) continue;
+            wrapper.dataset.disabledHelpReady = 'true';
             wrapper.addEventListener('pointerenter', () => { if (wrapper.dataset.disabledReason) { closeFieldHelp(); showFieldHelp(wrapper, wrapper.dataset.disabledReason); } });
             wrapper.addEventListener('pointerleave', () => { if (!helpOwner) closeFieldHelp(); });
             wrapper.addEventListener('focus', () => { if (wrapper.dataset.disabledReason) { closeFieldHelp(); showFieldHelp(wrapper, wrapper.dataset.disabledReason); } });
@@ -242,13 +250,14 @@
         return heading;
     }
     function field(label, path, options = {}) {
-        const wrap = element('div', 'field'), heading = fieldHeading(label, 'field-' + path.replaceAll('.', '-'), path);
+        const controlId = (options.component ? 'component-field-' : 'field-') + path.replaceAll('.', '-');
+        const wrap = element('div', 'field'), heading = fieldHeading(label, controlId, path);
         wrap.append(heading);
         let input;
         if (options.options) { input = element('select'); for (const [value, text] of options.options) { const option = element('option', '', text); option.value = value; input.append(option); } }
         else if (options.multiline) { input = element('textarea'); input.rows = 2; }
         else { input = element('input'); input.type = options.type || 'text'; }
-        input.dataset.path = path; input.id = 'field-' + path.replaceAll('.', '-'); input.value = options.list ? pathGet(path).join(', ') : options.seconds ? pathGet(path) / 20 : options.imageDelay ? Number((pathGet(path) * effect.timing['fade-in-ticks'] / 20).toFixed(3)) : pathGet(path);
+        input.dataset.path = path; input.id = controlId; input.value = options.list ? pathGet(path).join(', ') : options.seconds ? pathGet(path) / 20 : options.imageDelay ? Number((pathGet(path) * effect.timing['fade-in-ticks'] / 20).toFixed(3)) : pathGet(path);
         if (options.seconds) input.dataset.unit = 'seconds';
         if (options.imageDelay) input.dataset.unit = 'image-delay-seconds';
         if (options.placeholder) input.placeholder = options.placeholder;
@@ -285,6 +294,7 @@
     }
     function details(title, ...children) { const result = element('details', 'advanced-details'); result.append(element('summary', '', title), ...children); return result; }
     function renderSettings() {
+        directEditor?.select('');
         closeFieldHelp();
         dropdowns.close();
         const visual = $('settings-visual'), motion = $('settings-motion'), events = $('settings-events'), game = $('settings-game');
@@ -292,7 +302,12 @@
         const identity = section('Your effect');
         identity.append(field('Display name', 'name', { maxLength: 64 }));
         visual.append(identity);
-        const captions = section('Captions'); captions.append(toggle('Show captions', 'captions.enabled'), field('Title', 'captions.title', { maxLength: 64 }), field('Subtitle', 'captions.subtitle', { maxLength: 96 }), details('Extra caption line', note('A smaller third line below the title and subtitle. Studio shows the Preview text; the game uses Joining or Teleporting for those events. Leave a value empty to hide that line.'), field('Joining', 'captions.join-detail', { maxLength: 128 }), field('Teleporting', 'captions.teleport-detail', { maxLength: 128 }), field('Preview', 'captions.preview-detail', { maxLength: 128 }), note('Use {player}, {world}, {effect} in captions; details also support {source-world}, {destination} and {event}.')));  visual.append(captions);
+        const captions = section('Captions'); captions.append(toggle('Show captions','captions.enabled'));
+        for (const kind of ['title','subtitle','detail']) {
+            const button = element('button','component-entry',componentLabels[kind]);
+            button.append(element('span','','›')); button.addEventListener('click',()=>directEditor.select(kind)); captions.append(button);
+        }
+        visual.append(captions);
         const background = section('Background');
         background.append(field('Background layout', 'elements.background', { options: [['none','None'],['template','Shader template'],['solid','Solid color'],['split','Split panels'],['grid','Technical grid'],['terminal','Terminal'],['pulse','Expanding pulse']] }));
         visual.append(background);
@@ -304,7 +319,9 @@
         palette.append(segments, colors, field('Brightness', 'appearance.intensity', { type: 'range', min: 0, max: 4, step: 0.05 })); visual.append(palette);
         const picture = section('Your image'), upload = element('button', 'image-upload'); upload.id = 'upload-image'; upload.append(icon('image'), element('strong', '', 'Choose an image'), element('span', '', 'Add a logo, artwork or your own photo'), element('small', '', 'PNG / JPEG · up to 8 MB · resized to 2048 px')); upload.addEventListener('click', () => $('image-file').click());
         const info = element('div', 'image-info'); info.id = 'image-info'; const thumbnail = element('img'); thumbnail.id = 'image-thumbnail'; thumbnail.alt = 'Uploaded effect image'; const label = element('span'); label.id = 'image-description'; const remove = element('button', 'icon-button', '×'); remove.setAttribute('aria-label', 'Remove image'); remove.addEventListener('click', async () => { const previous = snapshot(); await setImage(null); effect.appearance.image = ''; commitChange(previous); renderSettings(); sync(); }); info.append(thumbnail, label, remove);
-        picture.append(info, upload, field('Image fit', 'appearance.image-fit', { options: [['cover', 'Cover - fill screen'], ['contain', 'Contain - show entire image']] }), field('Image opacity', 'appearance.image-opacity', { type: 'range', min: 0, max: 1, step: 0.01 }), note('Drag to move; use the corner handles to resize.')); visual.append(picture);
+        const editImage = element('button','component-entry','Edit image'); editImage.append(element('span','','›'));
+        editImage.id = 'edit-image'; editImage.addEventListener('click',()=>directEditor.select('image'));
+        picture.append(info,upload,editImage); visual.append(picture);
         const indicator = section('Loading indicator');
         indicator.append(field('Indicator style', 'elements.progress', { options: [['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']] }), note('An animated visual indicator, not a measurement of server loading progress.'));
         visual.append(indicator);
@@ -346,12 +363,9 @@
         const animation = section('Animation');
         animation.append(field('Animation speed', 'appearance.speed', { type: 'range', min: .05, max: 8, step: .05 }), note('Changes the animation movement without changing total duration.'));
         motion.append(animation);
-        const entrances = section('Element entrances');
-        entrances.append(field('Text entrance', 'elements.text-animation', { options: [['none','None (instant)'],['still','Fade'],['grow','Grow'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right']] }), field('Image entrance', 'elements.image-animation', { options: [['none','None (instant)'],['inherit','Follow template'],['fade','Fade'],['grow','Grow from center'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right'],['wipe','Left-to-right reveal'],['page','Diagonal page']] }), field('Image entrance delay · seconds', 'elements.image-delay', { type: 'number', min: 0, max: .8 * effect.timing['fade-in-ticks'] / 20, step: .01, imageDelay: true }), note('Time after fade in begins before the image appears. Limited to 80% of the fade-in duration.'));
+        const entrances = section('Caption entrance');
+        entrances.append(field('Text entrance','elements.text-animation',{options:[['none','None (instant)'],['still','Fade'],['grow','Grow'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right']]}));
         motion.append(entrances);
-        const imageMotion = section('Image movement');
-        imageMotion.append(field('Ambient image motion', 'appearance.image-motion', { options: [['still','Still'],['panorama','Slow zoom and pan'],['page','Legacy page reveal']] }), note('Add or replace your image in Design. These settings animate it after placement.'));
-        motion.append(imageMotion);
         const playback = section('When to play');
         playback.append(checkboxList('play-on', ['join', 'teleport', 'world-change'], { join: 'Join', teleport: 'Teleport', 'world-change': 'World change' }), note('Choose where this effect runs automatically. Your selection applies when imported to your server. Leave all unchecked for manual previews only.')); events.append(playback);
         const integrations = section('Plugin events', 'OPTIONAL');
@@ -375,6 +389,91 @@
         game.append(targets);
         wireDisabledHelp();
         dropdowns.enhance();
+    }
+    function showComponent(kind) {
+        selectedComponent = kind; closeFieldHelp(); dropdowns.close();
+        $('inspector-title').textContent = componentLabels[kind] || 'Effect settings';
+        $('component-back').hidden = !kind; document.querySelector('.inspector-tabs').hidden = !!kind;
+        $('settings-component').hidden = !kind;
+        $('reset-button').textContent = kind ? 'Reset layout' : 'Reset';
+        for (const pane of document.querySelectorAll('.settings-pane:not(#settings-component)')) pane.hidden = !!kind || pane.id !== 'settings-'+activeTab;
+        document.querySelector('.inspector-scroll').scrollTop = 0;
+        if (kind) renderComponent(kind);
+    }
+    function geometryValues(rect) {
+        if (!rect) return;
+        for (const input of document.querySelectorAll('[data-geometry]')) {
+            if (document.activeElement === input) continue;
+            input.value = Number((rect[input.dataset.geometry]*100).toFixed(2));
+        }
+    }
+    function renderComponent(kind) {
+        const pane = $('settings-component'); pane.replaceChildren();
+        const layout = section('Position & size'), fields = {};
+        for (const [key,label] of [['x','X · %'],['y','Y · %'],['width','Width · %'],['height','Height · %']]) {
+            if (kind==='progress' && key==='height') continue;
+            const wrap = element('div','field'), input = element('input');
+            input.id = 'geometry-'+key; const caption = fieldHeading(label,input.id,'canvas.'+key); input.type = 'number'; input.step = 'any';
+            input.min = key==='width'||key==='height' ? .01 : -1000; input.max = 1000; input.dataset.geometry = key;
+            let previous = null;
+            input.addEventListener('focus',()=>{previous=snapshot();});
+            input.addEventListener('input',()=>{
+                const value = Number(input.value);
+                if (Number.isFinite(value) && input.value && input.checkValidity()) directEditor.setGeometry(kind,key,value/100,false);
+            });
+            input.addEventListener('blur',()=>{if(previous) commitChange(previous); previous=null; geometryValues(directEditor.bounds(kind));});
+            input.addEventListener('keydown',event=>{if(event.key==='Enter') input.blur();});
+            wrap.append(caption,input); fields[key] = wrap;
+        }
+        layout.append(row(fields.x,fields.y),kind==='progress'?fields.width:row(fields.width,fields.height));
+        if (kind==='progress') {
+            const wrap = element('div','field'), input = element('input');
+            input.id = 'component-thickness'; const label = fieldHeading('Thickness · px',input.id,'canvas.thickness'); input.type = 'number'; input.min=.1; input.max=144; input.step='any';
+            let previous = null;
+            input.addEventListener('focus',()=>{previous=snapshot();});
+            input.addEventListener('input',()=>{const unit=effect.elements.progress==='ring'?4.4:effect.elements.progress==='dots'?7.2:6; if(input.checkValidity() && input.value) {effect.elements['progress-scale']=Math.max(.05,Math.min(20,Number(input.value)/unit)); sync();}});
+            input.addEventListener('blur',()=>{if(previous) commitChange(previous); previous=null; sync();});
+            input.addEventListener('keydown',event=>{if(event.key==='Enter') input.blur();});
+            wrap.append(label,input); layout.append(wrap);
+        }
+        pane.append(layout);
+        if (core.captionLines[kind]) {
+            const content = section(kind==='detail'?'Text by event':'Text');
+            if (kind==='detail') {
+                for (const [key,label] of [['join-detail','Joining'],['teleport-detail','Teleporting'],['preview-detail','Preview']]) content.append(field(label,'captions.'+key,{maxLength:128,component:true}));
+            } else content.append(field(componentLabels[kind],'captions.'+kind,{maxLength:kind==='title'?64:96,component:true}));
+            pane.append(content);
+        } else if (kind==='image') {
+            const appearance = section('Appearance');
+            appearance.append(field('Image fit','appearance.image-fit',{component:true,options:[['cover','Cover - fill screen'],['contain','Contain - show entire image']]}),field('Image opacity','appearance.image-opacity',{component:true,type:'range',min:0,max:1,step:.01}));
+            const replace = element('button','button button-quiet full-width','Replace image'); replace.addEventListener('click',()=>$('image-file').click()); appearance.append(replace); pane.append(appearance);
+            const motion = section('Motion');
+            motion.append(field('Image entrance','elements.image-animation',{component:true,options:[['none','None (instant)'],['inherit','Follow template'],['fade','Fade'],['grow','Grow from center'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right'],['wipe','Left-to-right reveal'],['page','Diagonal page']]}),field('Image entrance delay · seconds','elements.image-delay',{component:true,type:'number',min:0,max:.8*effect.timing['fade-in-ticks']/20,step:.01,imageDelay:true}),field('Ambient image motion','appearance.image-motion',{component:true,options:[['still','Still'],['panorama','Slow zoom and pan'],['page','Legacy page reveal']]})); pane.append(motion);
+        } else {
+            const appearance = section('Appearance'); appearance.append(field('Indicator style','elements.progress',{component:true,options:[['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']]})); pane.append(appearance);
+        }
+        wireDisabledHelp(); dropdowns.enhance(); sync();
+    }
+    function syncComponentGeometry(kind,rect) {
+        if (!kind || kind!==selectedComponent) return;
+        geometryValues(rect);
+        const reason = kind==='progress' ? 'Choose an indicator style to adjust its layout.' : kind==='image' ? 'Add an image to adjust its layout.' : effect.captions.enabled ? 'Enter text for this line to adjust its layout.' : 'Enable Show captions in Effect settings to adjust this line.';
+        const thickness = $('component-thickness');
+        for (const input of document.querySelectorAll('[data-geometry],#component-thickness')) {
+            input.disabled = !rect;
+            const field = input.closest('.field'); field.classList.toggle('is-disabled',!rect);
+            field.dataset.disabledReason = rect ? '' : reason;
+        }
+        if (thickness && document.activeElement!==thickness) thickness.value = Number((effect.elements['progress-scale']*(effect.elements.progress==='ring'?4.4:effect.elements.progress==='dots'?7.2:6)).toFixed(2));
+    }
+    function resetComponentLayout() {
+        const previous = snapshot(), kind = selectedComponent;
+        const defaults = core.createEffect(effect.template).elements;
+        const keys = core.captionLines[kind] ? ['offset-x','offset-y','scale','stretch-x','stretch-y'].map(key=>kind+'-'+key)
+            : kind==='image' ? ['image-x','image-y','image-scale','image-stretch-x','image-stretch-y']
+            : ['progress-x','progress-y','progress-width','progress-scale'];
+        for (const key of keys) effect.elements[key] = defaults[key];
+        commitChange(previous); sync();
     }
     function renderCategories() {
         const select = $('category-filter');
@@ -592,6 +691,7 @@
         if ($('image-info')) { $('image-info').hidden = !effect.appearance.image; $('upload-image').hidden = !!imageBytes; if (imageUrl) $('image-thumbnail').src = imageUrl; else $('image-thumbnail').removeAttribute('src'); const label = $('image-description'); label.textContent = effect.appearance.image; label.append(element('small', '', imageElement ? `${imageElement.width} × ${imageElement.height} · ${(imageBytes.length / 1024).toFixed(0)} KB` : 'Missing image · choose the matching file')); }
         $('play-button').setAttribute('aria-label', playing ? 'Pause preview' : 'Play preview'); $('play-button').replaceChildren(icon(playing ? 'pause' : 'play'));
         for (const button of document.querySelectorAll('[data-template]')) { const selected = button.dataset.template === effect.id && button.dataset.libraryGroup === effect.category; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected)); }
+        if ($('edit-image')) $('edit-image').hidden = !imageBytes;
         directEditor?.render();
     }
     function duration() { return Math.max(1, effect.timing['minimum-ticks'] + effect.timing['fade-out-ticks']); }
@@ -640,13 +740,18 @@
         const caption = $('caption-preview'), layout = effect.elements;
         const delay = Math.max(.12, layout['image-delay']), t = Math.max(0, Math.min(1, (opacity - delay) / (1 - delay))), entrance = t * t * (3 - 2 * t);
         caption.hidden = !effect.captions.enabled; caption.style.opacity = String(layout['text-animation'] === 'none' ? 1 : entrance);
-        caption.style.top = '0'; caption.style.bottom = '0';
-        caption.style.left = ((layout['text-x'] - .5) * 100) + '%'; caption.style.right = ((.5 - layout['text-x']) * 100) + '%';
-        caption.style.transformOrigin = `50% ${layout['text-y'] * 100}%`;
+        caption.style.inset = '0'; caption.style.transform = 'none';
         const fit = $('stage').clientWidth / 640;
-        for (const [id, offset, size] of [['preview-title', .004, 14], ['preview-subtitle', .069, 8], ['preview-detail', .246, 7]]) { const line = $(id); line.style.position = 'absolute'; line.style.left = '0'; line.style.right = '0'; line.style.top = ((layout['text-y'] + offset) * 100) + '%'; line.style.margin = '0'; line.style.fontSize = (size * fit) + 'px'; }
-        const direction = { 'slide-up': [0, 30], 'slide-down': [0, -30], 'slide-left': [-40, 0], 'slide-right': [40, 0] }[layout['text-animation']] || [0, 0];
-        caption.style.transform = `translate(${direction[0] * (1 - entrance) * fit}px, ${direction[1] * (1 - entrance) * fit}px) scale(${layout['text-stretch-x'] * layout['text-scale'] * (layout['text-animation'] === 'grow' ? 1 - Math.pow(1 - entrance, 3) : 1)}, ${layout['text-stretch-y'] * layout['text-scale'] * (layout['text-animation'] === 'grow' ? 1 - Math.pow(1 - entrance, 3) : 1)})`;
+        const direction = { 'slide-up':[0,30], 'slide-down':[0,-30], 'slide-left':[-40,0], 'slide-right':[40,0] }[layout['text-animation']] || [0,0];
+        const grow = layout['text-animation'] === 'grow' ? 1 - Math.pow(1-entrance,3) : 1;
+        for (const [kind, definition] of Object.entries(core.captionLines)) {
+            const line = $('preview-'+kind), anchor = core.elementAnchor(layout,kind);
+            line.style.position = 'absolute'; line.style.left = anchor.x*100+'%'; line.style.right = 'auto';
+            line.style.width = 'max-content'; line.style.top = anchor.y*100+'%'; line.style.margin = '0';
+            line.style.fontSize = definition.size * fit+'px'; line.style.lineHeight = '1.3'; line.style.transformOrigin = '50% 0';
+            const scale = layout['text-scale'] * layout[kind+'-scale'] * grow;
+            line.style.transform = `translateX(-50%) translate(${direction[0]*(1-entrance)*fit}px,${direction[1]*(1-entrance)*fit}px) scale(${layout['text-stretch-x']*layout[kind+'-stretch-x']*scale},${layout['text-stretch-y']*layout[kind+'-stretch-y']*scale})`;
+        }
         $('preview-title').style.color = layout.background === 'template' ? '#f1f4fa' : effect.appearance.primary; $('preview-subtitle').style.color = layout.background === 'template' ? '#8595ad' : effect.appearance.secondary;
         const captionText = value => value.replace(/\{effect\}/g, effect.name).replace(/\{world\}/g, 'world');
         $('preview-title').textContent = captionText(effect.captions.title); $('preview-subtitle').textContent = captionText(effect.captions.subtitle); $('preview-detail').textContent = captionText(effect.captions['preview-detail']);
@@ -775,11 +880,12 @@
     $('close-connect').addEventListener('click', () => $('connect-dialog').close());
     $('export-button').addEventListener('click', exportEffect); $('guide-export').addEventListener('click', exportEffect); $('yaml-download').addEventListener('click', () => { try { download(core.toYaml(effect), effect.id + '.yml', 'text/yaml;charset=utf-8'); toast('YAML downloaded. Images must be supplied separately; use Export effect for a complete ZIP.'); } catch (error) { toast(error.message, true); } });
     $('guide-button').addEventListener('click', () => $('guide-dialog').showModal()); $('close-guide').addEventListener('click', () => $('guide-dialog').close()); $('guide-dialog').addEventListener('click', event => { if (event.target === $('guide-dialog')) { const rect = $('guide-dialog').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('guide-dialog').close(); } });
-    $('reset-button').addEventListener('click', async () => { remember(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
+    $('reset-button').addEventListener('click', async () => { if (selectedComponent) { resetComponentLayout(); return; } remember(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
     const tabs = [...document.querySelectorAll('[data-tab]')];
     const tabScroll = new Map();
     let activeTab = null;
     function selectTab(button) {
+        if (selectedComponent) directEditor?.select('');
         closeFieldHelp();
         dropdowns.close();
         const scroll = document.querySelector('.inspector-scroll');
@@ -802,7 +908,9 @@
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !editing) { event.preventDefault(); historyStep(event.shiftKey); }
         if (event.code === 'Space' && !editing && document.activeElement === document.body) { event.preventDefault(); playing = !playing; sync(); }
     });
+    $('component-back').addEventListener('click',()=>directEditor.select(''));
     directEditor = window.FrameStudioCanvas.create({
+        select:showComponent, geometry:syncComponentGeometry,
         stage: $('stage'),
         effect: () => effect, image: () => imageElement,
         pause: () => { playing = false; playTick = Math.max(effect.timing['fade-in-ticks'], Math.min(playTick, effect.timing['minimum-ticks'] - 1)); sync(); },

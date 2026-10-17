@@ -153,7 +153,7 @@ test('canvas movement uses the exported coordinates and respects bounds', () => 
     const text = core.transformElement(original, 'text', .2, -.1);
     assert.equal(text['text-x'], .7); assert.equal(text['text-y'], .34);
     const bounded = core.transformElement(original, 'progress', 100, -100);
-    assert.equal(bounded['progress-x'], .9); assert.equal(bounded['progress-y'], .1);
+    assert.equal(bounded['progress-x'], 10); assert.equal(bounded['progress-y'], -10);
     assert.throws(() => core.transformElement(original,'unknown',0,0));
     assert.throws(() => core.transformElement(original,'image',NaN,0));
 });
@@ -425,4 +425,52 @@ test('expanded resize bounds remain finite and survive YAML validation', () => {
         assert.ok(small[kind+'-scale'] > 0 && small[kind+'-scale'] < .1);
         core.validate({...effect,elements:small});
     }
+});
+
+
+test('caption lines move and resize independently while legacy layouts round-trip', () => {
+    const effect = core.createEffect('aurora'), original = core.clone(effect.elements);
+    for (const kind of ['title','subtitle','detail']) {
+        const moved = core.transformElement(original,kind,.12,-.2);
+        assert.equal(moved[kind+'-offset-x'],.12);
+        assert.ok(Math.abs(moved[kind+'-offset-y']+.2)<.0001);
+        for (const other of ['title','subtitle','detail'].filter(line=>line!==kind)) {
+            assert.equal(moved[other+'-offset-x'],0); assert.equal(moved[other+'-offset-y'],0);
+        }
+        const anchor = core.elementAnchor(original,kind), rect = {x:anchor.x-.1,y:anchor.y,width:.2,height:.08};
+        const resized = core.transformElement(original,kind,0,-.4,'n',rect);
+        const height = rect.height * resized[kind+'-stretch-y'];
+        assert.ok(Math.abs(core.elementAnchor(resized,kind).y + height - rect.y - rect.height)<.0002);
+        assert.equal(resized[kind+'-stretch-x'],1);
+        assert.ok(core.elementAnchor(resized,kind).y<rect.y);
+        effect.elements = resized;
+        assert.deepEqual(core.fromYaml(core.toYaml(effect)).elements,resized);
+    }
+    const old = core.clone(effect); for(const key of Object.keys(old.elements)) if(/^(title|subtitle|detail)-/.test(key)) delete old.elements[key];
+    const normalized=core.normalize(old); assert.equal(normalized.elements['title-offset-y'],0); assert.equal(normalized.elements['subtitle-stretch-y'],1);
+});
+
+test('top-edge resizing crosses the screen edge without moving the bottom edge', () => {
+    for (const kind of ['image','text']) {
+        const elements=core.createEffect('aurora').elements; elements[kind+'-y']=.01;
+        const rect={x:.4,y:.01,width:.2,height:.1};
+        const resized=core.transformElement(elements,kind,0,-.2,'n',rect);
+        assert.equal(resized[kind+'-stretch-y'],3);
+        assert.ok(resized[kind+'-y']<0);
+        assert.ok(Math.abs(resized[kind+'-y']+.1*3-.11)<.0001);
+    }
+});
+
+test('alignment snaps to component edges and centers without changing its targets', () => {
+    const e=core.createEffect('aurora').elements, rect={x:.4,y:.4,width:.2,height:.2};
+    const target={x:.6,y:.67,width:.2,height:.12}, saved=core.clone(target);
+    const candidate=core.transformElement(e,'image',.202,.231);
+    const result=core.snapElement(e,candidate,'image',rect,1000,500,8,[target]);
+    assert.deepEqual(result.guides,{x:true,y:true});
+    assert.ok(Math.abs(result.elements['image-x']-.7)<.00001);
+    assert.ok(Math.abs(result.elements['image-y']-.73)<.00001);
+    assert.deepEqual(target,saved);
+    assert.ok(result.lines.every(line=>line.to>line.from));
+    const edge=core.snapElement(e,core.transformElement(e,'image',.302,.1),'image',rect,1000,500,8,[target]);
+    assert.ok(Math.abs(edge.elements['image-x']-.8)<.00001);
 });
