@@ -91,9 +91,109 @@
     }
     async function restore(state) { const next = core.clone(state.effect); await setImage(state.image); effect = next; activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); scheduleSave(); }
     async function historyStep(isRedo) { const source = isRedo ? redo : undo, destination = isRedo ? undo : redo; if (!source.length) return; const target = source.pop(); destination.push(snapshot()); await restore(target); }
+    const FIELD_HELP = {
+        name: ['The readable name of this effect.', 'Shown in the Studio library, the in-game effect catalog and {effect} placeholders. It does not change the on-screen title.'],
+        id: ['The unique ID used to identify this effect.', 'Used by /frameui preview <id>, event assignments and the YAML filename. Use lowercase words separated by hyphens.'],
+        'captions.enabled': ['Show or hide all three caption lines.', 'Controls the title, subtitle and extra line on the effect screen in Minecraft and the Studio preview.'],
+        'captions.title': ['The main on-screen heading.', 'Appears over the effect in Minecraft and on the preview. An empty value hides this line.'],
+        'captions.subtitle': ['The secondary on-screen text.', 'Appears below the title in Minecraft and on the preview. An empty value hides this line.'],
+        'captions.join-detail': ['Extra text for a server join.', 'Appears as the smaller third caption line when this effect plays on join. The Studio preview uses Preview text instead.'],
+        'captions.teleport-detail': ['Extra text for travel.', 'Appears as the smaller third line for teleports, world changes and supported addon travel events.'],
+        'captions.preview-detail': ['Extra text for manual previews.', 'Appears as the smaller third line in Studio and when you run /frameui preview. It is not the join or teleport message.'],
+        'elements.background': ['Choose what sits behind the screen elements.', 'Changes the effect background. None leaves the game visible behind your image, captions and indicator.'],
+        'appearance.background': ['The base color in your custom palette.', 'Used by the effect background and custom color mapping. Enable Custom colors to edit it.'],
+        'appearance.primary': ['The main color in your custom palette.', 'Colors the main visual elements; composed screens also use it for the title.'],
+        'appearance.secondary': ['The accent color in your custom palette.', 'Adds secondary tones; composed screens also use it for the subtitle.'],
+        'appearance.intensity': ['Adjust the brightness of the effect.', 'Changes the rendered effect, not how long it plays.'],
+        'appearance.speed': ['Adjust the speed of animated movement.', 'Changes motion inside the effect without changing its total duration.'],
+        'appearance.image-fit': ['Choose how your image fits its available area.', 'Cover fills the area and may crop edges. Contain keeps the entire image visible.'],
+        'appearance.image-opacity': ['Adjust the visibility of your image.', 'Lower values reveal the background or game beneath the image. Zero makes the image invisible.'],
+        'appearance.image-motion': ['Choose continuous movement for your image.', 'Still keeps it fixed. Panorama slowly moves it. This is separate from its entrance animation.'],
+        'elements.image-animation': ['Choose how your image enters the screen.', 'Plays during the entrance phase. Follow template uses the selected animation template.'],
+        'elements.image-delay': ['Delay the image entrance, in seconds.', 'Measured from the start of fade in. Limited to 80% of fade in and unavailable when fade in is zero.'],
+        'elements.image-scale': ['Resize the image around its center.', 'Changes the image on the preview and in Minecraft. You can also drag its corner handles.'],
+        'elements.image-x': ['Horizontal position of the image center.', '0 is the left edge, 0.5 is the center and 1 is the right edge of the screen.'],
+        'elements.image-y': ['Vertical position of the image center.', '0 is the top, 0.5 is the center and 1 is the bottom of the screen.'],
+        'elements.text-animation': ['Choose how captions enter the screen.', 'Affects the title, subtitle and extra caption line together.'],
+        'elements.text-x': ['Horizontal position of the caption group.', 'Moves the title, subtitle and extra line together. 0.5 centers them horizontally.'],
+        'elements.text-y': ['Vertical position of the caption group.', 'Moves all caption lines together. You can also drag the Text object on the preview.'],
+        'elements.text-scale': ['Resize the entire caption group.', 'Changes all three caption lines together in the preview and Minecraft.'],
+        'elements.progress': ['Choose the animated loading indicator.', 'Appears over your effect. It is a visual animation, not a measurement of server loading progress.'],
+        'elements.progress-x': ['Horizontal position of the loading indicator.', '0.5 centers it. You can also drag the Loading indicator object on the preview.'],
+        'elements.progress-y': ['Vertical position of the loading indicator.', 'Moves it toward the top or bottom of the screen.'],
+        'elements.progress-width': ['Width of the loading indicator.', 'Changes how much screen space it occupies.'],
+        'elements.progress-scale': ['Thickness or overall size of the indicator.', 'Adjusts bar thickness, dot size or ring size depending on its style.'],
+        'elements.decoration': ['Add a decorative animated layer.', 'Appears over the background alongside your image, captions and loading indicator.'],
+        enabled: ['Allow this effect to play.', 'Disabled effects remain configured but cannot be selected for automatic playback or previews.'],
+        priority: ['Choose which matching effect takes precedence.', 'The highest eligible priority wins when several effects match an event.'],
+        weight: ['Control selection between equally prioritized effects.', 'Larger weights are more likely to be chosen. Weight does not override priority.'],
+        'filters.cooldown-ticks': ['Minimum time between this effect playing for the same player, in seconds.', 'Applies in game after a screen opens. Zero allows every eligible event; global cooldowns still apply.'],
+        'presentation.show-hands': ['Keep the player’s normal hands visible.', 'Applies during the effect in Minecraft. Enabling this also keeps the HUD visible. The Studio view is illustrative.'],
+        'presentation.hide-hud': ['Hide gameplay HUD elements during the effect.', 'Masks the hotbar and crosshair using a temporary client view. It does not hide chat or pause menus.'],
+        'presentation.block-movement': ['Prevent player movement while this effect is active.', 'Applies in Minecraft for the duration of the screen; it does not affect moving elements in Studio.'],
+        'presentation.block-interactions': ['Prevent gameplay interactions while the effect is active.', 'Applies to player actions in Minecraft, not clicks in the Studio editor.'],
+        'filters.permission': ['Require this permission to see the effect.', 'Checked for automatic playback and manual previews. Empty adds no permission requirement.'],
+        'filters.deny-permissions': ['Block the effect for players with any listed permission.', 'A matching denied permission wins even if the required permission is granted. Separate entries with commas.'],
+        'filters.distance.min': ['Minimum travel distance, in blocks.', 'Checked for travel events. Cross-world travel counts as infinite distance.'],
+        'filters.distance.max': ['Maximum travel distance, in blocks.', 'Use -1 for no maximum. A finite maximum prevents this effect on cross-world travel.'],
+        'filters.height.min': ['Lowest allowed destination Y coordinate.', 'Restricts where the player arrives, independently of the source world.'],
+        'filters.height.max': ['Highest allowed destination Y coordinate.', 'Restricts where the player arrives. Both height bounds are inclusive.'],
+        'filters.time.min': ['Start of the allowed Minecraft world-time range.', 'Uses the destination world clock: 0 sunrise, 6000 noon, 12000 sunset and 18000 midnight. This is not a duration.'],
+        'filters.time.max': ['End of the allowed Minecraft world-time range.', 'An end below the start crosses midnight. The default 0–23999 allows the entire day.'],
+        duration: ['Total normal playback duration, in seconds.', 'Changing this scales fade in, hold and fade out together. Additional world-loading wait can extend actual playback.'],
+        'timing.entrance': ['Time for the effect to become fully visible.', 'Part of the total duration. Changing it preserves the configured hold and extra loading wait.'],
+        'timing.hold': ['Time the effect stays fully visible.', 'Starts after fade in and ends before fade out. It excludes both transitions.'],
+        'timing.exit': ['Time for the effect to fade away and reveal the game.', 'The last part of the normal playback duration.'],
+        'timing.wait': ['Extra time allowed for the destination world to finish loading.', 'Only used when world readiness is pending. It does not lengthen a normal manual preview.']
+    };
+    let helpPopup = null, helpOwner = null, helpPinned = false;
+    function closeFieldHelp() {
+        if (helpOwner) { helpOwner.setAttribute('aria-expanded', 'false'); helpOwner.removeAttribute('aria-describedby'); }
+        if (helpPopup) helpPopup.hidden = true;
+        helpOwner = null; helpPinned = false;
+    }
+    function fieldHelp(path) {
+        if (FIELD_HELP[path]) return FIELD_HELP[path];
+        const match = path.match(/^filters\.(worlds|source-worlds|addon-targets)\.(include|exclude)$/);
+        if (match) {
+            const target = { worlds: 'destination worlds', 'source-worlds': 'worlds the player leaves', 'addon-targets': 'named homes, warps, portals, towns, nations, lands or islands' }[match[1]];
+            return [match[2] === 'include' ? 'Allow matching ' + target + '.' : 'Block matching ' + target + '.', 'Separate names with commas. * and ? are wildcards. Empty includes allow all; exclusions always win. Applies in Minecraft, not to Studio playback.'];
+        }
+        return null;
+    }
+    function helpButton(path, label, explanation = fieldHelp(path)) {
+        if (!explanation) return document.createTextNode('');
+        const button = element('button', 'field-info', 'i');
+        button.type = 'button'; button.dataset.helpFor = path;
+        button.setAttribute('aria-label', 'About ' + label); button.setAttribute('aria-expanded', 'false');
+        function open() {
+            if (helpOwner !== button) closeFieldHelp();
+            if (!helpPopup) { helpPopup = element('div', 'field-help-popup'); helpPopup.id = 'field-help-popup'; helpPopup.role = 'tooltip'; document.body.append(helpPopup); }
+            helpOwner = button; helpPopup.replaceChildren(element('strong', '', label), element('p', '', explanation[0]), element('p', 'help-location', explanation[1]));
+            helpPopup.hidden = false; button.setAttribute('aria-expanded', 'true'); button.setAttribute('aria-describedby', helpPopup.id);
+            const anchor = button.getBoundingClientRect(), box = helpPopup.getBoundingClientRect();
+            helpPopup.style.left = Math.max(12, Math.min(innerWidth - box.width - 12, anchor.right - box.width)) + 'px';
+            helpPopup.style.top = Math.max(12, anchor.bottom + box.height + 10 <= innerHeight ? anchor.bottom + 10 : anchor.top - box.height - 10) + 'px';
+        }
+        button.addEventListener('pointerenter', () => { if (!helpPinned) open(); });
+        button.addEventListener('pointerleave', () => { if (!helpPinned && helpOwner === button && document.activeElement !== button) closeFieldHelp(); });
+        button.addEventListener('focus', open);
+        button.addEventListener('blur', () => { if (!helpPinned && helpOwner === button) closeFieldHelp(); });
+        button.addEventListener('click', event => {
+            event.preventDefault(); event.stopPropagation();
+            if (helpOwner === button && helpPinned) closeFieldHelp();
+            else { open(); helpPinned = true; }
+        });
+        return button;
+    }
+    document.addEventListener('click', event => { if (helpOwner && !helpOwner.contains(event.target)) closeFieldHelp(); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && helpOwner) { event.preventDefault(); closeFieldHelp(); } });
+    document.addEventListener('scroll', closeFieldHelp, true);
+    window.addEventListener('resize', closeFieldHelp);
     function field(label, path, options = {}) {
-        const wrap = element(options.options ? 'div' : 'label', 'field'), caption = element('span', 'field-label', label);
-        wrap.append(caption);
+        const wrap = element('div', 'field'), heading = element('div', 'field-heading'), caption = element('label', 'field-label', label);
+        caption.htmlFor = 'field-' + path.replaceAll('.', '-');
+        heading.append(caption, helpButton(path, label)); wrap.append(heading);
         let input;
         if (options.options) { input = element('select'); for (const [value, text] of options.options) { const option = element('option', '', text); option.value = value; input.append(option); } }
         else if (options.multiline) { input = element('textarea'); input.rows = 2; }
@@ -113,8 +213,17 @@
         wrap.append(input); return wrap;
     }
     function toggle(label, path, note = '') {
-        const row = element('label', 'switch-field'), copy = element('span', 'switch-copy', label); if (note) copy.append(element('small', '', note));
-        const slider = element('span', 'switch'), input = element('input'); input.type = 'checkbox'; input.checked = pathGet(path); input.dataset.path = path; input.addEventListener('change', () => mutate(path, input.checked)); slider.append(input, element('span')); row.append(copy, slider); return row;
+        const row = element('div', 'switch-field'), copy = element('div', 'switch-copy');
+        const heading = element('div', 'switch-heading'), caption = element('label', '', label);
+        caption.htmlFor = 'field-' + path.replaceAll('.', '-');
+        heading.append(caption, helpButton(path, label)); copy.append(heading);
+        if (note) copy.append(element('small', '', note));
+        const slider = element('span', 'switch'), input = element('input');
+        input.type = 'checkbox'; input.id = caption.htmlFor; input.checked = pathGet(path); input.dataset.path = path;
+        input.setAttribute('aria-label', label); input.addEventListener('change', () => mutate(path, input.checked));
+        slider.append(input, element('span')); row.append(copy, slider);
+        row.addEventListener('click', event => { if (!event.target.closest('button,input,label')) input.click(); });
+        return row;
     }
     function section(title, tag = '') { const result = element('section', 'settings-section'), heading = element('div', 'section-heading'); heading.append(element('h3', '', title)); if (tag) heading.append(element('span', '', tag)); result.append(heading); return result; }
     function note(text) { return element('p', 'field-note', text); }
@@ -126,6 +235,7 @@
     }
     function details(title, ...children) { const result = element('details', 'advanced-details'); result.append(element('summary', '', title), ...children); return result; }
     function renderSettings() {
+        closeFieldHelp();
         dropdowns.close();
         const visual = $('settings-visual'), motion = $('settings-motion'), events = $('settings-events'), game = $('settings-game');
         for (const pane of [visual, motion, events, game]) pane.replaceChildren();
@@ -142,7 +252,7 @@
         const segments = element('div', 'segmented');
         for (const [value, label] of [['original', 'Original'], ['custom', 'Custom colors']]) { const button = element('button', effect.appearance.palette === value ? 'active' : '', label); button.dataset.palette = value; button.addEventListener('click', () => mutate('appearance.palette', value)); segments.append(button); }
         const colors = element('div', 'colors-row'); colors.id = 'custom-colors';
-        for (const [key, label] of [['background', 'Base'], ['primary', 'Primary'], ['secondary', 'Accent']]) { const wrap = element('label', 'field color-field'), name = element('span', 'field-label', label), well = element('span', 'color-well'), input = element('input'), text = element('input'); input.type = 'color'; input.value = effect.appearance[key]; input.dataset.path = `appearance.${key}`; input.setAttribute('aria-label', label + ' color'); text.type = 'text'; text.value = effect.appearance[key]; text.maxLength = 7; text.dataset.path = `appearance.${key}`; text.setAttribute('aria-label', label + ' hex color'); input.addEventListener('input', () => mutate(`appearance.${key}`, input.value)); text.addEventListener('input', () => { if (/^#[0-9a-f]{6}$/i.test(text.value)) mutate(`appearance.${key}`, text.value); }); text.addEventListener('change', () => mutate(`appearance.${key}`, text.value)); well.append(input, text); wrap.append(name, well); colors.append(wrap); }
+        for (const [key, label] of [['background', 'Base'], ['primary', 'Primary'], ['secondary', 'Accent']]) { const wrap = element('div', 'field color-field'), name = element('span', 'field-label', label), well = element('span', 'color-well'), input = element('input'), text = element('input'); input.type = 'color'; input.value = effect.appearance[key]; input.dataset.path = `appearance.${key}`; input.setAttribute('aria-label', label + ' color'); text.type = 'text'; text.value = effect.appearance[key]; text.maxLength = 7; text.dataset.path = `appearance.${key}`; text.setAttribute('aria-label', label + ' hex color'); input.addEventListener('input', () => mutate(`appearance.${key}`, input.value)); text.addEventListener('input', () => { if (/^#[0-9a-f]{6}$/i.test(text.value)) mutate(`appearance.${key}`, text.value); }); text.addEventListener('change', () => mutate(`appearance.${key}`, text.value)); well.append(input, text); const heading = element('div', 'field-heading'); heading.append(name, helpButton('appearance.' + key, label + ' color')); wrap.append(heading, well); colors.append(wrap); }
         palette.append(segments, colors, field('Brightness', 'appearance.intensity', { type: 'range', min: 0, max: 4, step: 0.05 })); visual.append(palette);
         const picture = section('Your image', 'OPTIONAL'), upload = element('button', 'image-upload'); upload.id = 'upload-image'; upload.append(icon('image'), element('strong', '', 'Choose an image'), element('span', '', 'Add a logo, artwork or your own photo'), element('small', '', 'PNG / JPEG · up to 8 MB · resized to 2048 px')); upload.addEventListener('click', () => $('image-file').click());
         const info = element('div', 'image-info'); info.id = 'image-info'; const thumbnail = element('img'); thumbnail.id = 'image-thumbnail'; thumbnail.alt = 'Uploaded effect image'; const label = element('span'); label.id = 'image-description'; const remove = element('button', 'icon-button', '×'); remove.setAttribute('aria-label', 'Remove image'); remove.addEventListener('click', async () => { const previous = snapshot(); await setImage(null); effect.appearance.image = ''; commitChange(previous); renderSettings(); sync(); }); info.append(thumbnail, label, remove);
@@ -156,8 +266,10 @@
         const metadata = section('File details');
         metadata.append(details('Effect ID & category', field('Effect ID / filename', 'id', { maxLength: 48, placeholder: 'my-aurora' }), element('p', 'category-readonly', 'Category: ' + effect.category), note('The first edit creates a copy in My Effects. The ID is also the YAML filename: use lowercase words separated by hyphens.')));
         visual.append(metadata);
-        const durationSection = section('Duration'), durationField = element('label', 'field');
-        durationField.append(element('span', 'field-label', 'Total duration · seconds'));
+        const durationSection = section('Duration'), durationField = element('div', 'field');
+        const durationHeading = element('div', 'field-heading'), durationCaption = element('label', 'field-label', 'Total duration · seconds');
+        durationCaption.htmlFor = 'duration-seconds';
+        durationHeading.append(durationCaption, helpButton('duration', 'Total duration')); durationField.append(durationHeading);
         const durationInput = element('input'); durationInput.id = 'duration-seconds'; durationInput.type = 'number'; durationInput.min = .05; durationInput.max = 60; durationInput.step = .05; durationInput.value = duration() / 20;
         durationInput.addEventListener('change', () => { try { const previous = snapshot(); effect.timing = core.durationTiming(effect.timing, Number(durationInput.value)); commitChange(previous); durationInput.value = duration() / 20; } catch (error) { toast(error.message, true); durationInput.value = duration() / 20; } });
         durationField.append(durationInput); durationSection.append(durationField, note('Scales the entrance, hold and exit together. Use the controls below to adjust each phase separately.')); motion.append(durationSection);
@@ -168,8 +280,9 @@
             ['exit', 'Fade out · seconds', 'Time to reveal the game again.'],
             ['wait', 'Extra loading wait · seconds', 'Additional time allowed if the destination world is still loading.']
         ]) {
-            const wrap = element('label', 'field timing-field');
-            wrap.append(element('span', 'field-label', label));
+            const wrap = element('div', 'field timing-field'), heading = element('div', 'field-heading'), caption = element('label', 'field-label', label);
+            caption.htmlFor = 'timing-' + phase;
+            heading.append(caption, helpButton('timing.' + phase, label)); wrap.append(heading);
             const input = element('input');
             input.type = 'number'; input.min = phase === 'exit' ? .05 : 0; input.max = 60; input.step = .05;
             input.id = 'timing-' + phase; input.dataset.timingPhase = phase;
@@ -620,6 +733,7 @@
     const tabScroll = new Map();
     let activeTab = null;
     function selectTab(button) {
+        closeFieldHelp();
         dropdowns.close();
         const scroll = document.querySelector('.inspector-scroll');
         if (activeTab) tabScroll.set(activeTab, scroll.scrollTop);
