@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private security report
+    url: https://github.com/Despical/FrameUIStudio/security/policy
+    about: Report vulnerabilities privately; never paste personal server links.
+  - name: Community support
+    url: https://discord.gg/uXVU8jmtpU
+    about: Ask usage questions in Discord.

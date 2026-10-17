@@ -1,0 +1,24 @@
+name: Bug report
+description: Report a reproducible Studio defect.
+labels: [bug]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Explain the expected and actual result. Remove server links and private data.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser, device, screen size and interface language
+      placeholder: Safari, iPhone, 390 × 844, Turkish
+    validations:
+      required: true
