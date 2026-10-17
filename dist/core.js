@@ -75,6 +75,30 @@
         return { 'fade-in-ticks': entrance, 'minimum-ticks': entrance + hold,
             'maximum-ticks': entrance + hold + wait, 'fade-out-ticks': Math.round(parts.exit * 20) };
     }
+    function disabledSettings(effect, hasImage) {
+        const disabled = {}, e = effect.elements, a = effect.appearance;
+        const template = e.background === 'template', none = e.background === 'none';
+        const overlay = e.progress !== 'none' || e.decoration !== 'none';
+        const mapped = template && a.palette === 'custom';
+        function block(paths, reason) { for (const path of paths) if (!disabled[path]) disabled[path] = reason; }
+        if (!template) block(['appearance.palette'], 'Palette mode only affects Shader template backgrounds. Other layouts use their colors directly.');
+        if (!(mapped || !template && !none)) block(['appearance.background'], none ? 'Background is None, so no base background color is drawn.' : 'Choose Custom colors to edit the shader background color.');
+        if (!(mapped || overlay || !none && !template && e.background !== 'solid' || !template && effect.captions.enabled && effect.captions.title.trim())) {
+            block(['appearance.primary'], template ? 'Primary is unused with the Original shader palette and no loading indicator or decoration. Choose Custom colors or add an element that uses it.' : 'No visible title, indicator, decoration or background element uses the primary color.');
+        }
+        if (!(mapped || !template && effect.captions.enabled && effect.captions.subtitle.trim())) {
+            block(['appearance.secondary'], 'Accent is unused here. It colors the subtitle on composed screens, or the shader when Custom colors is selected.');
+        }
+        if (!template) block(['appearance.intensity'], 'Brightness adjusts the Shader template background. This background layout does not use that setting.');
+        if (none || e.background === 'solid') {
+            if (!overlay && !(hasImage && a['image-motion'] === 'panorama')) block(['appearance.speed'], 'There is no moving background, indicator, decoration or panorama image using animation speed.');
+        }
+        if (!effect.captions.enabled) block(['captions.title', 'captions.subtitle', 'captions.join-detail', 'captions.teleport-detail', 'captions.preview-detail', 'elements.text-x', 'elements.text-y', 'elements.text-scale', 'elements.text-animation'], 'Show captions is off. Enable it to edit the on-screen text and its placement.');
+        if (!hasImage) block(['appearance.image-fit', 'appearance.image-opacity', 'appearance.image-motion', 'elements.image-scale', 'elements.image-x', 'elements.image-y', 'elements.image-animation', 'elements.image-delay'], 'Add an image in Design before adjusting its appearance, placement or movement.');
+        if (effect.timing['fade-in-ticks'] === 0) block(['elements.image-delay'], 'Fade in is zero seconds, so there is no entrance phase to delay.');
+        if (e.progress === 'none') block(['elements.progress-x', 'elements.progress-y', 'elements.progress-width', 'elements.progress-scale'], 'Loading indicator is None. Choose an indicator style to adjust its placement and size.');
+        return disabled;
+    }
     const modes = ['SURVIVAL', 'CREATIVE', 'ADVENTURE', 'SPECTATOR'];
     const triggers = ['join', 'teleport', 'world-change', 'command'];
     const addons = [
@@ -358,6 +382,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1-2048 pixels.');
         return { width, height };
     }
-    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

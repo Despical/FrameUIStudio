@@ -438,3 +438,9 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 
 .field-label-tail{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;vertical-align:bottom}
 .field-heading{align-items:flex-end}
+
+.field.is-disabled .field-label,.field.is-disabled output{color:#7e8b9d}
+.field.is-disabled input,.field.is-disabled .select-trigger,.segmented.is-disabled button{opacity:.4;pointer-events:none}
+.field.is-disabled .field-info{color:#7e8b9d}
+.field.is-disabled,.segmented.is-disabled{cursor:default}
+.field.is-disabled:focus-visible,.segmented.is-disabled:focus-visible{outline:1px solid #75899f;outline-offset:4px;border-radius:4px}

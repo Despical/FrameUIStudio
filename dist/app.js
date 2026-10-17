@@ -101,7 +101,7 @@
         'captions.teleport-detail': ['Extra text for travel.', 'Appears as the smaller third line for teleports, world changes and supported addon travel events.'],
         'captions.preview-detail': ['Extra text for manual previews.', 'Appears as the smaller third line in Studio and when you run /frameui preview. It is not the join or teleport message.'],
         'elements.background': ['Choose what sits behind the screen elements.', 'Changes the effect background. None leaves the game visible behind your image, captions and indicator.'],
-        'appearance.background': ['The base color in your custom palette.', 'Used by the effect background and custom color mapping. Enable Custom colors to edit it.'],
+        'appearance.background': ['The base color in your custom palette.', 'Used directly by composed backgrounds, or by Shader template backgrounds when Custom colors is selected.'],
         'appearance.primary': ['The main color in your custom palette.', 'Colors the main visual elements; composed screens also use it for the title.'],
         'appearance.secondary': ['The accent color in your custom palette.', 'Adds secondary tones; composed screens also use it for the subtitle.'],
         'appearance.intensity': ['Adjust the brightness of the effect.', 'Changes the rendered effect, not how long it plays.'],
@@ -152,6 +152,43 @@
         if (helpPopup) helpPopup.hidden = true;
         helpOwner = null;
     }
+    function showFieldHelp(anchor, text) {
+        if (!helpPopup) { helpPopup = element('div', 'field-help-popup'); helpPopup.id = 'field-help-popup'; helpPopup.role = 'tooltip'; document.body.append(helpPopup); }
+        helpPopup.textContent = text; helpPopup.hidden = false;
+        const rect = anchor.getBoundingClientRect(), box = helpPopup.getBoundingClientRect();
+        helpPopup.style.left = Math.max(12, Math.min(innerWidth - box.width - 12, rect.right - box.width)) + 'px';
+        helpPopup.style.top = Math.max(12, rect.bottom + box.height + 10 <= innerHeight ? rect.bottom + 10 : rect.top - box.height - 10) + 'px';
+    }
+    function updateAvailability() {
+        const disabled = core.disabledSettings(effect, !!imageBytes);
+        for (const input of document.querySelectorAll('[data-path]')) {
+            const reason = disabled[input.dataset.path] || '';
+            input.disabled = !!reason;
+            const wrapper = input.closest('.field');
+            if (!wrapper) continue;
+            wrapper.classList.toggle('is-disabled', !!reason);
+            wrapper.dataset.disabledReason = reason;
+            if (reason) { wrapper.tabIndex = 0; wrapper.setAttribute('aria-description', reason); }
+            else { wrapper.removeAttribute('tabindex'); wrapper.removeAttribute('aria-disabled'); wrapper.removeAttribute('aria-description'); }
+        }
+        const modes = document.querySelector('.segmented');
+        if (modes) {
+            const reason = disabled['appearance.palette'] || '';
+            modes.classList.toggle('is-disabled', !!reason); modes.dataset.disabledReason = reason;
+            modes.tabIndex = reason ? 0 : -1;
+            for (const button of modes.querySelectorAll('button')) button.disabled = !!reason;
+            if (reason) { modes.setAttribute('aria-disabled', 'true'); modes.setAttribute('aria-description', reason); }
+            else { modes.removeAttribute('aria-disabled'); modes.removeAttribute('aria-description'); }
+        }
+    }
+    function wireDisabledHelp() {
+        for (const wrapper of document.querySelectorAll('.field, .segmented')) {
+            wrapper.addEventListener('pointerenter', () => { if (wrapper.dataset.disabledReason) { closeFieldHelp(); showFieldHelp(wrapper, wrapper.dataset.disabledReason); } });
+            wrapper.addEventListener('pointerleave', () => { if (!helpOwner) closeFieldHelp(); });
+            wrapper.addEventListener('focus', () => { if (wrapper.dataset.disabledReason) { closeFieldHelp(); showFieldHelp(wrapper, wrapper.dataset.disabledReason); } });
+            wrapper.addEventListener('blur', () => { if (!helpOwner) closeFieldHelp(); });
+        }
+    }
     function fieldHelp(path) {
         if (FIELD_HELP[path]) return FIELD_HELP[path];
         const match = path.match(/^filters\.(worlds|source-worlds|addon-targets)\.(include|exclude)$/);
@@ -175,12 +212,10 @@
         button.setAttribute('aria-label', 'About ' + label); button.setAttribute('aria-expanded', 'false');
         function open() {
             if (helpOwner !== button) closeFieldHelp();
-            if (!helpPopup) { helpPopup = element('div', 'field-help-popup'); helpPopup.id = 'field-help-popup'; helpPopup.role = 'tooltip'; document.body.append(helpPopup); }
-            helpOwner = button; helpPopup.textContent = explanation.join(' ');
-            helpPopup.hidden = false; button.setAttribute('aria-expanded', 'true'); button.setAttribute('aria-describedby', helpPopup.id);
-            const anchor = button.getBoundingClientRect(), box = helpPopup.getBoundingClientRect();
-            helpPopup.style.left = Math.max(12, Math.min(innerWidth - box.width - 12, anchor.right - box.width)) + 'px';
-            helpPopup.style.top = Math.max(12, anchor.bottom + box.height + 10 <= innerHeight ? anchor.bottom + 10 : anchor.top - box.height - 10) + 'px';
+            helpOwner = button;
+            const reason = button.closest('[data-disabled-reason]')?.dataset.disabledReason;
+            showFieldHelp(button, reason || explanation.join(' '));
+            button.setAttribute('aria-expanded', 'true'); button.setAttribute('aria-describedby', helpPopup.id);
         }
         button.addEventListener('pointerenter', open);
         button.addEventListener('pointerleave', () => { if (helpOwner === button && !button.matches(':focus-visible')) closeFieldHelp(); });
@@ -189,8 +224,8 @@
         button.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); open(); });
         return button;
     }
-    document.addEventListener('click', event => { if (helpOwner && !helpOwner.contains(event.target)) closeFieldHelp(); });
-    document.addEventListener('keydown', event => { if (event.key === 'Escape' && helpOwner) { event.preventDefault(); closeFieldHelp(); } });
+    document.addEventListener('click', event => { if (helpPopup && !helpPopup.hidden && (!helpOwner || !helpOwner.contains(event.target))) closeFieldHelp(); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && helpPopup && !helpPopup.hidden) { event.preventDefault(); closeFieldHelp(); } });
     document.addEventListener('scroll', closeFieldHelp, true);
     window.addEventListener('resize', closeFieldHelp);
     function fieldHeading(label, controlId, path, helpLabel = label) {
@@ -338,6 +373,7 @@
         const targets = section('Plugin destinations');
         targets.append(details('Home, warp, portal & island names', field('Include addon destinations', 'filters.addon-targets.include', { list: true, placeholder: 'spawn, town-*, survival_portal' }), field('Exclude addon destinations', 'filters.addon-targets.exclude', { list: true, placeholder: 'staff-*' }), note('Restrict the plugin events selected in Events. Match home, warp, portal, town, nation, land or island names. Multiverse-Core uses destination worlds. Empty includes allow all; * and ? are wildcards.')));
         game.append(targets);
+        wireDisabledHelp();
         dropdowns.enhance();
     }
     function renderCategories() {
@@ -549,10 +585,10 @@
                 group.querySelector('summary').setAttribute('aria-label', addon.name + (count ? ` · ${count} selected` : ''));
             }
         }
+        updateAvailability();
         dropdowns.refresh();
         for (const output of document.querySelectorAll('[data-output]')) { const value = pathGet(output.dataset.output); output.textContent = output.dataset.output.endsWith('image-opacity') ? `${Math.round(value * 100)}%` : `${value.toFixed(2).replace(/0$/, '')}×`; }
         for (const button of document.querySelectorAll('[data-palette]')) button.classList.toggle('active', button.dataset.palette === effect.appearance.palette);
-        if ($('custom-colors')) { $('custom-colors').style.opacity = effect.appearance.palette === 'custom' ? '1' : '.42'; for (const input of $('custom-colors').querySelectorAll('input')) input.disabled = effect.appearance.palette !== 'custom'; }
         if ($('image-info')) { $('image-info').hidden = !effect.appearance.image; $('upload-image').hidden = !!imageBytes; if (imageUrl) $('image-thumbnail').src = imageUrl; else $('image-thumbnail').removeAttribute('src'); const label = $('image-description'); label.textContent = effect.appearance.image; label.append(element('small', '', imageElement ? `${imageElement.width} × ${imageElement.height} · ${(imageBytes.length / 1024).toFixed(0)} KB` : 'Missing image · choose the matching file')); }
         $('play-button').setAttribute('aria-label', playing ? 'Pause preview' : 'Play preview'); $('play-button').replaceChildren(icon(playing ? 'pause' : 'play'));
         for (const button of document.querySelectorAll('[data-template]')) { const selected = button.dataset.template === effect.id && button.dataset.libraryGroup === effect.category; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected)); }
@@ -589,7 +625,7 @@
             gl.uniform4f(u.uIndicator, ['none','bar','segments','dots','ring'].indexOf(e.progress), e['progress-x'], e['progress-y'], e['progress-width']);
             gl.uniform1f(u.uProgressScale, e['progress-scale']);
             gl.uniform1i(u.uDecoration, ['none','embers','petals','scan','pulse'].indexOf(e.decoration));
-            gl.viewport(0, 0, c.width, c.height); gl.useProgram(this.program); gl.uniform2f(u.ScreenSize, c.width, c.height); gl.uniform1f(u.uTime, seconds); gl.uniform1f(u.uSpeed, a.speed); gl.uniform1i(u.frameLoadingEffect, core.catalog.find(item => item.id === definition.template)?.shaderId || 0); gl.uniform1f(u.frameLoadingTransition, transition); gl.uniform1i(u.uCustom, a.palette === 'custom' ? 1 : 0); gl.uniform3fv(u.uBackground, rgb(a.background)); gl.uniform3fv(u.uPrimary, rgb(a.primary)); gl.uniform3fv(u.uSecondary, rgb(a.secondary)); gl.uniform1f(u.uIntensity, a.intensity); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.texture); gl.uniform1i(u.uImage, 0); gl.uniform1i(u.uHasImage, !!this.picture); gl.uniform2f(u.uImageSize, this.picture?.width || 1, this.picture?.height || 1); gl.uniform1i(u.uContain, a['image-fit'] === 'contain'); gl.uniform1f(u.uImageOpacity, a['image-opacity']); gl.drawArrays(gl.TRIANGLES, 0, 6);
+            gl.viewport(0, 0, c.width, c.height); gl.useProgram(this.program); gl.uniform2f(u.ScreenSize, c.width, c.height); gl.uniform1f(u.uTime, seconds); gl.uniform1f(u.uSpeed, a.speed); gl.uniform1i(u.frameLoadingEffect, core.catalog.find(item => item.id === definition.template)?.shaderId || 0); gl.uniform1f(u.frameLoadingTransition, transition); gl.uniform1i(u.uCustom, a.palette === 'custom' ? 1 : 0); gl.uniform3fv(u.uBackground, rgb(a.background)); gl.uniform3fv(u.uPrimary, rgb(a.primary)); gl.uniform3fv(u.uSecondary, rgb(a.secondary)); gl.uniform1f(u.uIntensity, definition.elements.background === 'template' ? a.intensity : 1); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.texture); gl.uniform1i(u.uImage, 0); gl.uniform1i(u.uHasImage, !!this.picture); gl.uniform2f(u.uImageSize, this.picture?.width || 1, this.picture?.height || 1); gl.uniform1i(u.uContain, a['image-fit'] === 'contain'); gl.uniform1f(u.uImageOpacity, a['image-opacity']); gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
     }
     let directEditor = null;
@@ -610,7 +646,7 @@
         const fit = $('stage').clientWidth / 640;
         for (const [id, offset, size] of [['preview-title', .004, 14], ['preview-subtitle', .069, 8], ['preview-detail', .246, 7]]) { const line = $(id); line.style.position = 'absolute'; line.style.left = '0'; line.style.right = '0'; line.style.top = ((layout['text-y'] + offset) * 100) + '%'; line.style.margin = '0'; line.style.fontSize = (size * fit) + 'px'; }
         caption.style.transform = `translateY(${layout['text-animation'] === 'slide-up' ? (1 - entrance) * 30 : 0}px) scale(${layout['text-scale'] * (layout['text-animation'] === 'grow' ? 1 - Math.pow(1 - entrance, 3) : 1)})`;
-        $('preview-title').style.color = effect.appearance.primary; $('preview-subtitle').style.color = effect.appearance.secondary;
+        $('preview-title').style.color = layout.background === 'template' ? '#f1f4fa' : effect.appearance.primary; $('preview-subtitle').style.color = layout.background === 'template' ? '#8595ad' : effect.appearance.secondary;
         const captionText = value => value.replace(/\{effect\}/g, effect.name).replace(/\{world\}/g, 'world');
         $('preview-title').textContent = captionText(effect.captions.title); $('preview-subtitle').textContent = captionText(effect.captions.subtitle); $('preview-detail').textContent = captionText(effect.captions['preview-detail']);
         $('game-hud').hidden = effect.presentation['hide-hud']; $('game-hands').hidden = !effect.presentation['show-hands'];
@@ -627,7 +663,7 @@
     function download(bytes, filename, type) { const url = URL.createObjectURL(new Blob([bytes], { type })), anchor = element('a'); anchor.href = url; anchor.download = filename; document.body.append(anchor); anchor.click(); anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000); }
     function effectArchive() {
         core.validate(effect);
-        if (effect.appearance.image && !imageBytes) throw new Error('Choose the referenced image, or clear it in YAML.');
+        if (effect.appearance.image && !imageBytes) throw new Error('Choose the referenced image, or remove it in Design.');
         const entries = { [`effects/${effect.id}.yml`]: core.toYaml(effect), 'INSTALL.txt': `FrameUI effect: ${effect.name}\n\nOpen /frameui editor to import directly, or extract effects/ and images/ into plugins/FrameUI/ and run /frameui reload.\nTest with /frameui preview ${effect.id}.\n` };
         if (imageBytes) entries[effect.appearance.image] = imageBytes;
         return core.zip(entries);

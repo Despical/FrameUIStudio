@@ -313,3 +313,47 @@ test('phase editing supports zero entrances, rounds to server resolution and rej
     assert.throws(() => core.phaseTiming(long, 'wait', 2), /60 seconds/);
     assert.deepEqual(core.phaseTiming(timing, 'entrance', 0), timing);
 });
+
+test('transparent backgrounds disable only colors with no visible consumers', () => {
+    const effect = core.createEffect('aurora');
+    effect.elements.background = 'none'; effect.elements.progress = 'none'; effect.elements.decoration = 'none';
+    effect.captions.enabled = true; effect.captions.title = 'Welcome'; effect.captions.subtitle = 'Loading';
+    const original = core.clone(effect);
+    let disabled = core.disabledSettings(effect, false);
+    assert.ok(disabled['appearance.background']); assert.ok(disabled['appearance.palette']);
+    assert.equal(disabled['appearance.primary'], undefined); assert.equal(disabled['appearance.secondary'], undefined);
+    assert.deepEqual(effect, original);
+    effect.captions.enabled = false;
+    disabled = core.disabledSettings(effect, false);
+    assert.ok(disabled['appearance.primary']); assert.ok(disabled['appearance.secondary']);
+    assert.ok(disabled['captions.title']); assert.ok(disabled['elements.text-animation']);
+    effect.elements.progress = 'bar';
+    disabled = core.disabledSettings(effect, false);
+    assert.equal(disabled['appearance.primary'], undefined);
+    assert.equal(disabled['elements.progress-width'], undefined);
+});
+
+test('image, indicator and palette controls re-enable without losing configured values', () => {
+    const effect = core.createEffect('aurora'); effect.elements.progress = 'none'; effect.elements.decoration = 'none';
+    effect.appearance.palette = 'original';
+    let disabled = core.disabledSettings(effect, false);
+    assert.ok(disabled['appearance.background']); assert.ok(disabled['appearance.image-fit']);
+    assert.ok(disabled['elements.progress-width']); assert.equal(disabled['appearance.palette'], undefined);
+    effect.appearance.palette = 'custom'; effect.elements.progress = 'ring';
+    disabled = core.disabledSettings(effect, true);
+    for (const path of ['appearance.background', 'appearance.primary', 'appearance.secondary', 'appearance.image-fit', 'elements.image-delay', 'elements.progress-width']) assert.equal(disabled[path], undefined, path);
+    effect.timing['fade-in-ticks'] = 0;
+    assert.ok(core.disabledSettings(effect, true)['elements.image-delay']);
+    effect.timing['fade-in-ticks'] = 10;
+    assert.equal(core.disabledSettings(effect, true)['elements.image-delay'], undefined);
+});
+
+test('composed layouts use direct color endpoints independently of palette mode', () => {
+    const effect = core.createEffect('aurora'); effect.elements.background = 'solid';
+    effect.elements.progress = 'none'; effect.elements.decoration = 'none'; effect.captions.enabled = false;
+    effect.appearance.palette = 'original';
+    const disabled = core.disabledSettings(effect, false);
+    assert.equal(disabled['appearance.background'], undefined);
+    assert.ok(disabled['appearance.palette']); assert.ok(disabled['appearance.intensity']);
+    assert.ok(disabled['appearance.primary']); assert.ok(disabled['appearance.speed']);
+});
