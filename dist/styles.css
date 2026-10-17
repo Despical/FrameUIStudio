@@ -362,8 +362,11 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .library-filter>label{font-size:12px;color:var(--subtle)}
 .library-filter .custom-select{width:100%}
 .template-copy small{white-space:nowrap}
-.template-row{display:grid;grid-template-columns:minmax(0,1fr) 30px;align-items:center;gap:3px;margin-bottom:3px}
-.template-row .template-card{margin-bottom:0}
+.template-row{position:relative;margin-bottom:3px;border:1px solid transparent;border-radius:7px;transition:background .1s,border-color .1s}
+.template-row:hover{background:#1a2533}
+.template-row:has(.template-card.active){background:#193030;border-color:#315b57}
+.template-row .template-card{margin-bottom:0;padding-right:44px;border:0;background:transparent}
+.template-row .effect-delete{position:absolute;right:7px;top:50%;transform:translateY(-50%)}
 .template-row .template-copy b{white-space:normal;overflow-wrap:anywhere;line-height:1.4}
 .effect-delete{width:30px;height:34px;padding:6px;color:var(--subtle)}
 .effect-delete:hover{color:var(--danger);background:#ffa28f12}
@@ -493,3 +496,6 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 #connect-dialog{padding:28px;max-width:520px}
 #connect-dialog .dialog-note{margin:0;padding-top:20px;border-top:1px solid var(--border);font-size:14px;line-height:1.65}
 @media(min-width:1241px){.center-scroll{height:calc(100% + 20px)}.preview-panel{padding-bottom:0}}
+
+.switch-copy .field-heading .field-label{font-size:15px;color:inherit}
+.section-heading h3:has(.field-info){display:inline-flex;align-items:center;gap:6px}

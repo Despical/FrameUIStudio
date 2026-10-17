@@ -133,7 +133,7 @@
         'elements.progress-width': ['Width of the loading indicator.', 'Changes how much screen space it occupies.'],
         'elements.progress-scale': ['Thickness or overall size of the indicator.', 'Adjusts bar thickness, dot size or ring size depending on its style.'],
         'elements.decoration': ['Add a decorative animated layer.', 'Appears over the background alongside your image, captions and loading indicator.'],
-        enabled: ['Allow this effect to play.', 'Disabled effects remain configured but cannot be selected for automatic playback or previews.'],
+        enabled: ['Allow this effect to play.', 'When disabled, this effect stays in your library but is excluded from automatic playback and in-game previews. The Studio preview still works. Import or save to your server to apply this setting.'],
         priority: ['Choose which matching effect takes precedence.', 'The highest eligible priority wins when several effects match an event.'],
         weight: ['Control selection between equally prioritized effects.', 'Larger weights are more likely to be chosen. Weight does not override priority.'],
         'filters.cooldown-ticks': ['Minimum time between this effect playing for the same player, in seconds.', 'Applies in game after a screen opens. Zero allows every eligible event; global cooldowns still apply.'],
@@ -274,11 +274,11 @@
         if (!options.options) input.addEventListener('change', () => { update(); sync(); });
         wrap.append(input); return wrap;
     }
-    function toggle(label, path, note = '') {
+    function toggle(label, path, note = '', info = false) {
         const row = element('div', 'switch-field'), copy = element('div', 'switch-copy');
         const heading = element('div', 'switch-heading'), caption = element('label', '', label);
         caption.htmlFor = 'field-' + path.replaceAll('.', '-');
-        heading.append(caption); copy.append(heading);
+        heading.append(caption); copy.append(info ? fieldHeading(label, caption.htmlFor, path) : heading);
         if (note) copy.append(element('small', '', note));
         const slider = element('span', 'switch'), input = element('input');
         input.type = 'checkbox'; input.id = caption.htmlFor; input.checked = pathGet(path); input.dataset.path = path;
@@ -292,7 +292,7 @@
     function row(...fields) { const result = element('div', 'field-row'); result.append(...fields); return result; }
     function checkboxList(path, values, names = {}) {
         const grid = element('div', 'check-grid');
-        for (const value of values) { const label = element('label'), input = element('input'); input.type = 'checkbox'; input.checked = pathGet(path).includes(value); input.dataset.checkPath = path; input.value = value; input.addEventListener('change', () => { const current = pathGet(path).filter(entry => entry !== value); if (input.checked) current.push(value); mutate(path, current); }); label.append(input, element('span', '', names[value] || value[0] + value.slice(1).toLowerCase().replaceAll('-', ' '))); grid.append(label); }
+        for (const value of values) { const label = element('label'), input = element('input'); input.type = 'checkbox'; input.checked = pathGet(path).includes(value); input.dataset.checkPath = path; input.value = value; input.addEventListener('change', () => { const current = pathGet(path).filter(entry => entry !== value); if (input.checked) current.push(value); mutate(path, current); }); label.append(input, element('span', '', names[value] || value.toLowerCase().replace(/[_-]+/g, ' ').replace(/\b[a-z]/g, letter => letter.toUpperCase()))); grid.append(label); }
         return grid;
     }
     function details(title, ...children) { const result = element('details', 'advanced-details'); result.append(element('summary', '', title), ...children); return result; }
@@ -373,7 +373,8 @@
         motion.append(animation);
         const playback = section('When to play');
         playback.append(checkboxList('play-on', ['join', 'teleport', 'world-change'], { join: 'Join', teleport: 'Teleport', 'world-change': 'World change' }), note('Choose where this effect runs automatically. Your selection applies when imported to your server. Leave all unchecked for manual previews only.')); events.append(playback);
-        const integrations = section('Plugin events', 'OPTIONAL');
+        const integrations = section('Plugin events');
+        integrations.querySelector('h3').append(helpButton('plugin-events', 'Plugin events', ['Connect your server to see which addons are installed.']));
         integrations.append(note('Choose an installed plugin and its events. One effect plays per teleport.'));
         for (const addon of core.addons) {
             const group = details(addon.name, checkboxList('play-on', Object.keys(addon.events), addon.events));
@@ -382,10 +383,9 @@
             group.querySelector('summary').append(element('span', 'addon-state' + (state === 'active' ? ' active' : ''), state === 'active' ? 'Active' : state === 'disabled' ? 'Disabled' : state === 'unsupported-api' ? 'Unsupported API' : state ? 'Not installed' : 'Optional'));
             integrations.append(group);
         }
-        if (!server.session) integrations.append(note('Connect your server to see which addons are installed.'));
         events.append(integrations);
-        const selection = section('Availability & selection'); selection.append(toggle('Enable effect', 'enabled'), row(field('Priority', 'priority', { type: 'number', min: -10000, max: 10000 }), field('Random weight', 'weight', { type: 'number', min: 1, max: 10000 })), field('Cooldown · seconds', 'filters.cooldown-ticks', { type: 'number', min: 0, max: 86400, step: .05, seconds: true }), note('Higher priorities win. Weight controls random selection between equally prioritized matches. A zero cooldown permits every eligible event.')); events.append(selection);
-        const presentation = section('Player view'); presentation.append(toggle('Show hands', 'presentation.show-hands', 'Showing hands also keeps the HUD visible.'), toggle('Hide HUD', 'presentation.hide-hud', 'Hides the hotbar, crosshair and in-game HUD.'), toggle('Block movement', 'presentation.block-movement'), toggle('Block interactions', 'presentation.block-interactions')); game.append(presentation);
+        const selection = section('Availability & selection'); selection.append(toggle('Enable effect', 'enabled', '', true), row(field('Priority', 'priority', { type: 'number', min: -10000, max: 10000 }), field('Random weight', 'weight', { type: 'number', min: 1, max: 10000 })), field('Cooldown · seconds', 'filters.cooldown-ticks', { type: 'number', min: 0, max: 86400, step: .05, seconds: true }), note('Higher priorities win. Weight controls random selection between equally prioritized matches. A zero cooldown permits every eligible event.')); events.append(selection);
+        const presentation = section('Player view'); presentation.append(toggle('Show hands', 'presentation.show-hands', '', true), toggle('Hide HUD', 'presentation.hide-hud', '', true), toggle('Block movement', 'presentation.block-movement', '', true), toggle('Block interactions', 'presentation.block-interactions', '', true)); game.append(presentation);
         const worlds = section('Where it can play'); worlds.append(field('Include worlds', 'filters.worlds.include', { list: true, placeholder: 'world, survival-*' }), field('Exclude worlds', 'filters.worlds.exclude', { list: true, placeholder: 'world_nether, lobby' }), note('Comma-separated world names. * and ? are supported; exclusions win. Empty include allows every world.'), details('Source world filters', field('Include source worlds', 'filters.source-worlds.include', { list: true, placeholder: 'lobby, hub-*' }), field('Exclude source worlds', 'filters.source-worlds.exclude', { list: true, placeholder: 'minigame-*' }), note('Source is the world the player leaves. On join it is the same as the destination.'))); game.append(worlds);
         const access = section('Who can see it'); access.append(field('Required permission', 'filters.permission', { maxLength: 128, placeholder: 'frameui.effect.vip' }), field('Denied permissions', 'filters.deny-permissions', { list: true, placeholder: 'frameui.effect.disable' }), details('Game mode filters', element('span', 'chip-note', 'INCLUDE · EMPTY ALLOWS ALL'), checkboxList('filters.game-modes.include', core.modes), element('span', 'chip-note', 'EXCLUDE'), checkboxList('filters.game-modes.exclude', core.modes))); game.append(access);
         const environment = section('Advanced conditions'); environment.append(details('Distance & height', row(field('Min distance · blocks', 'filters.distance.min', { type: 'number', min: 0, max: 100000000, step: 'any' }), field('Max distance · blocks', 'filters.distance.max', { type: 'number', min: -1, max: 100000000, step: 'any' })), note('Use -1 for unlimited maximum distance. Cross-world teleports satisfy the minimum distance.'), row(field('Min Y', 'filters.height.min', { type: 'number', min: -30000000, max: 30000000, step: 'any' }), field('Max Y', 'filters.height.max', { type: 'number', min: -30000000, max: 30000000, step: 'any' })), note('Height applies to the destination. The defaults allow all heights.')), details('Time & weather', row(field('Start time · ticks', 'filters.time.min', { type: 'number', min: 0, max: 23999 }), field('End time · ticks', 'filters.time.max', { type: 'number', min: 0, max: 23999 })), note('Minecraft time: 0 sunrise, 6000 noon, 12000 sunset, 18000 midnight. A range crossing midnight is supported.'), checkboxList('filters.weather', ['clear', 'rain', 'thunder']), note('Empty allows any weather.'))); environment.append(details('Teleport causes', checkboxList('filters.teleport-causes', core.causes), note('Empty allows every cause. Distance and cause filters apply to teleports and world changes.'))); game.append(environment);
@@ -561,7 +561,7 @@
             const copy = element('span', 'template-copy'); copy.append(element('b', '', item.name), element('small', '', `${seconds.toFixed(1)} s`));
             if (saved?.remote) copy.append(element('span', 'server-effect-badge', saved.dirty ? 'Unsaved changes' : 'Server'));
             button.title = item.name;
-            button.append(thumb, copy, icon('check')); button.addEventListener('click', () => openLibraryItem(item, saved));
+            button.append(thumb, copy); button.addEventListener('click', () => openLibraryItem(item, saved));
             if (own) {
                 const entry = element('div', 'template-row'), remove = element('button', 'icon-button effect-delete');
                 remove.append(icon('trash')); remove.title = 'Delete effect'; remove.setAttribute('aria-label', `Delete ${item.name}`);
