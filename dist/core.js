@@ -51,6 +51,30 @@
             'fade-out-ticks': out
         };
     }
+    function timingSeconds(timing) {
+        return {
+            entrance: timing['fade-in-ticks'] / 20,
+            hold: (timing['minimum-ticks'] - timing['fade-in-ticks']) / 20,
+            exit: timing['fade-out-ticks'] / 20,
+            wait: (timing['maximum-ticks'] - timing['minimum-ticks']) / 20
+        };
+    }
+    function phaseTiming(timing, phase, seconds) {
+        if (!['entrance', 'hold', 'exit', 'wait'].includes(phase)) throw new Error('Unknown timing phase.');
+        const minimum = phase === 'exit' ? .05 : 0;
+        if (!Number.isFinite(seconds) || seconds < minimum || seconds > 60) {
+            throw new Error(`Time must be between ${minimum} and 60 seconds.`);
+        }
+        const parts = timingSeconds(timing);
+        parts[phase] = Math.round(seconds * 20) / 20;
+        const entrance = Math.round(parts.entrance * 20), hold = Math.round(parts.hold * 20);
+        const wait = Math.round(parts.wait * 20);
+        if (entrance + hold + wait > 1200) {
+            throw new Error('Fade in, hold and extra loading wait must fit within 60 seconds.');
+        }
+        return { 'fade-in-ticks': entrance, 'minimum-ticks': entrance + hold,
+            'maximum-ticks': entrance + hold + wait, 'fade-out-ticks': Math.round(parts.exit * 20) };
+    }
     const modes = ['SURVIVAL', 'CREATIVE', 'ADVENTURE', 'SPECTATOR'];
     const triggers = ['join', 'teleport', 'world-change', 'command'];
     const addons = [
@@ -334,6 +358,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1–2048 pixels.');
         return { width, height };
     }
-    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

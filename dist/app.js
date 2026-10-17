@@ -15,7 +15,7 @@
     const storageKey = 'frameui-studio-v1';
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let effect = core.createEffect('frameui'), imageBytes = null, imageUrl = '', imageElement = null;
-    let undo = [], redo = [], playing = !reducedMotion, playTick = 24, lastFrame = 0, saveTimer, toastTimer, rawDirty = false;
+    let undo = [], redo = [], playing = !reducedMotion, playTick = 24, lastFrame = 0, saveTimer, toastTimer;
     const thumbs = new Map(), savedEffects = new Map(), deletedEffects = new Map(), savedThumbnails = new Map();
     let activeCategory = core.categories[1], selectionVersion = 0, libraryBusy = false, pendingPurge = [];
     function element(tag, classes, text) { const node = document.createElement(tag); if (classes) node.className = classes; if (text !== undefined) node.textContent = text; return node; }
@@ -41,7 +41,7 @@
             toast('Copy created in My Effects. Your original stays unchanged.');
         } else effect.category = core.categories[2];
         undo.push(previous); if (undo.length > 32) undo.shift(); redo.length = 0;
-        rawDirty = false; sync(); scheduleSave();
+        sync(); scheduleSave();
         return true;
     }
     function mutate(path, value) {
@@ -89,7 +89,7 @@
         if (renderer) renderer.setImage(imageElement);
         return true;
     }
-    async function restore(state) { const next = core.clone(state.effect); await setImage(state.image); effect = next; activeCategory = effect.category; rawDirty = false; renderSettings(); renderCatalog(); sync(); scheduleSave(); }
+    async function restore(state) { const next = core.clone(state.effect); await setImage(state.image); effect = next; activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); scheduleSave(); }
     async function historyStep(isRedo) { const source = isRedo ? redo : undo, destination = isRedo ? undo : redo; if (!source.length) return; const target = source.pop(); destination.push(snapshot()); await restore(target); }
     function field(label, path, options = {}) {
         const wrap = element(options.options ? 'div' : 'label', 'field'), caption = element('span', 'field-label', label);
@@ -98,13 +98,15 @@
         if (options.options) { input = element('select'); for (const [value, text] of options.options) { const option = element('option', '', text); option.value = value; input.append(option); } }
         else if (options.multiline) { input = element('textarea'); input.rows = 2; }
         else { input = element('input'); input.type = options.type || 'text'; }
-        input.dataset.path = path; input.id = 'field-' + path.replaceAll('.', '-'); input.value = options.list ? pathGet(path).join(', ') : pathGet(path);
+        input.dataset.path = path; input.id = 'field-' + path.replaceAll('.', '-'); input.value = options.list ? pathGet(path).join(', ') : options.seconds ? pathGet(path) / 20 : options.imageDelay ? Number((pathGet(path) * effect.timing['fade-in-ticks'] / 20).toFixed(3)) : pathGet(path);
+        if (options.seconds) input.dataset.unit = 'seconds';
+        if (options.imageDelay) input.dataset.unit = 'image-delay-seconds';
         if (options.placeholder) input.placeholder = options.placeholder;
         for (const key of ['min', 'max', 'step', 'maxLength']) if (options[key] !== undefined) input[key] = options[key];
         if (options.type === 'range') { const output = element('output'); output.htmlFor = input.id; output.dataset.output = path; caption.append(output); }
         const update = () => {
             const value = options.list ? input.value.split(/[,\n]/).map(item => item.trim()).filter(Boolean) : ['range', 'number'].includes(options.type) ? Number(input.value) : input.value;
-            mutate(path, value);
+            mutate(path, options.seconds ? Math.round(value * 20) : options.imageDelay ? Math.max(0, Math.min(.8, value * 20 / (effect.timing['fade-in-ticks'] || 1))) : value);
         };
         input.addEventListener(options.options ? 'change' : 'input', update);
         if (!options.options) input.addEventListener('change', () => { update(); sync(); });
@@ -126,17 +128,7 @@
     function renderSettings() {
         dropdowns.close();
         const visual = $('settings-visual'), motion = $('settings-motion'), events = $('settings-events'), game = $('settings-game');
-        for (const [pane, title, description] of [
-            [visual, 'Make it yours', 'Edit the words, colors and screen layout. Drag elements directly on the preview.'],
-            [motion, 'Bring it to life', 'Set the duration and how elements enter, move and leave.'],
-            [events, 'Choose when it plays', 'Assign automatic events. Changes apply only after importing or saving to your server.'],
-            [game, 'Control the player experience', 'Choose the player view and which players, worlds and conditions allow this effect.']
-        ]) {
-            pane.replaceChildren();
-            const intro = element('div', 'settings-intro');
-            intro.append(element('h3', '', title), note(description));
-            pane.append(intro);
-        }
+        for (const pane of [visual, motion, events, game]) pane.replaceChildren();
         const identity = section('Your effect');
         identity.append(field('Display name', 'name', { maxLength: 64 }));
         visual.append(identity);
@@ -168,13 +160,36 @@
         durationField.append(element('span', 'field-label', 'Total duration · seconds'));
         const durationInput = element('input'); durationInput.id = 'duration-seconds'; durationInput.type = 'number'; durationInput.min = .05; durationInput.max = 60; durationInput.step = .05; durationInput.value = duration() / 20;
         durationInput.addEventListener('change', () => { try { const previous = snapshot(); effect.timing = core.durationTiming(effect.timing, Number(durationInput.value)); commitChange(previous); durationInput.value = duration() / 20; } catch (error) { toast(error.message, true); durationInput.value = duration() / 20; } });
-        durationField.append(durationInput); durationSection.append(durationField, note('Scales the entrance, hold and exit together. Open advanced timing to adjust individual phases.')); motion.append(durationSection);
-        const timing = details('Advanced timing · ticks'); timing.append(row(field('Fade in · ticks', 'timing.fade-in-ticks', { type: 'number', min: 0, max: 1200 }), field('Fade out · ticks', 'timing.fade-out-ticks', { type: 'number', min: 1, max: 1200 })), row(field('Minimum · ticks', 'timing.minimum-ticks', { type: 'number', min: 0, max: 1200 }), field('Maximum · ticks', 'timing.maximum-ticks', { type: 'number', min: 0, max: 1200 })), note('Minimum includes fade in. 20 ticks = 1 second. Maximum caps waiting for the destination world. The preview uses the minimum duration.')); durationSection.append(timing);
+        durationField.append(durationInput); durationSection.append(durationField, note('Scales the entrance, hold and exit together. Use the controls below to adjust each phase separately.')); motion.append(durationSection);
+        const timing = details('Fine-tune each phase');
+        for (const [phase, label, description] of [
+            ['entrance', 'Fade in · seconds', 'Time to reveal the effect.'],
+            ['hold', 'Hold · seconds', 'Time fully visible before fading out.'],
+            ['exit', 'Fade out · seconds', 'Time to reveal the game again.'],
+            ['wait', 'Extra loading wait · seconds', 'Additional time allowed if the destination world is still loading.']
+        ]) {
+            const wrap = element('label', 'field timing-field');
+            wrap.append(element('span', 'field-label', label));
+            const input = element('input');
+            input.type = 'number'; input.min = phase === 'exit' ? .05 : 0; input.max = 60; input.step = .05;
+            input.id = 'timing-' + phase; input.dataset.timingPhase = phase;
+            input.value = core.timingSeconds(effect.timing)[phase];
+            input.addEventListener('change', () => {
+                try {
+                    const previous = snapshot();
+                    effect.timing = core.phaseTiming(effect.timing, phase, input.value === '' ? NaN : Number(input.value));
+                    commitChange(previous);
+                } catch (error) { toast(error.message, true); }
+                input.value = core.timingSeconds(effect.timing)[phase];
+            });
+            wrap.append(input, note(description)); timing.append(wrap);
+        }
+        durationSection.append(timing);
         const animation = section('Animation');
         animation.append(field('Animation speed', 'appearance.speed', { type: 'range', min: .05, max: 8, step: .05 }), note('Changes the animation movement without changing total duration.'));
         motion.append(animation);
         const entrances = section('Element entrances');
-        entrances.append(field('Text entrance', 'elements.text-animation', { options: [['still','Fade'],['grow','Grow'],['slide-up','Slide up']] }), field('Image entrance', 'elements.image-animation', { options: [['inherit','Follow template'],['fade','Fade'],['grow','Grow from center'],['slide-up','Slide up'],['slide-left','Slide from left'],['wipe','Left-to-right reveal'],['page','Diagonal page']] }), field('Image entrance delay', 'elements.image-delay', { type: 'range', min: 0, max: .8, step: .01 }), note('Image delay is the fraction of entrance coverage before the image appears. It is not a teleport delay.'));
+        entrances.append(field('Text entrance', 'elements.text-animation', { options: [['still','Fade'],['grow','Grow'],['slide-up','Slide up']] }), field('Image entrance', 'elements.image-animation', { options: [['inherit','Follow template'],['fade','Fade'],['grow','Grow from center'],['slide-up','Slide up'],['slide-left','Slide from left'],['wipe','Left-to-right reveal'],['page','Diagonal page']] }), field('Image entrance delay · seconds', 'elements.image-delay', { type: 'number', min: 0, max: .8 * effect.timing['fade-in-ticks'] / 20, step: .01, imageDelay: true }), note('Time after fade in begins before the image appears. Limited to 80% of the fade-in duration.'));
         motion.append(entrances);
         const imageMotion = section('Image movement');
         imageMotion.append(field('Ambient image motion', 'appearance.image-motion', { options: [['still','Still'],['panorama','Slow zoom and pan'],['page','Legacy page reveal']] }), note('Add or replace your image in Design. These settings animate it after placement.'));
@@ -192,7 +207,7 @@
         }
         if (!server.session) integrations.append(note('Connect your server to see which addons are installed.'));
         events.append(integrations);
-        const selection = section('Availability & selection'); selection.append(toggle('Enable effect', 'enabled'), row(field('Priority', 'priority', { type: 'number', min: -10000, max: 10000 }), field('Random weight', 'weight', { type: 'number', min: 1, max: 10000 })), field('Cooldown · ticks', 'filters.cooldown-ticks', { type: 'number', min: 0, max: 1728000 }), note('Higher priorities win. Weight controls random selection between equally prioritized matches. A zero cooldown permits every eligible event.')); events.append(selection);
+        const selection = section('Availability & selection'); selection.append(toggle('Enable effect', 'enabled'), row(field('Priority', 'priority', { type: 'number', min: -10000, max: 10000 }), field('Random weight', 'weight', { type: 'number', min: 1, max: 10000 })), field('Cooldown · seconds', 'filters.cooldown-ticks', { type: 'number', min: 0, max: 86400, step: .05, seconds: true }), note('Higher priorities win. Weight controls random selection between equally prioritized matches. A zero cooldown permits every eligible event.')); events.append(selection);
         const presentation = section('Player view'); presentation.append(toggle('Show hands', 'presentation.show-hands', 'Showing hands also keeps the HUD visible.'), toggle('Hide HUD', 'presentation.hide-hud', 'Hides the hotbar, crosshair and in-game HUD.'), toggle('Block movement', 'presentation.block-movement'), toggle('Block interactions', 'presentation.block-interactions')); game.append(presentation);
         const worlds = section('Where it can play'); worlds.append(field('Include worlds', 'filters.worlds.include', { list: true, placeholder: 'world, survival-*' }), field('Exclude worlds', 'filters.worlds.exclude', { list: true, placeholder: 'world_nether, lobby' }), note('Comma-separated world names. * and ? are supported; exclusions win. Empty include allows every world.'), details('Source world filters', field('Include source worlds', 'filters.source-worlds.include', { list: true, placeholder: 'lobby, hub-*' }), field('Exclude source worlds', 'filters.source-worlds.exclude', { list: true, placeholder: 'minigame-*' }), note('Source is the world the player leaves. On join it is the same as the destination.'))); game.append(worlds);
         const access = section('Who can see it'); access.append(field('Required permission', 'filters.permission', { maxLength: 128, placeholder: 'frameui.effect.vip' }), field('Denied permissions', 'filters.deny-permissions', { list: true, placeholder: 'frameui.effect.disable' }), details('Game mode filters', element('span', 'chip-note', 'INCLUDE · EMPTY ALLOWS ALL'), checkboxList('filters.game-modes.include', core.modes), element('span', 'chip-note', 'EXCLUDE'), checkboxList('filters.game-modes.exclude', core.modes))); game.append(access);
@@ -241,7 +256,7 @@
             undo.push(before); if (undo.length > 32) undo.shift(); redo.length = 0;
             effect = next; linkedEffectId = stored?.remote ? item.id : null;
             if (stored?.remote) serverStatus(`Editing ${next.name} · Save to server to apply changes`);
-            playTick = Math.max(effect.timing['fade-in-ticks'], 1); rawDirty = false;
+            playTick = Math.max(effect.timing['fade-in-ticks'], 1);
             renderSettings(); renderCatalog(); sync();
             document.querySelector('.inspector-scroll').scrollTop = 0;
             scheduleSave();
@@ -306,7 +321,7 @@
             undo = undo.filter(keep); redo = redo.filter(keep);
             if (effect.id === id && effect.category === core.categories[2]) {
                 ++selectionVersion; const next = core.createEffect(effect.template);
-                await setImage(null); effect = next; linkedEffectId = null; rawDirty = false; renderSettings();
+                await setImage(null); effect = next; linkedEffectId = null; renderSettings();
             }
             renderCatalog(); sync(); await save();
             toast('Effect moved to Trash. Restore it from My Effects → Trash.');
@@ -392,10 +407,17 @@
         $('server-import-button').querySelector('span').textContent = serverButtonLabel();
         $('export-button').disabled = !!error; $('yaml-download').disabled = !!error; $('guide-export').disabled = !!error;
         $('effect-heading').textContent = effect.name || 'Untitled effect';
-        $('summary-in').textContent = `${(effect.timing['fade-in-ticks'] / 20).toFixed(1)} s`; $('summary-hold').textContent = `${(effect.timing['minimum-ticks'] / 20).toFixed(1)} s`; $('summary-out').textContent = `${(effect.timing['fade-out-ticks'] / 20).toFixed(1)} s`; $('summary-triggers').textContent = effect['play-on'].length ? `${effect['play-on'].length} ${effect['play-on'].length === 1 ? 'event' : 'events'}` : 'Manual only';
-        $('duration-label').textContent = `${(duration() / 20).toFixed(1)} s`; $('undo-button').disabled = !undo.length; $('redo-button').disabled = !redo.length;
+        $('summary-in').textContent = `${Number((effect.timing['fade-in-ticks'] / 20).toFixed(2))} s`; $('summary-hold').textContent = `${Number(((effect.timing['minimum-ticks'] - effect.timing['fade-in-ticks']) / 20).toFixed(2))} s`; $('summary-out').textContent = `${Number((effect.timing['fade-out-ticks'] / 20).toFixed(2))} s`; $('summary-triggers').textContent = effect['play-on'].length ? `${effect['play-on'].length} ${effect['play-on'].length === 1 ? 'event' : 'events'}` : 'Manual only';
+        $('duration-label').textContent = `${Number((duration() / 20).toFixed(2))} s`; $('undo-button').disabled = !undo.length; $('redo-button').disabled = !redo.length;
         if ($('duration-seconds') && document.activeElement !== $('duration-seconds')) $('duration-seconds').value = duration() / 20;
-        for (const input of document.querySelectorAll('[data-path]')) { if (document.activeElement === input) continue; const value = pathGet(input.dataset.path); if (input.type === 'checkbox') input.checked = value; else input.value = Array.isArray(value) ? value.join(', ') : value; }
+        for (const input of document.querySelectorAll('[data-path]')) { if (document.activeElement === input) continue; const value = pathGet(input.dataset.path); if (input.type === 'checkbox') input.checked = value; else input.value = Array.isArray(value) ? value.join(', ') : input.dataset.unit === 'seconds' ? value / 20 : input.dataset.unit === 'image-delay-seconds' ? Number((value * effect.timing['fade-in-ticks'] / 20).toFixed(3)) : value; }
+        for (const input of document.querySelectorAll('[data-unit="image-delay-seconds"]')) {
+            input.max = .8 * effect.timing['fade-in-ticks'] / 20;
+            input.disabled = effect.timing['fade-in-ticks'] === 0;
+        }
+        for (const input of document.querySelectorAll('[data-timing-phase]')) {
+            if (document.activeElement !== input) input.value = core.timingSeconds(effect.timing)[input.dataset.timingPhase];
+        }
         for (const input of document.querySelectorAll('[data-check-path]')) input.checked = pathGet(input.dataset.checkPath).includes(input.value);
         for (const addon of core.addons) {
             const group = document.querySelector(`[data-addon="${addon.id}"]`);
@@ -409,7 +431,6 @@
         for (const button of document.querySelectorAll('[data-palette]')) button.classList.toggle('active', button.dataset.palette === effect.appearance.palette);
         if ($('custom-colors')) { $('custom-colors').style.opacity = effect.appearance.palette === 'custom' ? '1' : '.42'; for (const input of $('custom-colors').querySelectorAll('input')) input.disabled = effect.appearance.palette !== 'custom'; }
         if ($('image-info')) { $('image-info').hidden = !effect.appearance.image; $('upload-image').hidden = !!imageBytes; if (imageUrl) $('image-thumbnail').src = imageUrl; else $('image-thumbnail').removeAttribute('src'); const label = $('image-description'); label.textContent = effect.appearance.image; label.append(element('small', '', imageElement ? `${imageElement.width} × ${imageElement.height} · ${(imageBytes.length / 1024).toFixed(0)} KB` : 'Missing image · choose the matching file')); }
-        if (!rawDirty && !error) $('yaml-editor').value = core.toYaml(effect);
         $('play-button').setAttribute('aria-label', playing ? 'Pause preview' : 'Play preview'); $('play-button').replaceChildren(icon(playing ? 'pause' : 'play'));
         for (const button of document.querySelectorAll('[data-template]')) { const selected = button.dataset.template === effect.id && button.dataset.libraryGroup === effect.category; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected)); }
         if (document.querySelector('.category-readonly')) document.querySelector('.category-readonly').textContent = 'Category: ' + effect.category;
@@ -510,7 +531,7 @@
             }
             if (inServerTrash(effect.id)) {
                 await setImage(null); effect = core.createEffect(effect.template); linkedEffectId = null;
-                rawDirty = false; renderSettings();
+                renderSettings();
             }
             if (serverEffects.size || serverTrash.size) activeCategory = core.categories[2];
             renderSettings(); renderCatalog();
@@ -556,7 +577,7 @@
             else if (/\.ya?ml$/i.test(file.name)) { if (file.size > 256000) throw new Error('YAML must be smaller than 256 KB.'); imported = core.fromYaml(await file.text()); if (file.name.replace(/\.ya?ml$/i, '') !== imported.id) throw new Error('Effect ID must match the YAML filename.'); }
             else throw new Error('Choose a FrameUI YAML definition or an exported effect ZIP.');
             await save(); imported.category = core.categories[2]; activeCategory = core.categories[2];
-            const before = snapshot(); await setImage(bytes); undo.push(before); if (undo.length > 32) undo.shift(); redo.length = 0; effect = imported; rawDirty = false; playTick = Math.max(effect.timing['fade-in-ticks'], 1); renderSettings(); renderCatalog(); sync(); scheduleSave(); toast(bytes || !effect.appearance.image ? 'Effect imported. Your previous draft is available with Undo.' : 'Definition imported. Choose its image to preview and export a complete ZIP.');
+            const before = snapshot(); await setImage(bytes); undo.push(before); if (undo.length > 32) undo.shift(); redo.length = 0; effect = imported; playTick = Math.max(effect.timing['fade-in-ticks'], 1); renderSettings(); renderCatalog(); sync(); scheduleSave(); toast(bytes || !effect.appearance.image ? 'Effect imported. Your previous draft is available with Undo.' : 'Definition imported. Choose its image to preview and export a complete ZIP.');
         } catch (error) { toast(error.message, true); }
         $('import-file').value = '';
     }
@@ -594,7 +615,7 @@
     $('close-connect').addEventListener('click', () => $('connect-dialog').close());
     $('export-button').addEventListener('click', exportEffect); $('guide-export').addEventListener('click', exportEffect); $('yaml-download').addEventListener('click', () => { try { download(core.toYaml(effect), effect.id + '.yml', 'text/yaml;charset=utf-8'); toast('YAML downloaded. Images must be supplied separately; use Export effect for a complete ZIP.'); } catch (error) { toast(error.message, true); } });
     $('guide-button').addEventListener('click', () => $('guide-dialog').showModal()); $('close-guide').addEventListener('click', () => $('guide-dialog').close()); $('guide-dialog').addEventListener('click', event => { if (event.target === $('guide-dialog')) { const rect = $('guide-dialog').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('guide-dialog').close(); } });
-    $('reset-button').addEventListener('click', async () => { remember(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); activeCategory = effect.category; rawDirty = false; renderSettings(); renderCatalog(); sync(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
+    $('reset-button').addEventListener('click', async () => { remember(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
     const tabs = [...document.querySelectorAll('[data-tab]')];
     const tabScroll = new Map();
     let activeTab = null;
@@ -614,7 +635,6 @@
     }
     for (const tab of tabs) { tab.addEventListener('click', () => selectTab(tab)); tab.addEventListener('keydown', event => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const index = tabs.indexOf(tab), next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length; selectTab(tabs[next]); tabs[next].focus(); } }); }
     selectTab(tabs[0]);
-    $('yaml-editor').addEventListener('input', () => { rawDirty = true; }); $('apply-yaml').addEventListener('click', async () => { try { const imported = core.fromYaml($('yaml-editor').value), previous = snapshot(); effect = imported; if (previous.effect.appearance.image !== effect.appearance.image) await setImage(null); commitChange(previous); rawDirty = false; renderSettings(); renderCatalog(); sync(); toast('YAML validated and applied.'); } catch (error) { toast(error.message, true); } });
     document.addEventListener('keydown', event => {
         const editing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '') || document.activeElement?.getAttribute('role') === 'combobox';
         if (event.key === '/' && !editing) { event.preventDefault(); $('search').focus(); }

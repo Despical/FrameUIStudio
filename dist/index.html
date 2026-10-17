@@ -48,7 +48,7 @@
                 <div id="renderer-error" class="renderer-error" hidden></div>
             </div></div>
             <div class="playback-bar"><button id="play-button" class="round-button" aria-label="Pause preview"><svg><use href="#icon-pause"/></svg></button><button id="restart-button" class="icon-button" aria-label="Restart preview" title="Restart preview"><svg><use href="#icon-restart"/></svg></button><div class="timeline-control"><div class="timeline-labels"><span id="time-label">00:00.0</span><span id="duration-label">5.2 s</span></div><input id="timeline" type="range" min="0" max="1000" value="160" aria-label="Preview position"></div><label class="loop-toggle"><input id="loop" type="checkbox" checked><span>Loop</span></label></div>
-            <div class="timing-strip"><div><span>FADE IN</span><b id="summary-in">0.8 s</b></div><div><span>MINIMUM</span><b id="summary-hold">4.3 s</b></div><div><span>FADE OUT</span><b id="summary-out">0.9 s</b></div><div><span>PLAY ON</span><b id="summary-triggers">Manual only</b></div></div>
+            <div class="timing-strip"><div><span>FADE IN</span><b id="summary-in">0.8 s</b></div><div><span>HOLD</span><b id="summary-hold">4.3 s</b></div><div><span>FADE OUT</span><b id="summary-out">0.9 s</b></div><div><span>PLAY ON</span><b id="summary-triggers">Manual only</b></div></div>
             <div class="preview-note"><svg><use href="#icon-frame"/></svg><p>Rendered with the plugin’s shader. Captions, HUD and scene are illustrative; verify final placement in Minecraft.</p></div>
         </section>
 
@@ -60,14 +60,13 @@
                 <button id="tab-motion" role="tab" aria-selected="false" aria-controls="settings-motion" data-tab="motion">Motion</button>
                 <button id="tab-events" role="tab" aria-selected="false" aria-controls="settings-events" data-tab="events">Events</button>
                 <button id="tab-game" role="tab" aria-selected="false" aria-controls="settings-game" data-tab="game">In game</button>
-                <button id="tab-yaml" role="tab" aria-selected="false" aria-controls="settings-yaml" data-tab="yaml">YAML</button>
             </div>
             <div class="inspector-scroll">
                 <div id="settings-visual" class="settings-pane" role="tabpanel" aria-labelledby="tab-visual"></div>
                 <div id="settings-motion" class="settings-pane" role="tabpanel" aria-labelledby="tab-motion" hidden></div>
                 <div id="settings-events" class="settings-pane" role="tabpanel" aria-labelledby="tab-events" hidden></div>
                 <div id="settings-game" class="settings-pane" role="tabpanel" aria-labelledby="tab-game" hidden></div>
-                <div id="settings-yaml" class="settings-pane" role="tabpanel" aria-labelledby="tab-yaml" hidden><div class="section-heading"><h3>Effect source</h3><span>YAML</span></div><p class="field-note">Edit the complete definition. Apply validates the file before replacing your draft.</p><label for="yaml-editor" class="sr-only">Effect YAML</label><textarea id="yaml-editor" spellcheck="false" class="yaml-editor"></textarea><button id="apply-yaml" class="button button-primary full-width">Apply YAML</button><p class="field-note">Studio supports mappings, lists and quoted values. YAML anchors and multiline blocks are not supported.</p></div></div>
+            </div>
             <div class="inspector-footer"><span id="validation-dot" class="status-dot"></span><span id="validation-status">Ready to export</span><button id="reset-button" class="text-button">Reset</button></div>
         </aside>
     </main>

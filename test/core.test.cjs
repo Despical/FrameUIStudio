@@ -289,3 +289,27 @@ test('None background round-trips without removing image, widgets or event bindi
     assert.equal(restored.elements.progress, 'bar');
     assert.deepEqual(restored['play-on'], effect['play-on']);
 });
+
+test('second-based phase edits preserve hold and world-loading wait without exposing tick arithmetic', () => {
+    let timing = { 'fade-in-ticks': 10, 'minimum-ticks': 40, 'maximum-ticks': 60, 'fade-out-ticks': 10 };
+    assert.deepEqual(core.timingSeconds(timing), { entrance: .5, hold: 1.5, exit: .5, wait: 1 });
+    timing = core.phaseTiming(timing, 'entrance', .75);
+    assert.deepEqual(core.timingSeconds(timing), { entrance: .75, hold: 1.5, exit: .5, wait: 1 });
+    timing = core.phaseTiming(timing, 'hold', 2.25);
+    timing = core.phaseTiming(timing, 'exit', .8);
+    timing = core.phaseTiming(timing, 'wait', 1.25);
+    assert.deepEqual(timing, { 'fade-in-ticks': 15, 'minimum-ticks': 60, 'maximum-ticks': 85, 'fade-out-ticks': 16 });
+    const effect = core.createEffect('aurora'); effect.timing = timing;
+    assert.deepEqual(core.fromYaml(core.toYaml(effect)).timing, timing);
+});
+
+test('phase editing supports zero entrances, rounds to server resolution and rejects invalid waits', () => {
+    const timing = { 'fade-in-ticks': 0, 'minimum-ticks': 0, 'maximum-ticks': 0, 'fade-out-ticks': 1 };
+    assert.equal(core.phaseTiming(timing, 'hold', .13)['minimum-ticks'], 3);
+    for (const value of [NaN, Infinity, -.1, 60.1]) assert.throws(() => core.phaseTiming(timing, 'hold', value));
+    assert.throws(() => core.phaseTiming(timing, 'exit', 0));
+    assert.throws(() => core.phaseTiming(timing, 'unknown', 1));
+    const long = { 'fade-in-ticks': 20, 'minimum-ticks': 1180, 'maximum-ticks': 1200, 'fade-out-ticks': 1 };
+    assert.throws(() => core.phaseTiming(long, 'wait', 2), /60 seconds/);
+    assert.deepEqual(core.phaseTiming(timing, 'entrance', 0), timing);
+});
