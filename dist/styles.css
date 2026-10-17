@@ -425,7 +425,7 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 
 .field-heading,.switch-heading{display:flex;align-items:center;gap:8px;min-width:0}
 .field-heading{margin-bottom:7px}
-.field-heading .field-label{margin:0;flex:0 1 auto;gap:8px;min-width:0}
+.field-heading .field-label{display:block;margin:0;flex:0 1 auto;min-width:0}
 .switch-heading>label{cursor:pointer}
 .field-info{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:18px;height:20px;padding:0;border:0;background:transparent;color:#8c9db3;cursor:default}
 .field-info svg{display:block;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round}
@@ -435,3 +435,6 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .field-help-popup{position:fixed;z-index:100;width:max-content;max-width:min(310px,calc(100vw - 24px));padding:10px 12px;border:1px solid #3c4b5e;border-radius:6px;background:#1b2635;box-shadow:0 5px 15px #0005;color:#d7e4ef;font-size:13px;line-height:1.6;pointer-events:none;overflow-wrap:anywhere}
 
 .field-heading>output{margin-left:auto;color:#c0d1de;font-size:13px;font-variant-numeric:tabular-nums}
+
+.field-label-tail{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;vertical-align:bottom}
+.field-heading{align-items:flex-end}

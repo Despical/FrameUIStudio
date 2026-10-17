@@ -1,4 +1,4 @@
-/* FrameUI Studio — Copyright (C) 2026 Berke Akçen. All rights reserved. Proprietary and confidential. */
+/* FrameUI Studio - Copyright (C) 2026 Berke Akçen. All rights reserved. Proprietary and confidential. */
 (function () {
     'use strict';
     const core = window.FrameStudioCore;
@@ -139,7 +139,7 @@
         'filters.height.min': ['Lowest allowed destination Y coordinate.', 'Restricts where the player arrives, independently of the source world.'],
         'filters.height.max': ['Highest allowed destination Y coordinate.', 'Restricts where the player arrives. Both height bounds are inclusive.'],
         'filters.time.min': ['Start of the allowed Minecraft world-time range.', 'Uses the destination world clock: 0 sunrise, 6000 noon, 12000 sunset and 18000 midnight. This is not a duration.'],
-        'filters.time.max': ['End of the allowed Minecraft world-time range.', 'An end below the start crosses midnight. The default 0–23999 allows the entire day.'],
+        'filters.time.max': ['End of the allowed Minecraft world-time range.', 'An end below the start crosses midnight. The default 0-23999 allows the entire day.'],
         duration: ['Total normal playback duration, in seconds.', 'Changing this scales fade in, hold and fade out together. Additional world-loading wait can extend actual playback.'],
         'timing.entrance': ['Time for the effect to become fully visible.', 'Part of the total duration. Changing it preserves the configured hold and extra loading wait.'],
         'timing.hold': ['Time the effect stays fully visible.', 'Starts after fade in and ends before fade out. It excludes both transitions.'],
@@ -193,10 +193,22 @@
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && helpOwner) { event.preventDefault(); closeFieldHelp(); } });
     document.addEventListener('scroll', closeFieldHelp, true);
     window.addEventListener('resize', closeFieldHelp);
+    function fieldHeading(label, controlId, path, helpLabel = label) {
+        const heading = element('div', 'field-heading'), caption = element('span', 'field-label');
+        const split = label.lastIndexOf(' '), tail = element('span', 'field-label-tail');
+        function text(value) {
+            const node = element(controlId ? 'label' : 'span', '', value);
+            if (controlId) node.htmlFor = controlId;
+            return node;
+        }
+        if (split >= 0) caption.append(text(label.slice(0, split + 1)));
+        tail.append(text(label.slice(split + 1)), helpButton(path, helpLabel));
+        caption.append(tail); heading.append(caption);
+        return heading;
+    }
     function field(label, path, options = {}) {
-        const wrap = element('div', 'field'), heading = element('div', 'field-heading'), caption = element('label', 'field-label', label);
-        caption.htmlFor = 'field-' + path.replaceAll('.', '-');
-        heading.append(caption, helpButton(path, label)); wrap.append(heading);
+        const wrap = element('div', 'field'), heading = fieldHeading(label, 'field-' + path.replaceAll('.', '-'), path);
+        wrap.append(heading);
         let input;
         if (options.options) { input = element('select'); for (const [value, text] of options.options) { const option = element('option', '', text); option.value = value; input.append(option); } }
         else if (options.multiline) { input = element('textarea'); input.rows = 2; }
@@ -246,8 +258,6 @@
         identity.append(field('Display name', 'name', { maxLength: 64 }));
         visual.append(identity);
         const captions = section('Captions'); captions.append(toggle('Show captions', 'captions.enabled'), field('Title', 'captions.title', { maxLength: 64 }), field('Subtitle', 'captions.subtitle', { maxLength: 96 }), details('Extra caption line', note('A smaller third line below the title and subtitle. Studio shows the Preview text; the game uses Joining or Teleporting for those events. Leave a value empty to hide that line.'), field('Joining', 'captions.join-detail', { maxLength: 128 }), field('Teleporting', 'captions.teleport-detail', { maxLength: 128 }), field('Preview', 'captions.preview-detail', { maxLength: 128 }), note('Use {player}, {world}, {effect} in captions; details also support {source-world}, {destination} and {event}.'))); captions.append(details('Text placement', row(field('Horizontal position', 'elements.text-x', { type: 'range', min: 0, max: 1, step: .01 }), field('Vertical position', 'elements.text-y', { type: 'range', min: .1, max: .9, step: .01 })), field('Text size', 'elements.text-scale', { type: 'range', min: .5, max: 2, step: .01 }))); visual.append(captions);
-        const placeholderState = server.session?.addons?.placeholderapi;
-        captions.append(note('PlaceholderAPI: ' + (placeholderState === 'active' ? 'Active' : placeholderState === 'disabled' ? 'Disabled' : placeholderState === 'not-installed' ? 'Not installed' : 'Optional') + '. Installed expansions can supply %placeholders% in captions.'));
         const background = section('Background');
         background.append(field('Background layout', 'elements.background', { options: [['none','None'],['template','Shader template'],['solid','Solid color'],['split','Split panels'],['grid','Technical grid'],['terminal','Terminal'],['pulse','Expanding pulse']] }));
         visual.append(background);
@@ -255,11 +265,11 @@
         const segments = element('div', 'segmented');
         for (const [value, label] of [['original', 'Original'], ['custom', 'Custom colors']]) { const button = element('button', effect.appearance.palette === value ? 'active' : '', label); button.dataset.palette = value; button.addEventListener('click', () => mutate('appearance.palette', value)); segments.append(button); }
         const colors = element('div', 'colors-row'); colors.id = 'custom-colors';
-        for (const [key, label] of [['background', 'Base'], ['primary', 'Primary'], ['secondary', 'Accent']]) { const wrap = element('div', 'field color-field'), name = element('span', 'field-label', label), well = element('span', 'color-well'), input = element('input'), text = element('input'); input.type = 'color'; input.value = effect.appearance[key]; input.dataset.path = `appearance.${key}`; input.setAttribute('aria-label', label + ' color'); text.type = 'text'; text.value = effect.appearance[key]; text.maxLength = 7; text.dataset.path = `appearance.${key}`; text.setAttribute('aria-label', label + ' hex color'); input.addEventListener('input', () => mutate(`appearance.${key}`, input.value)); text.addEventListener('input', () => { if (/^#[0-9a-f]{6}$/i.test(text.value)) mutate(`appearance.${key}`, text.value); }); text.addEventListener('change', () => mutate(`appearance.${key}`, text.value)); well.append(input, text); const heading = element('div', 'field-heading'); heading.append(name, helpButton('appearance.' + key, label + ' color')); wrap.append(heading, well); colors.append(wrap); }
+        for (const [key, label] of [['background', 'Base'], ['primary', 'Primary'], ['secondary', 'Accent']]) { const wrap = element('div', 'field color-field'), well = element('span', 'color-well'), input = element('input'), text = element('input'); input.type = 'color'; input.value = effect.appearance[key]; input.dataset.path = `appearance.${key}`; input.setAttribute('aria-label', label + ' color'); text.type = 'text'; text.value = effect.appearance[key]; text.maxLength = 7; text.dataset.path = `appearance.${key}`; text.setAttribute('aria-label', label + ' hex color'); input.addEventListener('input', () => mutate(`appearance.${key}`, input.value)); text.addEventListener('input', () => { if (/^#[0-9a-f]{6}$/i.test(text.value)) mutate(`appearance.${key}`, text.value); }); text.addEventListener('change', () => mutate(`appearance.${key}`, text.value)); well.append(input, text); const heading = fieldHeading(label, '', 'appearance.' + key, label + ' color'); wrap.append(heading, well); colors.append(wrap); }
         palette.append(segments, colors, field('Brightness', 'appearance.intensity', { type: 'range', min: 0, max: 4, step: 0.05 })); visual.append(palette);
         const picture = section('Your image', 'OPTIONAL'), upload = element('button', 'image-upload'); upload.id = 'upload-image'; upload.append(icon('image'), element('strong', '', 'Choose an image'), element('span', '', 'Add a logo, artwork or your own photo'), element('small', '', 'PNG / JPEG · up to 8 MB · resized to 2048 px')); upload.addEventListener('click', () => $('image-file').click());
         const info = element('div', 'image-info'); info.id = 'image-info'; const thumbnail = element('img'); thumbnail.id = 'image-thumbnail'; thumbnail.alt = 'Uploaded effect image'; const label = element('span'); label.id = 'image-description'; const remove = element('button', 'icon-button', '×'); remove.setAttribute('aria-label', 'Remove image'); remove.addEventListener('click', async () => { const previous = snapshot(); await setImage(null); effect.appearance.image = ''; commitChange(previous); renderSettings(); sync(); }); info.append(thumbnail, label, remove);
-        picture.append(info, upload, field('Image fit', 'appearance.image-fit', { options: [['cover', 'Cover — fill screen'], ['contain', 'Contain — show entire image']] }), field('Image opacity', 'appearance.image-opacity', { type: 'range', min: 0, max: 1, step: 0.01 }), details('Image placement', field('Image size', 'elements.image-scale', { type: 'range', min: .1, max: 2, step: .01 }), row(field('Horizontal position', 'elements.image-x', { type: 'range', min: 0, max: 1, step: .01 }), field('Vertical position', 'elements.image-y', { type: 'range', min: 0, max: 1, step: .01 }))), note('Drag the image on the preview to position it. Configure its entrance and movement in Motion.')); visual.append(picture);
+        picture.append(info, upload, field('Image fit', 'appearance.image-fit', { options: [['cover', 'Cover - fill screen'], ['contain', 'Contain - show entire image']] }), field('Image opacity', 'appearance.image-opacity', { type: 'range', min: 0, max: 1, step: 0.01 }), details('Image placement', field('Image size', 'elements.image-scale', { type: 'range', min: .1, max: 2, step: .01 }), row(field('Horizontal position', 'elements.image-x', { type: 'range', min: 0, max: 1, step: .01 }), field('Vertical position', 'elements.image-y', { type: 'range', min: 0, max: 1, step: .01 }))), note('Drag the image on the preview to position it. Configure its entrance and movement in Motion.')); visual.append(picture);
         const indicator = section('Loading indicator');
         indicator.append(field('Indicator style', 'elements.progress', { options: [['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']] }), details('Indicator placement', row(field('Horizontal position', 'elements.progress-x', { type: 'range', min: .1, max: .9, step: .01 }), field('Vertical position', 'elements.progress-y', { type: 'range', min: .1, max: .9, step: .01 })), field('Indicator width', 'elements.progress-width', { type: 'range', min: .08, max: .8, step: .01 }), field('Indicator thickness', 'elements.progress-scale', { type: 'range', min: .5, max: 3, step: .01 })), note('An animated visual indicator, not a measurement of server loading progress.'));
         visual.append(indicator);
@@ -270,9 +280,7 @@
         metadata.append(details('Effect ID & category', field('Effect ID / filename', 'id', { maxLength: 48, placeholder: 'my-aurora' }), element('p', 'category-readonly', 'Category: ' + effect.category), note('The first edit creates a copy in My Effects. The ID is also the YAML filename: use lowercase words separated by hyphens.')));
         visual.append(metadata);
         const durationSection = section('Duration'), durationField = element('div', 'field');
-        const durationHeading = element('div', 'field-heading'), durationCaption = element('label', 'field-label', 'Total duration · seconds');
-        durationCaption.htmlFor = 'duration-seconds';
-        durationHeading.append(durationCaption, helpButton('duration', 'Total duration')); durationField.append(durationHeading);
+        durationField.append(fieldHeading('Total duration · seconds', 'duration-seconds', 'duration', 'Total duration'));
         const durationInput = element('input'); durationInput.id = 'duration-seconds'; durationInput.type = 'number'; durationInput.min = .05; durationInput.max = 60; durationInput.step = .05; durationInput.value = duration() / 20;
         durationInput.addEventListener('change', () => { try { const previous = snapshot(); effect.timing = core.durationTiming(effect.timing, Number(durationInput.value)); commitChange(previous); durationInput.value = duration() / 20; } catch (error) { toast(error.message, true); durationInput.value = duration() / 20; } });
         durationField.append(durationInput); durationSection.append(durationField, note('Scales the entrance, hold and exit together. Use the controls below to adjust each phase separately.')); motion.append(durationSection);
@@ -283,9 +291,8 @@
             ['exit', 'Fade out · seconds', 'Time to reveal the game again.'],
             ['wait', 'Extra loading wait · seconds', 'Additional time allowed if the destination world is still loading.']
         ]) {
-            const wrap = element('div', 'field timing-field'), heading = element('div', 'field-heading'), caption = element('label', 'field-label', label);
-            caption.htmlFor = 'timing-' + phase;
-            heading.append(caption, helpButton('timing.' + phase, label)); wrap.append(heading);
+            const wrap = element('div', 'field timing-field');
+            wrap.append(fieldHeading(label, 'timing-' + phase, 'timing.' + phase));
             const input = element('input');
             input.type = 'number'; input.min = phase === 'exit' ? .05 : 0; input.max = 60; input.step = .05;
             input.id = 'timing-' + phase; input.dataset.timingPhase = phase;

@@ -1,4 +1,4 @@
-/* FrameUI Studio — Copyright (C) 2026 Berke Akçen. All rights reserved. Proprietary and confidential. */
+/* FrameUI Studio - Copyright (C) 2026 Berke Akçen. All rights reserved. Proprietary and confidential. */
 (function (scope) {
     'use strict';
     const VERSION = 1;
@@ -355,7 +355,7 @@
         if (bytes.length > MAX_IMAGE_BYTES || bytes.length < 33 || ![137, 80, 78, 71, 13, 10, 26, 10].every((value, index) => bytes[index] === value)) throw new Error('The image must be a PNG smaller than 8 MB.');
         const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength), width = v.getUint32(16), height = v.getUint32(20);
         if (v.getUint32(8) !== 13 || v.getUint32(12) !== 0x49484452) throw new Error('The image has an invalid PNG header.');
-        if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1–2048 pixels.');
+        if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1-2048 pixels.');
         return { width, height };
     }
     const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, transformElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
