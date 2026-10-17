@@ -79,6 +79,8 @@ void main() {
         vec2 offset = vec2(0.0);
         if (uImageAnimation == 3) offset.y = (1.0 - progress) * 0.24;
         if (uImageAnimation == 4) offset.x = -(1.0 - progress) * 0.35;
+        if (uImageAnimation == 7) offset.x = (1.0 - progress) * 0.35;
+        if (uImageAnimation == 8) offset.y = -(1.0 - progress) * 0.24;
         float grow = uImageAnimation == 2 ? max(0.001, 1.0 - pow(1.0 - progress, 3.0)) : 1.0;
         vec2 point = (sampleUv - uPlacement.xy - offset) / (uPlacement.z * grow) * scale + 0.5;
         if (point.x >= 0.0 && point.x <= 1.0 && point.y >= 0.0 && point.y <= 1.0) {

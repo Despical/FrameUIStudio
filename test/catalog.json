@@ -79,6 +79,10 @@
           "include": [],
           "exclude": []
         },
+        "addon-targets": {
+          "include": [],
+          "exclude": []
+        },
         "game-modes": {
           "include": [],
           "exclude": []
@@ -182,6 +186,10 @@
           "exclude": []
         },
         "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "addon-targets": {
           "include": [],
           "exclude": []
         },
@@ -291,6 +299,10 @@
           "include": [],
           "exclude": []
         },
+        "addon-targets": {
+          "include": [],
+          "exclude": []
+        },
         "game-modes": {
           "include": [],
           "exclude": []
@@ -393,6 +405,10 @@
           "exclude": []
         },
         "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "addon-targets": {
           "include": [],
           "exclude": []
         },
@@ -502,6 +518,10 @@
           "include": [],
           "exclude": []
         },
+        "addon-targets": {
+          "include": [],
+          "exclude": []
+        },
         "game-modes": {
           "include": [],
           "exclude": []
@@ -604,6 +624,10 @@
           "exclude": []
         },
         "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "addon-targets": {
           "include": [],
           "exclude": []
         },
@@ -713,6 +737,10 @@
           "include": [],
           "exclude": []
         },
+        "addon-targets": {
+          "include": [],
+          "exclude": []
+        },
         "game-modes": {
           "include": [],
           "exclude": []
@@ -815,6 +843,10 @@
           "exclude": []
         },
         "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "addon-targets": {
           "include": [],
           "exclude": []
         },
@@ -923,6 +955,10 @@
           "include": [],
           "exclude": []
         },
+        "addon-targets": {
+          "include": [],
+          "exclude": []
+        },
         "game-modes": {
           "include": [],
           "exclude": []
@@ -1025,6 +1061,10 @@
           "exclude": []
         },
         "source-worlds": {
+          "include": [],
+          "exclude": []
+        },
+        "addon-targets": {
           "include": [],
           "exclude": []
         },

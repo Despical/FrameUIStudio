@@ -359,10 +359,21 @@ test('composed layouts use direct color endpoints independently of palette mode'
 });
 
 test('all caption entrance directions survive YAML and ZIP round trips', async () => {
-    for (const direction of ['still', 'grow', 'slide-up', 'slide-down', 'slide-left', 'slide-right']) {
+    for (const direction of ['still', 'grow', 'slide-up', 'slide-down', 'slide-left', 'slide-right', 'none']) {
         const effect = core.createEffect('aurora'); effect.elements['text-animation'] = direction;
         assert.deepEqual(core.fromYaml(core.toYaml(effect)), effect);
         const entries = await core.unzip(core.zip({ ['effects/' + effect.id + '.yml']: core.toYaml(effect) }));
         assert.equal(core.fromYaml(core.decoder.decode(entries['effects/' + effect.id + '.yml'])).elements['text-animation'], direction);
+    }
+});
+
+test('every image slide direction exports alongside instant captions', async () => {
+    for (const direction of ['slide-up', 'slide-down', 'slide-left', 'slide-right']) {
+        const effect = core.createEffect('aurora');
+        effect.elements['image-animation'] = direction; effect.elements['text-animation'] = 'none';
+        const entries = await core.unzip(core.zip({ ['effects/' + effect.id + '.yml']: core.toYaml(effect) }));
+        const imported = core.fromYaml(core.decoder.decode(entries['effects/' + effect.id + '.yml']));
+        assert.equal(imported.elements['image-animation'], direction);
+        assert.equal(imported.elements['text-animation'], 'none');
     }
 });

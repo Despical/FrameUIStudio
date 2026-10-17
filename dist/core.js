@@ -190,8 +190,8 @@
         const e = effect.elements;
         const choice = (key, values) => { if (!values.includes(e[key])) fail(`Invalid element ${key}.`); };
         choice('background', ['template', 'solid', 'split', 'grid', 'terminal', 'pulse', 'none']);
-        choice('image-animation', ['inherit', 'fade', 'grow', 'slide-up', 'slide-left', 'wipe', 'page']);
-        choice('text-animation', ['still', 'grow', 'slide-up', 'slide-down', 'slide-left', 'slide-right']);
+        choice('image-animation', ['inherit', 'fade', 'grow', 'slide-up', 'slide-left', 'wipe', 'page', 'slide-right', 'slide-down']);
+        choice('text-animation', ['still', 'grow', 'slide-up', 'slide-down', 'slide-left', 'slide-right', 'none']);
         choice('progress', ['none', 'bar', 'segments', 'dots', 'ring']);
         choice('decoration', ['none', 'embers', 'petals', 'scan', 'pulse']);
         for (const key of ['image-x', 'image-y', 'text-x']) number(e[key], key, 0, 1, false);

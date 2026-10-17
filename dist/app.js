@@ -114,7 +114,7 @@
         'elements.image-scale': ['Resize the image around its center.', 'Changes the image on the preview and in Minecraft. You can also drag its corner handles.'],
         'elements.image-x': ['Horizontal position of the image center.', '0 is the left edge, 0.5 is the center and 1 is the right edge of the screen.'],
         'elements.image-y': ['Vertical position of the image center.', '0 is the top, 0.5 is the center and 1 is the bottom of the screen.'],
-        'elements.text-animation': ['Choose how captions enter the screen.', 'Affects the title, subtitle and extra caption line together.'],
+        'elements.text-animation': ['Choose how captions enter the screen.', 'Affects all three caption lines together. None (instant) shows them immediately without fading or sliding.'],
         'elements.text-x': ['Horizontal position of the caption group.', 'Moves the title, subtitle and extra line together. 0.5 centers them horizontally.'],
         'elements.text-y': ['Vertical position of the caption group.', 'Moves all caption lines together. You can also drag the Text object on the preview.'],
         'elements.text-scale': ['Resize the entire caption group.', 'Changes all three caption lines together in the preview and Minecraft.'],
@@ -347,7 +347,7 @@
         animation.append(field('Animation speed', 'appearance.speed', { type: 'range', min: .05, max: 8, step: .05 }), note('Changes the animation movement without changing total duration.'));
         motion.append(animation);
         const entrances = section('Element entrances');
-        entrances.append(field('Text entrance', 'elements.text-animation', { options: [['still','Fade'],['grow','Grow'],['slide-up','From bottom'],['slide-down','From top'],['slide-left','From left'],['slide-right','From right']] }), field('Image entrance', 'elements.image-animation', { options: [['inherit','Follow template'],['fade','Fade'],['grow','Grow from center'],['slide-up','Slide up'],['slide-left','Slide from left'],['wipe','Left-to-right reveal'],['page','Diagonal page']] }), field('Image entrance delay · seconds', 'elements.image-delay', { type: 'number', min: 0, max: .8 * effect.timing['fade-in-ticks'] / 20, step: .01, imageDelay: true }), note('Time after fade in begins before the image appears. Limited to 80% of the fade-in duration.'));
+        entrances.append(field('Text entrance', 'elements.text-animation', { options: [['none','None (instant)'],['still','Fade'],['grow','Grow'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right']] }), field('Image entrance', 'elements.image-animation', { options: [['inherit','Follow template'],['fade','Fade'],['grow','Grow from center'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right'],['wipe','Left-to-right reveal'],['page','Diagonal page']] }), field('Image entrance delay · seconds', 'elements.image-delay', { type: 'number', min: 0, max: .8 * effect.timing['fade-in-ticks'] / 20, step: .01, imageDelay: true }), note('Time after fade in begins before the image appears. Limited to 80% of the fade-in duration.'));
         motion.append(entrances);
         const imageMotion = section('Image movement');
         imageMotion.append(field('Ambient image motion', 'appearance.image-motion', { options: [['still','Still'],['panorama','Slow zoom and pan'],['page','Legacy page reveal']] }), note('Add or replace your image in Design. These settings animate it after placement.'));
@@ -618,7 +618,7 @@
             const e = definition.elements;
             gl.useProgram(this.program);
             gl.uniform1i(u.uBackgroundStyle, ['template','solid','split','grid','terminal','pulse','none'].indexOf(e.background));
-            gl.uniform1i(u.uImageAnimation, ['inherit','fade','grow','slide-up','slide-left','wipe','page'].indexOf(e['image-animation']));
+            gl.uniform1i(u.uImageAnimation, ['inherit','fade','grow','slide-up','slide-left','wipe','page','slide-right','slide-down'].indexOf(e['image-animation']));
             gl.uniform1i(u.uImageMotion, ['still','panorama','page'].indexOf(a['image-motion']));
             gl.uniform4f(u.uPlacement, e['image-x'], e['image-y'], e['image-scale'], e['image-delay']);
             gl.uniform4f(u.uIndicator, ['none','bar','segments','dots','ring'].indexOf(e.progress), e['progress-x'], e['progress-y'], e['progress-width']);
@@ -638,7 +638,7 @@
         const phase = playTick < effect.timing['fade-in-ticks'] ? 'FADE IN' : playTick < effect.timing['minimum-ticks'] ? 'HOLD' : 'FADE OUT'; $('stage-phase').textContent = phase;
         const caption = $('caption-preview'), layout = effect.elements;
         const delay = Math.max(.12, layout['image-delay']), t = Math.max(0, Math.min(1, (opacity - delay) / (1 - delay))), entrance = t * t * (3 - 2 * t);
-        caption.hidden = !effect.captions.enabled; caption.style.opacity = String(entrance);
+        caption.hidden = !effect.captions.enabled; caption.style.opacity = String(layout['text-animation'] === 'none' ? 1 : entrance);
         caption.style.top = '0'; caption.style.bottom = '0';
         caption.style.left = ((layout['text-x'] - .5) * 100) + '%'; caption.style.right = ((.5 - layout['text-x']) * 100) + '%';
         caption.style.transformOrigin = `50% ${layout['text-y'] * 100}%`;
