@@ -547,6 +547,7 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 
 /* Narrow screens keep dialog text readable and all actions reachable. */
 @media(max-width:480px){
+    .colors-row{display:grid;grid-template-columns:minmax(0,1fr)}
     .timing-strip>div{min-width:0;overflow-wrap:anywhere}
     .timing-strip b{white-space:normal}
     dialog,#connect-dialog{padding:20px}
