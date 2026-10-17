@@ -1,4 +1,4 @@
-/* FrameUI Studio - Copyright (C) 2026 Berke Akçen. All rights reserved. Proprietary and confidential. */
+/* FrameUI Studio - Copyright (C) 2026 Berke Akçen. All rights reserved. Proprietary. See LICENSE for terms. */
 (function () {
     'use strict';
     const t = window.FrameStudioI18n.t, displayName = window.FrameStudioI18n.displayName, secondsLabel = window.FrameStudioI18n.seconds;
