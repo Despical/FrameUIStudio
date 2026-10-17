@@ -39,6 +39,7 @@
         listDeleted: async () => (await transaction('readonly', store => store.getAll())).filter(entry => entry.deleted),
         put: entry => transaction('readwrite', store => store.put({ ...entry, deleted: false })),
         remove: entry => transaction('readwrite', store => store.put({ ...entry, deleted: true })),
+        deleteEffect: id => transaction('readwrite', store => store.delete(id)),
         purgeDeleted
     };
 })();

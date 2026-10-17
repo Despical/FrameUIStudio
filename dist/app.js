@@ -6,10 +6,9 @@
     const server = window.FrameStudioServer;
     let serverBusy = false, linkedEffectId = null, selectedComponent = '';
     const componentLabels = {image:'Image', title:'Title', subtitle:'Subtitle', detail:'Extra line', progress:'Loading indicator'};
-    const serverEffects = new Map(), serverTrash = new Map();
-    const inServerTrash = id => [...serverTrash.values()].some(entry => entry.id === id) && !serverEffects.has(id);
+    const serverEffects = new Map();
     const isServerEffect = () => effect.id === linkedEffectId && serverEffects.has(effect.id);
-    const libraryEntries = () => new Map([...savedEffects, ...serverEffects].filter(([id]) => !inServerTrash(id)));
+    const libraryEntries = () => new Map([...savedEffects, ...serverEffects]);
     const serverButtonLabel = () => serverBusy ? (isServerEffect() ? 'Saving…' : 'Importing…') : server.session ? (isServerEffect() ? 'Save to server' : 'Import to server') : 'Connect server';
     core.configureCatalog(window.FrameStudioCatalog);
     const $ = id => document.getElementById(id);
@@ -17,8 +16,8 @@
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let effect = core.createEffect('frameui'), imageBytes = null, imageUrl = '', imageElement = null;
     let undo = [], redo = [], playing = !reducedMotion, playTick = 24, saveTimer, toastTimer;
-    const thumbs = new Map(), savedEffects = new Map(), deletedEffects = new Map(), savedThumbnails = new Map();
-    let activeCategory = core.categories[1], selectionVersion = 0, libraryBusy = false, pendingPurge = [];
+    const thumbs = new Map(), savedEffects = new Map(), legacyDeletedIds = new Set(), savedThumbnails = new Map();
+    let activeCategory = core.categories[1], selectionVersion = 0, libraryBusy = false, pendingDelete = null;
     function element(tag, classes, text) { const node = document.createElement(tag); if (classes) node.className = classes; if (text !== undefined) node.textContent = text; return node; }
     function icon(id) { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); const use = document.createElementNS('http://www.w3.org/2000/svg', 'use'); use.setAttribute('href', `#icon-${id}`); svg.append(use); return svg; }
     function toast(message, error = false) { clearTimeout(toastTimer); $('toast').textContent = message; $('toast').classList.toggle('error', error); $('toast').hidden = false; toastTimer = setTimeout(() => { $('toast').hidden = true; }, error ? 6500 : 3500); }
@@ -27,7 +26,7 @@
     function snapshot() { return { effect: core.clone(effect), image: imageBytes }; }
     function remember() { undo.push(snapshot()); if (undo.length > 32) undo.shift(); redo.length = 0; }
     function snapshotMatches(a, b) { return a.image === b.image && JSON.stringify(a.effect) === JSON.stringify(b.effect); }
-    function usedIds() { return [...core.catalog.map(item => item.id), ...savedEffects.keys(), ...serverEffects.keys(), ...[...serverTrash.values()].map(entry => entry.id), ...deletedEffects.keys()]; }
+    function usedIds() { return [...core.catalog.map(item => item.id), ...savedEffects.keys(), ...serverEffects.keys()]; }
     function usedNames() { return [...libraryEntries().values()].map(entry => entry.effect.name); }
     function commitChange(previous) {
         if (snapshotMatches(previous, snapshot())) return false;
@@ -60,8 +59,6 @@
     async function save() {
         clearTimeout(saveTimer);
         const current = { effect: core.clone(effect), image: imageBytes };
-        if (inServerTrash(current.effect.id)) return false;
-        if (current.effect.category === core.categories[2] && deletedEffects.has(current.effect.id) && !serverEffects.has(current.effect.id)) return false;
         let librarySaved = false;
         if (current.effect.category === core.categories[2] && !validState()) {
             const entry = { id: current.effect.id, effect: current.effect, image: current.image };
@@ -485,10 +482,11 @@
         }
         if (thickness && document.activeElement!==thickness) thickness.value = Number((effect.elements['progress-scale']*(effect.elements.progress==='ring'?4.4:effect.elements.progress==='dots'?7.2:6)).toFixed(2));
     }
+    function replayPreview() {previewLoop.suspend();playTick=0;playing=true;sync();}
     function resetComponent() {
         const previous = snapshot();
         effect = core.resetComponent(effect,selectedComponent);
-        commitChange(previous); sync();
+        commitChange(previous); replayPreview();
     }
     function renderCategories() {
         const select = $('category-filter');
@@ -500,8 +498,6 @@
         select.value = activeCategory;
         dropdowns.refresh();
         document.querySelector('.panel-heading h1').textContent = `Effect library (${core.catalog.length + libraryEntries().size})`;
-        $('catalog-footer').hidden = activeCategory !== core.categories[2];
-        $('trash-button').textContent = `Trash (${deletedEffects.size + serverTrash.size})`;
     }
     async function openLibraryItem(item, saved) {
         const version = ++selectionVersion;
@@ -568,114 +564,46 @@
             button.append(thumb, copy, icon('check')); button.addEventListener('click', () => openLibraryItem(item, saved));
             if (own) {
                 const entry = element('div', 'template-row'), remove = element('button', 'icon-button effect-delete');
-                remove.append(icon('trash')); remove.title = 'Move to Trash'; remove.setAttribute('aria-label', `Delete ${item.name}`);
-                remove.addEventListener('click', () => deleteEffect(item.id)); entry.append(button, remove); list.append(entry);
+                remove.append(icon('trash')); remove.title = 'Delete effect'; remove.setAttribute('aria-label', `Delete ${item.name}`);
+                remove.addEventListener('click', () => requestDelete(item.id)); entry.append(button, remove); list.append(entry);
             } else list.append(button);
         }
         if (previewReady) generateThumbnails();
         if (!list.children.length) list.append(element('p', 'empty-state', own && !query ? 'Edit an animation or preset to create your first effect automatically. You can also import your own effect ZIP.' : 'No matching effects in this category.'));
     }
-    async function deleteEffect(id) {
+    function requestDelete(id) {
         if (libraryBusy || serverBusy) return;
-        libraryBusy = true; sync();
-        try {
-            await save();
-            const remote = serverEffects.get(id);
-            if (remote) {
-                const deleted = await server.trashEffect(id, remote.revision);
-                serverTrash.set(deleted.trashId, deleted); serverEffects.delete(id);
-                serverStatus(`${deleted.name} moved to server Trash`);
-            } else {
-                const entry = savedEffects.get(id); if (!entry) return;
-                await window.FrameStudioLibrary.remove(entry);
-                deletedEffects.set(id, entry); savedEffects.delete(id);
-            }
-            const thumbnail = savedThumbnails.get(id); if (thumbnail) URL.revokeObjectURL(thumbnail.url); savedThumbnails.delete(id);
-            const keep = state => state.effect.category !== core.categories[2] || state.effect.id !== id;
-            undo = undo.filter(keep); redo = redo.filter(keep);
-            if (effect.id === id && effect.category === core.categories[2]) {
-                ++selectionVersion; const next = core.createEffect(effect.template);
-                await setImage(null); effect = next; linkedEffectId = null; renderSettings();
-            }
-            renderCatalog(); sync(); await save();
-            toast('Effect moved to Trash. Restore it from My Effects → Trash.');
-        } catch (error) { toast(error.message || 'Could not delete this effect. Your saved copy is still available.', true); }
-        finally { libraryBusy = false; sync(); }
-    }
-    async function restoreServerEffect(entry) {
-        if (libraryBusy || serverBusy) return;
-        libraryBusy = true; sync(); renderTrash();
-        try {
-            await server.restoreEffect(entry.trashId, entry.revision);
-            serverTrash.delete(entry.trashId);
-            // The operation is already committed even if the subsequent image download is interrupted.
-            const records = await server.listEffects();
-            const record = records.find(record => record.id === entry.id);
-            if (!record) throw new Error('The effect was restored. Reopen Studio to refresh the library.');
-            serverEffects.set(record.id, { id: record.id, effect: core.fromYaml(record.yaml), image: null, remote: true,
-                revision: record.revision, loaded: false, dirty: false });
-            activeCategory = core.categories[2]; renderCatalog();
-            serverStatus(`${entry.name} restored to your server`); toast('Effect restored to your server.');
-        } catch (error) { toast(error.message || 'Could not restore this effect. It is still in server Trash.', true); }
-        finally { libraryBusy = false; renderCatalog(); renderTrash(); sync(); }
-    }
-    function renderTrash() {
-        const list = $('trash-list'); list.replaceChildren();
-        $('empty-trash').disabled = !deletedEffects.size || libraryBusy;
-        $('empty-trash').textContent = serverTrash.size ? 'Empty local Trash' : 'Empty Trash';
-        for (const entry of serverTrash.values()) {
-            const row = element('div', 'trash-row'), copy = element('div', 'template-copy');
-            copy.append(element('b', '', entry.name), element('small', '', entry.id), element('span', 'server-effect-badge', 'Server'));
-            const restore = element('button', 'button button-quiet', 'Restore'); restore.setAttribute('aria-label', `Restore ${entry.name} from server Trash`);
-            restore.disabled = libraryBusy; restore.addEventListener('click', () => restoreServerEffect(entry));
-            row.append(copy, restore); list.append(row);
-        }
-        for (const entry of deletedEffects.values()) {
-            const row = element('div', 'trash-row'), copy = element('div', 'template-copy');
-            copy.append(element('b', '', entry.effect.name), element('small', '', entry.id));
-            const restore = element('button', 'button button-quiet', 'Restore'); restore.setAttribute('aria-label', `Restore ${entry.effect.name}`);
-            restore.addEventListener('click', async () => {
-                if (libraryBusy) return; libraryBusy = true; restore.disabled = true;
-                try {
-                    const restored = { id: entry.id, effect: core.clone(entry.effect), image: entry.image };
-                    restored.effect.name = core.uniqueName(restored.effect.name, usedNames());
-                    await window.FrameStudioLibrary.put(restored);
-                    deletedEffects.delete(entry.id); savedEffects.set(entry.id, restored);
-                    renderCatalog(); renderTrash(); sync(); toast('Effect restored to My Effects.');
-                } catch { restore.disabled = false; toast('Could not restore this effect. It is still in Trash.', true); }
-                finally { libraryBusy = false; $('empty-trash').disabled = !deletedEffects.size; }
-            });
-            const remove = element('button', 'button button-danger', 'Delete permanently'); remove.setAttribute('aria-label', `Delete permanently ${entry.effect.name}`);
-            remove.addEventListener('click', () => requestPurge([entry.id]));
-            const actions = element('div', 'trash-row-actions'); actions.append(restore, remove);
-            row.append(copy, actions); list.append(row);
-        }
-        if (previewReady) generateThumbnails();
-        if (!list.children.length) list.append(element('p', 'empty-state', 'Trash is empty.'));
-    }
-    function requestPurge(ids) {
-        if (libraryBusy) return;
-        pendingPurge = ids.filter(id => deletedEffects.has(id)); if (!pendingPurge.length) return;
-        $('purge-description').textContent = pendingPurge.length === 1
-            ? `“${deletedEffects.get(pendingPurge[0]).effect.name}” and its image will be deleted. This cannot be undone.`
-            : `All ${pendingPurge.length} effects in Trash and their images will be deleted. This cannot be undone.`;
-        $('confirm-purge').textContent = ids.length > 1 ? 'Empty Trash' : 'Delete permanently';
+        const entry=libraryEntries().get(id); if (!entry) return;
+        pendingDelete={id,name:entry.effect.name,remote:!!entry.remote,revision:entry.revision};
+        $('purge-description').textContent=`Permanently delete “${pendingDelete.name}”? This action cannot be undone.`;
         $('purge-dialog').showModal();
     }
-    async function confirmPurge() {
-        if (libraryBusy || !pendingPurge.length) return;
-        libraryBusy = true; $('confirm-purge').disabled = true; $('cancel-purge').disabled = true;
+    async function confirmDelete() {
+        if (libraryBusy || serverBusy || !pendingDelete) return;
+        const target=pendingDelete; libraryBusy=true;
+        $('confirm-purge').disabled=true; $('cancel-purge').disabled=true;
         try {
-            const removed = await window.FrameStudioLibrary.purgeDeleted(pendingPurge);
-            for (const id of removed) deletedEffects.delete(id);
-            pendingPurge = []; $('purge-dialog').close(); renderCatalog();
-            toast(removed.length === 1 ? 'Effect permanently deleted.' : `${removed.length} effects permanently deleted.`);
-        } catch { toast('Could not empty Trash. Your effects are still available.', true); }
-        finally {
-            libraryBusy = false; $('confirm-purge').disabled = false; $('cancel-purge').disabled = false; renderTrash();
-        }
+            await save();
+            if (target.remote) {
+                await server.deleteEffect(target.id,target.revision); serverEffects.delete(target.id);
+                if (savedEffects.has(target.id)) {
+                    try {await window.FrameStudioLibrary.deleteEffect(target.id);} catch {toast('Deleted from your server. A separate local copy could not be removed.',true);}
+                }
+            } else await window.FrameStudioLibrary.deleteEffect(target.id);
+            savedEffects.delete(target.id);
+            const thumbnail=savedThumbnails.get(target.id); if(thumbnail) URL.revokeObjectURL(thumbnail.url); savedThumbnails.delete(target.id);
+            const keep=state=>state.effect.category!==core.categories[2] || state.effect.id!==target.id;
+            undo=undo.filter(keep);redo=redo.filter(keep);
+            if (effect.id===target.id && effect.category===core.categories[2]) {
+                ++selectionVersion; const next=core.createEffect(effect.template);
+                await setImage(null); effect=next; linkedEffectId=null;renderSettings();
+            }
+            pendingDelete=null; $('purge-dialog').close(); renderCatalog();sync();await save();
+            toast('Effect permanently deleted.');
+        } catch(error) {toast(error.message || 'Could not delete this effect. Try again.',true);}
+        finally {libraryBusy=false;$('confirm-purge').disabled=false;$('cancel-purge').disabled=false;sync();}
     }
-    function validState() { try { core.validate(effect); if (inServerTrash(effect.id)) return 'This ID is in server Trash. Restore it first.'; if (effect.category === core.categories[2] && deletedEffects.has(effect.id) && !serverEffects.has(effect.id)) return 'This ID is in Trash. Restore it or choose another ID.'; return ''; } catch (error) { return error.message; } }
+    function validState() {try {core.validate(effect);return '';} catch(error) {return error.message;}}
     function sync() {
         const error = validState(); $('validation-status').textContent = error || (effect.appearance.image && !imageBytes ? 'Image file needs to be supplied' : isServerEffect() ? (serverBusy ? 'Saving to server…' : snapshotMatches(serverEffects.get(effect.id).synced, snapshot()) ? 'Saved on server' : 'Changes not saved to server') : 'Ready to export'); document.querySelector('.inspector-footer').classList.toggle('invalid', !!error || !!(effect.appearance.image && !imageBytes));
         $('server-import-button').disabled = serverBusy || libraryBusy || (!!server.session && !!error);
@@ -864,18 +792,13 @@
         if (!server.available) return;
         try {
             const session = await server.connect();
-            const [records, trashed] = await Promise.all([server.listEffects(), server.listTrash()]);
-            for (const record of trashed) serverTrash.set(record.trashId, record);
+            const records = await server.listEffects();
             for (const record of records) {
                 const definition = core.fromYaml(record.yaml);
                 serverEffects.set(record.id, { id: record.id, effect: definition, image: null, remote: true,
                     revision: record.revision, loaded: false, dirty: false });
             }
-            if (inServerTrash(effect.id)) {
-                await setImage(null); effect = core.createEffect(effect.template); linkedEffectId = null;
-                renderSettings();
-            }
-            if (serverEffects.size || serverTrash.size) activeCategory = core.categories[2];
+            if (serverEffects.size) activeCategory = core.categories[2];
             renderSettings(); renderCatalog();
             serverStatus(`Connected as ${session.player} · Link expires at ${new Date(session.expires).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
         } catch (error) { serverStatus(error.message, true); }
@@ -942,13 +865,10 @@
         else center.scrollTo({ top: 0 });
     });
     $('search').addEventListener('input', renderCatalog);
-    $('trash-button').addEventListener('click', () => { renderTrash(); $('trash-dialog').showModal(); });
-    $('close-trash').addEventListener('click', () => $('trash-dialog').close());
-    $('empty-trash').addEventListener('click', () => requestPurge([...deletedEffects.keys()]));
-    $('cancel-purge').addEventListener('click', () => { pendingPurge = []; $('purge-dialog').close(); });
-    $('confirm-purge').addEventListener('click', confirmPurge);
-    $('purge-dialog').addEventListener('cancel', event => { if (libraryBusy) event.preventDefault(); else pendingPurge = []; });
     $('category-filter').addEventListener('change', () => { activeCategory = $('category-filter').value; renderCatalog(); });
+    $('cancel-purge').addEventListener('click',()=>{pendingDelete=null;$('purge-dialog').close();});
+    $('confirm-purge').addEventListener('click',confirmDelete);
+    $('purge-dialog').addEventListener('cancel',event=>{if(libraryBusy) event.preventDefault();else pendingDelete=null;});
     $('undo-button').addEventListener('click', () => historyStep(false)); $('redo-button').addEventListener('click', () => historyStep(true));
     $('play-button').addEventListener('click', () => { playing = !playing; if (playing && playTick >= duration()) playTick = 0; sync(); }); $('restart-button').addEventListener('click', () => { playTick = 0; previewLoop.invalidate(); });
     $('timeline').addEventListener('input', () => { playTick = Number($('timeline').value) / 1000 * duration(); previewLoop.invalidate(); });
@@ -957,7 +877,7 @@
     $('close-connect').addEventListener('click', () => $('connect-dialog').close());
     $('export-button').addEventListener('click', exportEffect); $('guide-export').addEventListener('click', exportEffect); $('yaml-download').addEventListener('click', () => { try { download(core.toYaml(effect), effect.id + '.yml', 'text/yaml;charset=utf-8'); toast('YAML downloaded. Images must be supplied separately; use Export effect for a complete ZIP.'); } catch (error) { toast(error.message, true); } });
     $('guide-button').addEventListener('click', () => $('guide-dialog').showModal()); $('close-guide').addEventListener('click', () => $('guide-dialog').close()); $('guide-dialog').addEventListener('click', event => { if (event.target === $('guide-dialog')) { const rect = $('guide-dialog').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('guide-dialog').close(); } });
-    $('reset-button').addEventListener('click', async () => { if (selectedComponent) { resetComponent(); return; } remember(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
+    $('reset-button').addEventListener('click', async () => { if (selectedComponent) { resetComponent(); return; } remember(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); activeCategory = effect.category; renderSettings(); renderCatalog(); replayPreview(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
     const tabs = [...document.querySelectorAll('[data-tab]')];
     const tabScroll = new Map();
     let activeTab = null;
@@ -998,7 +918,7 @@
         const renamed = new Map();
         try {
             for (const entry of await window.FrameStudioLibrary.listDeleted()) {
-                try { entry.effect = core.normalize(entry.effect); entry.effect.category = core.categories[2]; deletedEffects.set(entry.id, entry); } catch {}
+                legacyDeletedIds.add(entry.id);
             }
             for (const entry of await window.FrameStudioLibrary.list()) {
                 try { entry.effect = core.normalize(entry.effect); entry.effect.category = core.categories[2]; savedEffects.set(entry.id, entry); } catch {}
@@ -1011,7 +931,7 @@
             }
         } catch { toast('My Effects could not access browser storage. Export your effects to keep a copy.', true); }
         try { const stored = localStorage.getItem(storageKey); if (stored) { const draft = JSON.parse(stored); if (draft.version === core.VERSION) { effect = core.normalize(draft.effect); if (draft.image) await setImage(fromDataUrl(draft.image)); } } } catch { toast('Previous draft unavailable.', true); }
-        if (effect.category === core.categories[2] && deletedEffects.has(effect.id)) { const template = effect.template; await setImage(null); effect = core.createEffect(template); }
+        if (effect.category === core.categories[2] && legacyDeletedIds.has(effect.id)) { const template = effect.template; await setImage(null); effect = core.createEffect(template); }
         const rename = renamed.get(effect.id); if (effect.category === core.categories[2] && rename?.original === effect.name) effect.name = rename.name;
         if (effect.appearance.image && !imageBytes) { const preset = core.catalog.find(item => item.id === effect.id); if (preset?.image) { try { await setImage(new Uint8Array(await (await fetch(preset.image)).arrayBuffer())); } catch { toast('Preset image could not load. Choose the matching PNG.', true); } } }
         activeCategory = effect.category;

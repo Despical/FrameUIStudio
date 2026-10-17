@@ -28,9 +28,7 @@
         get session() { return session; },
         async connect() { session = await request('session'); return session; },
         async listEffects() { return (await request('effects')).effects; },
-        async listTrash() { return (await request('trash')).trash; },
-        async trashEffect(id, revision) { return request('effects/' + encodeURIComponent(id), null, { method: 'DELETE', revision }); },
-        async restoreEffect(id, revision) { return request('trash/' + encodeURIComponent(id) + '/restore', null, { method: 'POST', revision }); },
+        async deleteEffect(id, revision) { return request('effects/' + encodeURIComponent(id), null, { method: 'DELETE', revision }); },
         async loadEffect(id) { return request('effects/' + encodeURIComponent(id), null, { binary: true }); },
         async importEffect(bytes, revision) { return request('import', bytes, { revision }); }
     };

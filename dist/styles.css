@@ -89,8 +89,9 @@ h2{font-size:25px;font-weight:600;letter-spacing:-.8px}
 .game-hands span{position:absolute;bottom:-15%;right:9%;width:13%;height:40%;background:linear-gradient(90deg,#997560,#cda38a);transform:rotate(-25deg);border:5px solid #402d2940}
 .game-hands span:first-child{right:auto;left:9%;transform:rotate(25deg)}
 .playback-bar{display:flex;align-items:center;gap:10px;margin:20px 1px 19px}
-.round-button{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#22332e;border:1px solid #35514a;color:var(--accent);flex-shrink:0}
-.round-button svg{width:16px;height:16px}
+.round-button{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--accent);border:1px solid #8bf1e5;color:#102b29;flex-shrink:0}
+.round-button svg{width:18px;height:18px}
+.round-button:hover{background:#a1f5eb;border-color:#b7fff6}
 .playback-bar>.icon-button{width:32px}
 .playback-bar>.icon-button svg{width:14px;height:14px}
 .timeline-control{flex:1;margin:0 10px;min-width:0}
@@ -367,19 +368,9 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .effect-delete{width:30px;height:34px;padding:6px;color:var(--subtle)}
 .effect-delete:hover{color:var(--danger);background:#ffa28f12}
 .effect-delete svg{width:17px;height:17px}
-#trash-button{font-size:12px;color:var(--subtle)}
-.trash-list{max-height:50dvh;overflow:auto;margin-top:20px}
-.trash-row{display:flex;gap:16px;align-items:center;padding:14px 0;border-top:1px solid var(--border)}
-.trash-row .template-copy b{white-space:normal;overflow-wrap:anywhere;line-height:1.4}
-.trash-row .template-copy small{white-space:normal;overflow-wrap:anywhere}
-.trash-row .button{flex-shrink:0}
 .button-danger{color:var(--danger);border-color:#9b554c66;background:#58261f33}
 .button-danger:hover{background:#793a3044;border-color:#b5685b}
-.trash-actions,.purge-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
-.trash-row{flex-wrap:wrap}
-.trash-row .template-copy{flex-basis:150px}
-.trash-row-actions{display:flex;flex-wrap:wrap;gap:8px}
-.trash-row-actions .button{min-height:36px;font-size:12px;padding:0 10px}
+.purge-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
 
 .server-connection{margin:0 0 16px;padding:10px 13px;border:1px solid #315d57;border-radius:7px;background:#14302c;color:#a9ded5;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
 .server-connection.connection-error{border-color:#925554;background:#382526;color:#ffd1c6}
@@ -491,3 +482,14 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .canvas-toolbar{gap:8px;margin-bottom:14px}
 .canvas-toolbar button{min-height:42px;padding:9px 12px;font-size:14px;font-weight:500;line-height:20px}
 [data-caption-entry]:disabled{cursor:default}
+
+.connection-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:24px}
+.connection-heading h2{margin:0;font-size:23px;line-height:1.3}
+.connection-heading .icon-button{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;padding:0;border-radius:8px}
+.connection-heading svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+#connect-dialog .connection-steps{margin:0 0 24px;padding:0;font-size:15px;line-height:1.7}
+#connect-dialog .connection-steps li{padding-left:38px;margin:16px 0}
+#connect-dialog .connection-steps li b{display:inline;font-size:inherit}
+#connect-dialog{padding:28px;max-width:520px}
+#connect-dialog .dialog-note{margin:0;padding-top:20px;border-top:1px solid var(--border);font-size:14px;line-height:1.65}
+@media(min-width:1241px){.center-scroll{height:calc(100% + 20px)}.preview-panel{padding-bottom:0}}

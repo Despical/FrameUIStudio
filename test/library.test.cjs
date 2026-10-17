@@ -68,3 +68,16 @@ test('a failed bulk deletion rolls back both definitions and image bytes', async
     await assert.rejects(library.purgeDeleted(['trash-one', 'trash-two']), /Storage failed/);
     assert.deepEqual([...records.values()], entries);
 });
+
+test('direct deletion removes the active record and image without creating a tombstone', async () => {
+    const {library,records}=libraryFixture(fixtures());
+    await library.deleteEffect('active');
+    assert.equal(records.has('active'),false);
+    assert.equal(records.size,2);
+    assert.deepEqual(records.get('trash-one').image,new Uint8Array([3,4]));
+});
+test('failed direct deletion retains the complete active definition and image', async () => {
+    const entries=fixtures(),{library,records}=libraryFixture(entries,'active');
+    await assert.rejects(library.deleteEffect('active'),/Storage failed/);
+    assert.deepEqual([...records.values()],entries);
+});
