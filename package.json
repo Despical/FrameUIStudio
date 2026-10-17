@@ -8,6 +8,19 @@
     "dev": "node scripts/serve.cjs",
     "start": "node scripts/serve.cjs",
     "test": "node --test test/core.test.cjs test/library.test.cjs test/server-link.test.cjs test/preview-loop.test.cjs test/render-model.test.cjs test/i18n.test.cjs test/cookies.test.cjs",
-    "refresh": "node scripts/generate-preview.cjs"
+    "refresh": "node scripts/generate-preview.cjs",
+    "check": "node scripts/check.cjs"
+  },
+  "homepage": "https://despical.github.io/FrameUIStudio/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Despical/FrameUIStudio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Despical/FrameUIStudio/issues"
+  },
+  "author": "Berke Akçen <contact@despical.dev>",
+  "engines": {
+    "node": ">=22"
   }
 }
