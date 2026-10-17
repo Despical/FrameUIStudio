@@ -53,8 +53,21 @@
         </section>
 
         </div>
-        <aside class="inspector-panel" aria-label="Effect settings"><div class="inspector-heading"><h2>Properties</h2></div><div class="inspector-tabs" role="tablist" aria-label="Setting groups"><button id="tab-visual" class="active" role="tab" aria-selected="true" aria-controls="settings-visual" data-tab="visual">Design</button><button id="tab-behavior" role="tab" aria-selected="false" aria-controls="settings-behavior" data-tab="behavior">Behavior</button><button id="tab-rules" role="tab" aria-selected="false" aria-controls="settings-rules" data-tab="rules">Rules</button><button id="tab-yaml" role="tab" aria-selected="false" aria-controls="settings-yaml" data-tab="yaml">YAML</button></div>
-            <div class="inspector-scroll"><div id="settings-visual" class="settings-pane" role="tabpanel" aria-labelledby="tab-visual"></div><div id="settings-behavior" class="settings-pane" role="tabpanel" aria-labelledby="tab-behavior" hidden></div><div id="settings-rules" class="settings-pane" role="tabpanel" aria-labelledby="tab-rules" hidden></div><div id="settings-yaml" class="settings-pane" role="tabpanel" aria-labelledby="tab-yaml" hidden><div class="section-heading"><h3>Effect source</h3><span>YAML</span></div><p class="field-note">Edit the complete definition. Apply validates the file before replacing your draft.</p><label for="yaml-editor" class="sr-only">Effect YAML</label><textarea id="yaml-editor" spellcheck="false" class="yaml-editor"></textarea><button id="apply-yaml" class="button button-primary full-width">Apply YAML</button><p class="field-note">Studio supports mappings, lists and quoted values. YAML anchors and multiline blocks are not supported.</p></div></div>
+        <aside class="inspector-panel" aria-label="Effect settings">
+            <div class="inspector-heading"><h2>Effect settings</h2></div>
+            <div class="inspector-tabs" role="tablist" aria-label="Setting groups">
+                <button id="tab-visual" class="active" role="tab" aria-selected="true" aria-controls="settings-visual" data-tab="visual">Design</button>
+                <button id="tab-motion" role="tab" aria-selected="false" aria-controls="settings-motion" data-tab="motion">Motion</button>
+                <button id="tab-events" role="tab" aria-selected="false" aria-controls="settings-events" data-tab="events">Events</button>
+                <button id="tab-game" role="tab" aria-selected="false" aria-controls="settings-game" data-tab="game">In game</button>
+                <button id="tab-yaml" role="tab" aria-selected="false" aria-controls="settings-yaml" data-tab="yaml">YAML</button>
+            </div>
+            <div class="inspector-scroll">
+                <div id="settings-visual" class="settings-pane" role="tabpanel" aria-labelledby="tab-visual"></div>
+                <div id="settings-motion" class="settings-pane" role="tabpanel" aria-labelledby="tab-motion" hidden></div>
+                <div id="settings-events" class="settings-pane" role="tabpanel" aria-labelledby="tab-events" hidden></div>
+                <div id="settings-game" class="settings-pane" role="tabpanel" aria-labelledby="tab-game" hidden></div>
+                <div id="settings-yaml" class="settings-pane" role="tabpanel" aria-labelledby="tab-yaml" hidden><div class="section-heading"><h3>Effect source</h3><span>YAML</span></div><p class="field-note">Edit the complete definition. Apply validates the file before replacing your draft.</p><label for="yaml-editor" class="sr-only">Effect YAML</label><textarea id="yaml-editor" spellcheck="false" class="yaml-editor"></textarea><button id="apply-yaml" class="button button-primary full-width">Apply YAML</button><p class="field-note">Studio supports mappings, lists and quoted values. YAML anchors and multiline blocks are not supported.</p></div></div>
             <div class="inspector-footer"><span id="validation-dot" class="status-dot"></span><span id="validation-status">Ready to export</span><button id="reset-button" class="text-button">Reset</button></div>
         </aside>
     </main>

@@ -391,3 +391,13 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 @media(max-width:760px){.header-actions{flex-wrap:wrap;justify-content:flex-end;gap:6px}.app-header{height:auto;min-height:84px;padding-top:12px;padding-bottom:12px}.header-actions .button{min-height:36px;padding:0 9px;font-size:12px}}
 
 .server-effect-badge{display:block;margin-top:4px;color:#92d9ce;font-size:10px;font-weight:600;letter-spacing:.04em;line-height:1.4}
+
+/* Five task-oriented groups fit the existing inspector without shrinking labels. */
+.inspector-heading{padding-bottom:16px}
+.inspector-heading>p{font-size:12px;line-height:1.6;color:var(--subtle);margin:7px 0 0}
+.inspector-tabs{padding-left:12px;padding-right:12px;gap:2px}
+.inspector-tabs button{min-width:0;white-space:nowrap;min-height:44px}
+.inspector-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-4px;border-radius:4px}
+.settings-intro{margin-bottom:20px;padding:0 0 16px;border-bottom:1px solid var(--border)}
+.settings-intro h3{font-size:14px;font-weight:600;color:#d5e4ef;margin:0 0 6px}
+.settings-intro .field-note{margin:0;line-height:1.65}
