@@ -337,7 +337,7 @@
         decoration.append(field('Ambient decoration', 'elements.decoration', { options: [['none','None'],['embers','Embers'],['petals','Petals'],['scan','Scan line'],['pulse','Pulse emblem']] }));
         visual.append(decoration);
         const metadata = section('File details');
-        metadata.append(field('Effect ID / filename', 'id', { maxLength: 48, placeholder: 'my-aurora' }), note('Lowercase words separated by hyphens.'));
+        metadata.append(field('Effect ID / filename', 'id', { maxLength: 48, placeholder: 'my-aurora' }));
         visual.append(metadata);
         const durationSection = section('Duration'), durationField = element('div', 'field');
         durationField.append(fieldHeading('Total duration · seconds', 'duration-seconds', 'duration', 'Total duration'));
@@ -486,13 +486,8 @@
         if (thickness && document.activeElement!==thickness) thickness.value = Number((effect.elements['progress-scale']*(effect.elements.progress==='ring'?4.4:effect.elements.progress==='dots'?7.2:6)).toFixed(2));
     }
     function resetComponent() {
-        const previous = snapshot(), kind = selectedComponent;
-        const templateDefaults = core.createEffect(effect.template), defaults = templateDefaults.elements;
-        const keys = core.captionLines[kind] ? ['offset-x','offset-y','scale','stretch-x','stretch-y'].map(key=>kind+'-'+key)
-            : kind==='image' ? ['image-x','image-y','image-scale','image-stretch-x','image-stretch-y']
-            : ['progress-x','progress-y','progress-width','progress-scale'];
-        for (const key of keys) effect.elements[key] = defaults[key];
-        if (core.captionLines[kind]) effect.captions[kind+'-color'] = templateDefaults.captions[kind+'-color'];
+        const previous = snapshot();
+        effect = core.resetComponent(effect,selectedComponent);
         commitChange(previous); sync();
     }
     function renderCategories() {

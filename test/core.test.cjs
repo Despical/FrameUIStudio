@@ -519,3 +519,37 @@ test('old definitions capture their existing caption colors once without palette
     assert.equal(core.normalize({template:'aurora'}).captions['title-color'],'#f1f4fa');
     assert.equal(core.normalize({template:'aurora',appearance:{'title-motion':'grow'}}).captions['title-color'],'#e8efe5');
 });
+
+
+test('image Reset restores appearance and motion while preserving the asset and other components', () => {
+    const effect = core.createEffect('frameui'), defaults = core.createEffect(effect.template);
+    effect.appearance['image-fit']='contain'; effect.appearance['image-opacity']=.24; effect.appearance['image-motion']='panorama';
+    Object.assign(effect.elements,{'image-x':.12,'image-y':.23,'image-scale':2,'image-stretch-x':1.7,'image-stretch-y':.8,'image-animation':'slide-down','image-delay':.4});
+    effect.captions['title-color']='#123456';
+    const original=core.clone(effect), result=core.resetComponent(effect,'image');
+    for(const key of Object.keys(defaults.elements).filter(key=>key.startsWith('image-'))) assert.equal(result.elements[key],defaults.elements[key],key);
+    for(const key of ['image-fit','image-opacity','image-motion']) assert.equal(result.appearance[key],defaults.appearance[key]);
+    assert.equal(result.appearance.image,effect.appearance.image);
+    assert.deepEqual(result.captions,effect.captions); assert.equal(result.elements.progress,effect.elements.progress);
+    assert.equal(result.appearance.primary,effect.appearance.primary); assert.equal(result.appearance.speed,effect.appearance.speed);
+    assert.deepEqual(effect,original); core.validate(result);
+});
+
+test('indicator Reset restores style and every dimension without resetting the image or captions', () => {
+    const effect=core.createEffect('frameui'), defaults=core.createEffect(effect.template);
+    Object.assign(effect.elements,{progress:'ring','progress-x':.2,'progress-y':.3,'progress-width':.7,'progress-scale':4});
+    const original=core.clone(effect), result=core.resetComponent(effect,'progress');
+    for(const key of Object.keys(defaults.elements).filter(key=>key==='progress'||key.startsWith('progress-'))) assert.equal(result.elements[key],defaults.elements[key],key);
+    assert.deepEqual(result.appearance,effect.appearance); assert.deepEqual(result.captions,effect.captions);
+    for(const key of Object.keys(effect.elements).filter(key=>key!=='progress'&&!key.startsWith('progress-'))) assert.equal(result.elements[key],effect.elements[key],key);
+    assert.deepEqual(effect,original); core.validate(result);
+});
+
+test('caption Reset retains the wording and other captions while restoring its color and placement', () => {
+    const effect=core.createEffect('aurora'); effect.captions.title='Keep this title'; effect.captions['title-color']='#ff0000';
+    effect.captions['subtitle-color']='#00ff00'; effect.elements['title-offset-x']=.2; effect.elements['title-stretch-y']=2;
+    const result=core.resetComponent(effect,'title');
+    assert.equal(result.captions.title,'Keep this title'); assert.equal(result.captions['title-color'],'#f1f4fa');
+    assert.equal(result.captions['subtitle-color'],'#00ff00'); assert.equal(result.elements['title-offset-x'],0); assert.equal(result.elements['title-stretch-y'],1);
+    assert.throws(()=>core.resetComponent(effect,'unknown')); core.validate(result);
+});

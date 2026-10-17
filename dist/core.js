@@ -233,6 +233,20 @@
     // The same normalized coordinates are exported to the plugin. One transform can be committed
     // as one history entry by any input surface (pointer, touch or keyboard).
     const captionLines = {title: {key:'title', delta:.004, size:14}, subtitle: {key:'subtitle', delta:.069, size:8}, detail: {key:'preview-detail', delta:.246, size:7}};
+    function resetComponent(effect, kind) {
+        if (!['image','progress',...Object.keys(captionLines)].includes(kind)) throw new Error('Unknown canvas element.');
+        const next = clone(effect), defaults = createEffect(effect.template);
+        if (kind === 'image') {
+            for (const key of Object.keys(defaults.elements).filter(key => key.startsWith('image-'))) next.elements[key] = defaults.elements[key];
+            for (const key of ['image-fit','image-opacity','image-motion']) next.appearance[key] = defaults.appearance[key];
+        } else if (kind === 'progress') {
+            for (const key of Object.keys(defaults.elements).filter(key => key === 'progress' || key.startsWith('progress-'))) next.elements[key] = defaults.elements[key];
+        } else {
+            for (const key of ['offset-x','offset-y','scale','stretch-x','stretch-y']) next.elements[kind+'-'+key] = defaults.elements[kind+'-'+key];
+            next.captions[kind+'-color'] = defaults.captions[kind+'-color'];
+        }
+        return next;
+    }
     function elementAnchor(elements, kind) {
         if (!captionLines[kind]) return {x:elements[kind+'-x'], y:elements[kind+'-y']};
         return {x:elements['text-x'] + elements[kind+'-offset-x'],
@@ -467,6 +481,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1-2048 pixels.');
         return { width, height };
     }
-    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, captionLines, elementAnchor, translateElement, transformElement, snapElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, captionLines, resetComponent, elementAnchor, translateElement, transformElement, snapElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);
