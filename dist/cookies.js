@@ -8,7 +8,6 @@
     const hosted = location.origin === HOST && !location.hash.includes('server=') && (location.pathname === '/' || location.pathname === '/index.html');
     const banner = document.getElementById('cookie-banner');
     const dialog = document.getElementById('cookie-dialog');
-    const checkbox = document.getElementById('cookie-analytics');
     let loaded = false;
     let preference = read();
 
@@ -71,7 +70,6 @@
     }
 
     function open() {
-        checkbox.checked = preference?.analytics === true;
         dialog.showModal();
     }
 
@@ -81,11 +79,10 @@
     document.getElementById('cookie-accept').addEventListener('click', () => save(true));
     document.getElementById('cookie-reject').addEventListener('click', () => save(false));
     document.getElementById('cookie-dialog-reject').addEventListener('click', () => save(false));
-    document.getElementById('cookie-save').addEventListener('click', () => save(checkbox.checked));
+    document.getElementById('cookie-dialog-accept').addEventListener('click', () => save(true));
     window.addEventListener('storage', event => {
         if (event.key !== KEY) return;
         preference = read();
-        checkbox.checked = preference?.analytics === true;
         banner.hidden = !hosted || !!preference;
         apply();
     });

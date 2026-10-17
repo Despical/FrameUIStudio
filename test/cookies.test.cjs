@@ -5,7 +5,7 @@ const vm = require('node:vm');
 
 function fixture({url='https://frameui-studio.berkeakcen.chatgpt.site/?lang=tr',consent,blockedStorage=false}={}) {
     const elements = {}, scripts = [], writes = [], listeners = {}, cookies = [];
-    const ids = ['cookie-banner','cookie-dialog','cookie-analytics','cookie-settings','cookie-customize','cookie-close','cookie-accept','cookie-reject','cookie-dialog-reject','cookie-save'];
+    const ids = ['cookie-banner','cookie-dialog','cookie-settings','cookie-customize','cookie-close','cookie-accept','cookie-reject','cookie-dialog-reject','cookie-dialog-accept'];
     for (const id of ids) elements[id] = {hidden:true,checked:false,open:false,events:{},
         addEventListener(type,callback){this.events[type]=callback;},showModal(){this.open=true;},close(){this.open=false;}};
     let stored = consent === undefined ? null : JSON.stringify(consent);
@@ -40,9 +40,9 @@ test('rejection and revocation stop analytics and preserve authored storage',()=
     const f=fixture(); f.click('cookie-reject');
     assert.equal(f.scripts.length,0); assert.equal(f.writes.at(-1).value.analytics,false);
     f.click('cookie-settings'); assert.equal(f.elements['cookie-dialog'].open,true);
-    f.elements['cookie-analytics'].checked=true; f.click('cookie-save');
+    f.click('cookie-dialog-accept');
     assert.equal(f.scripts.length,1);
-    f.click('cookie-settings'); f.elements['cookie-analytics'].checked=false; f.click('cookie-save');
+    f.click('cookie-settings'); f.click('cookie-dialog-reject');
     const id=f.window.dataLayer.find(args=>args[0]==='config')[1];
     assert.equal(f.window['ga-disable-'+id],true);
     assert.equal(f.window.dataLayer.at(-1)[2].analytics_storage,'denied');
