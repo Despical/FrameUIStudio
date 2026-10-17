@@ -1,3 +1,12 @@
 node_modules/
 *.log
 .DS_Store
+.openai/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+verification/
+playwright-report/
+test-results/
