@@ -29,7 +29,9 @@ test('server language takes precedence and Singapore regional codes normalize', 
     assert.equal(fixture('?lang=ta_SG').api.language,'ta');
     assert.equal(fixture('?lang=zh-SG').api.language,'zh');
     assert.equal(fixture('?lang=unknown','de',['tr']).api.language,'de');
-    assert.equal(fixture('','unknown',['ja-JP']).api.language,'ja');
+    assert.equal(fixture('','unknown',['ja-JP']).api.language,'en');
+    assert.equal(fixture('',undefined,['tr-TR']).api.language,'en');
+    assert.equal(fixture('','tr',['en']).api.language,'tr');
     assert.equal(fixture('','unknown',['xx']).api.language,'en');
 });
 test('language switches preserve the server fragment and only persist a language preference', () => {

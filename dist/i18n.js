@@ -9,8 +9,7 @@
     };
     let stored;
     try { stored = localStorage.getItem('frameui-studio-language'); } catch {}
-    let language = normalize(new URLSearchParams(location.search).get('lang')) || normalize(stored)
-        || (navigator.languages || [navigator.language]).map(normalize).find(Boolean) || 'en';
+    let language = normalize(new URLSearchParams(location.search).get('lang')) || normalize(stored) || 'en';
     const patterns = Object.keys(data.messages.en).filter(key => /\{\d+\}/.test(key)
         && key.replace(/\{\d+\}/g, '').replace(/[^a-zA-Z]/g, '').length >= 4).map(key => {
             const indices = [];

@@ -2,7 +2,7 @@
 
 A browser-local editor for 50 FrameUI shaders and 10 ready-made loading screens. No dependencies, build step, account or internet connection are required. The interface supports 28 bundled languages.
 
-Choose a language in the header. Studio remembers the choice in this browser; `?lang=tr` overrides that preference, and personal `/frameui editor` links initially use the server's `config.yml` language. Regional codes such as `en-SG`, `zh-SG`, `ms-SG` and `ta-SG` use their base language. Arabic and Hebrew use a right-to-left interface; canvas coordinates stay unchanged. Language switches preserve draft content, effect names, captions, IDs, event bindings and YAML. Translations work offline with no translation service at runtime.
+English is the default regardless of the browser's language. Choose a language in the header to save an explicit preference; `?lang=tr` overrides that preference, and personal `/frameui editor` links initially use the server's `config.yml` language. Regional codes such as `en-SG`, `zh-SG`, `ms-SG` and `ta-SG` use their base language. Arabic and Hebrew use a right-to-left interface; canvas coordinates stay unchanged. Language switches preserve draft content, effect names, captions, IDs, event bindings and YAML. Translations work offline with no translation service at runtime.
 
 Supported codes: `en`, `es`, `ru`, `de`, `fr`, `pt`, `pl`, `tr`, `zh`, `id`, `it`, `vi`, `nl`, `ko`, `cs`, `th`, `hu`, `ar`, `ja`, `uk`, `sv`, `da`, `ro`, `sk`, `he`, `lt`, `ms`, `ta`.
 
