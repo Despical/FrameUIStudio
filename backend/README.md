@@ -1,51 +1,58 @@
 # FrameUI connection relay
 
-GPL-3.0-only, matching the repository license. No runtime dependencies or database.
+Connects the browser editor to Minecraft servers through an outbound HTTPS connection. Players run `/frameui editor`, open their personal link and save effects directly to their server. They do not need to configure a domain, certificate or port forwarding.
 
-The plugin generates a random 256-bit channel ID and a separate 256-bit secret on startup. It registers the channel over HTTPS and keeps one outbound long poll open. The browser receives the channel endpoint and its separate expiring player capability in the URL fragment. Channel credentials never reach browsers. The plugin handles every API operation using its existing session/permission/import/revision checks; the relay cannot grant player permissions. A new command revokes the player's previous link. Server restarts generate a new channel and invalidate previous links.
+The service uses Node.js built-ins and requires no runtime dependencies or database. Its source is licensed under GPL-3.0-only, matching the repository license.
 
-Only the fixed Studio session/library/import/delete API and generated `/pack` route are transported. There is no arbitrary proxy, filesystem, console, command or socket access. Pack downloads use the random channel URL without a player token so Minecraft clients can fetch them. They expose only the generated pack, as ordinary resource-pack hosting does. Never put secrets in pack assets.
+## Development
 
-## Run and test
+Run these commands from the repository root:
 
 ```sh
 npm run relay
 node --test test/relay.test.cjs
 ```
 
-Local listener: `http://127.0.0.1:8094/frameui-relay/v1/health`. Production: `https://studio-relay.despical.dev/frameui-relay/v1/health`. The public website remains at `https://frameui.despical.dev` on GitHub Pages.
+The default listener is on port `8094`. Check its health at `http://localhost:8094/frameui-relay/v1/health`.
 
-## Deploy
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `PORT` | `8094` | HTTP listening port |
+| `TRUST_PROXY` | Disabled | Read client IPs from a trusted proxy's `X-Relay-IP` header |
 
-The service runs on the existing VDS in `/opt/frameui-studio/backend`, on Docker network `plugins-hub-edge`. The container has no published host ports, runs as the Node non-root user, has a read-only filesystem and resource limits. `studio-relay.despical.dev` has a DNS-only A record pointing at the VDS and a verified Let's Encrypt certificate; large pack transfers go directly to the relay. The existing TLS proxy routes only `/frameui-relay/` to `frameui-relay:8094`.
+Enable `TRUST_PROXY=1` only behind a proxy that overwrites `X-Relay-IP`. Keep the application listener private when using this setting. Production connections require HTTPS; the included Docker and Nginx files provide deployment examples.
 
-Install `nginx-server.conf` alongside the existing proxy server blocks, validate with `nginx -t`, then reload. The initial HTTP-only block serves ACME challenges from `/var/lib/acme-webroot`; obtain the certificate with the existing Certbot account before enabling the HTTPS block. The installed Certbot timer renews it automatically and the existing deployment hook reloads Nginx. The proxy uses Docker DNS to recover after relay container replacements. `nginx-location.conf` is an optional legacy Hub-hosted route. Do not replace unrelated Hub/proxy configuration.
+## Connection flow
 
-From a checkout on the deployment machine:
+The plugin generates a random channel ID and a separate secret, registers the channel and keeps an outbound long poll open. The browser receives the channel endpoint and a separate, expiring player token in the personal link's fragment. Channel secrets never reach browsers.
 
-```sh
-docker compose -p frameui-studio -f backend/compose.yml up -d --build --wait
-curl --fail https://studio-relay.despical.dev/frameui-relay/v1/health
-```
+The relay forwards requests to the corresponding plugin. The plugin checks player permissions, online status, session expiry, import validation and effect revisions before applying changes. A new editor link revokes that player's previous link. Restarting the Minecraft server invalidates its existing links.
 
-Deployment updates disconnect channels briefly; plugins reconnect automatically, keeping their IDs/secrets until the Minecraft server restarts. Requests in flight fail visibly and must be retried. Roll back by redeploying the previous checked-out backend and reloading the validated proxy configuration. No persistent database migrations are needed.
+Generated resource packs use a separate channel URL so Minecraft clients can download them without a player token. As with ordinary resource-pack hosting, pack assets must not contain secrets.
 
-## Protocol v1
+## Protocol
 
-The base path is `/frameui-relay/v1/`. Plugin control endpoints:
+All routes use the `/frameui-relay/v1/` prefix.
 
 | Request | Purpose |
 | --- | --- |
-| `POST channels/{id}` | Register/reconnect using `Authorization: Bearer {channel-secret}` |
-| `GET channels/{id}/poll` | Receive one binary request; idle polls return 204 after 25 seconds |
-| `POST channels/{id}/result/{request-id}` | Return a bounded response using the same channel secret |
-| `DELETE channels/{id}` | Disconnect and fail queued requests |
-| `GET health` | Public process health, no sensitive channel details |
+| `POST channels/{id}` | Register or reconnect with the channel secret |
+| `GET channels/{id}/poll` | Receive one request; idle polls return 204 |
+| `POST channels/{id}/result/{request-id}` | Return a response with the channel secret |
+| `DELETE channels/{id}` | Disconnect and clear pending requests |
+| `GET health` | Check service health |
 
-Public request routes: `servers/{id}/studio/api/{session,effects,effects/{effect-id},import}` and `servers/{id}/pack`. API calls require the separate player bearer token. Exact allowed browser origin: `https://frameui.despical.dev`. API bodies/authorization are forwarded only to the corresponding authenticated channel.
+Browser API requests use `servers/{id}/studio/api/` for sessions, effect lists, effect downloads, imports and deletions. They require the player's bearer token. Resource packs use `servers/{id}/pack`.
 
-Each binary field has an unsigned 32-bit big-endian byte length, then UTF-8 bytes. Request fields: method, fixed path, authorization, content-type, if-match, if-none-match, then length-prefixed raw body. Response fields: decimal status, allowlisted content-type, optional quoted SHA-256 ETag, then length-prefixed raw body. Text fields are limited to 8192 bytes. No compression is used in the transport envelope.
+Transport fields begin with an unsigned 32-bit big-endian byte length, followed by their UTF-8 contents. The final field contains length-prefixed raw body bytes.
 
-Limits: 9 MiB imports, 32 MiB responses, 4 pending requests/channel, 32 global pending requests, bounded buffered request bytes, 4 simultaneous upload readers, 2 response readers, 1000 channels, 32 channels/IP, 30 registrations/IP/hour and 180 requests/IP/minute. Identical versioned pack downloads share one transfer (up to 128 waiting clients) and a 60-second memory cache capped at 64 MiB globally. This avoids a pack request per player during simultaneous joins. Requests time out after 45 seconds; abandoned channels expire after 3 minutes. Oversize, invalid origin, unsupported route, stale result and wrong-secret requests are rejected. Limits also bound unauthenticated abuse; they are operational limits, not an availability guarantee.
+- Request fields: method, path, authorization, content type, `If-Match`, `If-None-Match`, body.
+- Response fields: status, content type, ETag, body.
 
-No designs, tokens or packs are persisted by the service. The proxy disables access logging for relay routes; do not enable request-body/header logging. Both browser-to-relay and plugin-to-relay connections use verified HTTPS. This is **not end-to-end encryption**: the relay operator can technically inspect traffic in memory. `TRUST_PROXY=1` is only safe behind a trusted proxy that overwrites `X-Relay-IP`; never publish the container port directly with this enabled. Existing hosting-provider/proxy security controls and IP processing still apply.
+Text fields are limited to 8192 bytes. Imports are limited to 9 MiB and responses to 32 MiB. Identical versioned pack downloads share a transfer and a short-lived, bounded memory cache. Request timeouts, concurrency limits and IP rate limits protect service capacity; their values are defined in `relay.cjs`.
+
+## Privacy and availability
+
+Designs, tokens and packs are not written to persistent storage. Do not enable request-body or authorization-header logging. Both connections use HTTPS in production, but this is **not end-to-end encryption**: the relay operator can technically inspect forwarded traffic in memory.
+
+Plugins reconnect automatically after an interruption. Requests in progress may fail and need to be retried. Connected saves and pack downloads require the relay and Minecraft server to be available; offline editing and ZIP exports remain independent.
