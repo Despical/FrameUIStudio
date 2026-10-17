@@ -403,7 +403,7 @@
         $('inspector-title').textContent = componentLabels[kind] || 'Effect settings';
         $('component-back').hidden = !kind; document.querySelector('.inspector-heading').classList.toggle('component-heading',!!kind); document.querySelector('.inspector-tabs').hidden = !!kind;
         $('settings-component').hidden = !kind;
-        $('reset-button').textContent = kind ? 'Reset layout' : 'Reset';
+        $('reset-button').textContent = 'Reset';
         for (const pane of document.querySelectorAll('.settings-pane:not(#settings-component)')) pane.hidden = !!kind || pane.id !== 'settings-'+activeTab;
         document.querySelector('.inspector-scroll').scrollTop = 0;
         if (kind) renderComponent(kind);
@@ -457,10 +457,10 @@
         pane.append(layout);
         if (core.captionLines[kind]) {
             const content = element('section','settings-section caption-content');
-            content.append(captionColor(kind));
             if (kind==='detail') {
                 for (const [key,label] of [['join-detail','Joining'],['teleport-detail','Teleporting'],['preview-detail','Preview']]) content.append(field(label,'captions.'+key,{maxLength:128,component:true}));
             } else content.append(field(componentLabels[kind],'captions.'+kind,{maxLength:kind==='title'?64:96,component:true}));
+            content.append(captionColor(kind));
             pane.append(content);
         } else if (kind==='image') {
             const appearance = section('Appearance');
@@ -485,13 +485,14 @@
         }
         if (thickness && document.activeElement!==thickness) thickness.value = Number((effect.elements['progress-scale']*(effect.elements.progress==='ring'?4.4:effect.elements.progress==='dots'?7.2:6)).toFixed(2));
     }
-    function resetComponentLayout() {
+    function resetComponent() {
         const previous = snapshot(), kind = selectedComponent;
-        const defaults = core.createEffect(effect.template).elements;
+        const templateDefaults = core.createEffect(effect.template), defaults = templateDefaults.elements;
         const keys = core.captionLines[kind] ? ['offset-x','offset-y','scale','stretch-x','stretch-y'].map(key=>kind+'-'+key)
             : kind==='image' ? ['image-x','image-y','image-scale','image-stretch-x','image-stretch-y']
             : ['progress-x','progress-y','progress-width','progress-scale'];
         for (const key of keys) effect.elements[key] = defaults[key];
+        if (core.captionLines[kind]) effect.captions[kind+'-color'] = templateDefaults.captions[kind+'-color'];
         commitChange(previous); sync();
     }
     function renderCategories() {
@@ -900,7 +901,7 @@
     $('close-connect').addEventListener('click', () => $('connect-dialog').close());
     $('export-button').addEventListener('click', exportEffect); $('guide-export').addEventListener('click', exportEffect); $('yaml-download').addEventListener('click', () => { try { download(core.toYaml(effect), effect.id + '.yml', 'text/yaml;charset=utf-8'); toast('YAML downloaded. Images must be supplied separately; use Export effect for a complete ZIP.'); } catch (error) { toast(error.message, true); } });
     $('guide-button').addEventListener('click', () => $('guide-dialog').showModal()); $('close-guide').addEventListener('click', () => $('guide-dialog').close()); $('guide-dialog').addEventListener('click', event => { if (event.target === $('guide-dialog')) { const rect = $('guide-dialog').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('guide-dialog').close(); } });
-    $('reset-button').addEventListener('click', async () => { if (selectedComponent) { resetComponentLayout(); return; } remember(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
+    $('reset-button').addEventListener('click', async () => { if (selectedComponent) { resetComponent(); return; } remember(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
     const tabs = [...document.querySelectorAll('[data-tab]')];
     const tabScroll = new Map();
     let activeTab = null;
