@@ -17,14 +17,15 @@
   <a href="https://discord.gg/uXVU8jmtpU">Discord</a>
 </p>
 
-FrameUI Studio is a free browser editor for FrameUI loading screens: 50 animated shaders, 10 editable presets, and your own saved designs. This repository contains the website only. The paid Minecraft plugin has its own project and is not included here.
+FrameUI Studio is a free browser editor for FrameUI loading screens: 50 animated shaders, 10 editable presets, and your own saved designs. This repository contains the website and its connection relay in `backend/`. The paid Minecraft plugin has its own project and is not included here.
 
 ## Features
 
 - Preview the plugin's shader functions and edit colors, timing, captions, images and indicators.
 - Drag and resize screen elements directly on the preview, with undo and redo.
 - Import YAML or Studio ZIPs; export a complete effect with its PNG and installation instructions.
-- Keep drafts and image libraries in your browser. No Studio account, backend or subscription is required.
+- Keep drafts and image libraries in your browser. No Studio account or subscription is required.
+- Connect to your Minecraft server with `/frameui editor`; save effects without opening ports or setting up a domain.
 - Use 28 bundled interface languages, translated language names, flags, and Arabic/Hebrew RTL layouts.
 - Edit on desktop, tablet or mobile. Longer dialogs scroll inside the viewport.
 - Allow all cookies or essential storage only; reopen **Cookie settings** in the footer at any time.
@@ -66,7 +67,11 @@ The website is independent of the plugin project. Deploying this repository does
 
 Run `/frameui editor` on a FrameUI server and open the personal link. It opens this public website, connects to that server, and enables importing and saving effects. Each player keeps a separate expiring capability; the link's fragment contains the server endpoint and token, and neither is sent to the website host or Google Analytics. Server API calls use the Authorization header with no cookies or referrer.
 
-The server owner must expose the resource-pack host over reachable HTTPS and forward `/studio/` through the same reverse proxy. Set the plugin's `resource-pack.public-url` to that HTTPS pack address and `editor.public-url` to `https://frameui.despical.dev/`. Remote plain HTTP addresses are blocked by browsers; local loopback development may require a browser permission. The server accepts cross-origin API requests only from its configured Studio origin, while preserving player permissions, session expiry and revision checks. Keep personal links private. Clicking **Connect server** retries an existing personal connection if the server becomes available again.
+Current FrameUI automatically opens an outbound HTTPS connection to the maintained relay. No inbound port, domain, certificate or manual configuration is needed. The relay transports Studio API calls and generated resource packs, while the plugin still enforces online-player permissions, 30-minute sessions, per-player link revocation, import validation and revision checks. Keep personal links private. Clicking **Connect server** retries an existing personal connection if the server becomes available again.
+
+The relay must be reachable from the Minecraft server over outbound HTTPS (port 443). It forwards content in memory; it does not store designs, tokens or resource packs on disk or send them to analytics. This is TLS on both connections, not end-to-end encryption: the relay operator can technically access traffic while forwarding it. Offline editing/exporting continues to work during relay outages; connected saves and pack delivery require the server and relay to be online. Deliberately self-hosted installations may disable `editor.relay.enabled` and use their own direct HTTPS resource-pack/API host.
+
+See [backend/README.md](backend/README.md) for the protocol, limits and deployment procedure. Static Pages deployments contain only `dist/`; backend code and deployment configuration are never included in the Pages artifact.
 
 ## Security and support
 

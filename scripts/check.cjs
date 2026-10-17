@@ -19,7 +19,7 @@ function walk(folder) {
         return entry.isDirectory() ? walk(file) : [file];
     });
 }
-const sources = ['dist','scripts','test'].flatMap(folder => walk(path.join(root, folder)));
+const sources = ['dist','scripts','test','backend'].flatMap(folder => walk(path.join(root, folder)));
 for (const file of sources.filter(file => /\.(?:c?js)$/.test(file))) {
     const result = spawnSync(process.execPath, ['--check',file], {stdio:'inherit'});
     if (result.status !== 0) process.exit(result.status || 1);

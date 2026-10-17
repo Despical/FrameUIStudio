@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "node scripts/serve.cjs",
     "start": "node scripts/serve.cjs",
-    "test": "node --test test/core.test.cjs test/library.test.cjs test/server-link.test.cjs test/preview-loop.test.cjs test/render-model.test.cjs test/i18n.test.cjs test/cookies.test.cjs",
+    "test": "node --test test/core.test.cjs test/library.test.cjs test/server-link.test.cjs test/preview-loop.test.cjs test/render-model.test.cjs test/i18n.test.cjs test/cookies.test.cjs test/relay.test.cjs",
+    "relay": "node backend/relay.cjs",
     "refresh": "node scripts/generate-preview.cjs",
     "check": "node scripts/check.cjs"
   },
