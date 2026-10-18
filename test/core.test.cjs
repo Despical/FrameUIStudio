@@ -552,7 +552,7 @@ test('indicator Reset restores style and every dimension without resetting the i
     const original=core.clone(effect), result=core.resetComponent(effect,'progress');
     for(const key of Object.keys(defaults.elements).filter(key=>key==='progress'||key.startsWith('progress-'))) assert.equal(result.elements[key],defaults.elements[key],key);
     assert.deepEqual(result.appearance,effect.appearance); assert.deepEqual(result.captions,effect.captions);
-    for(const key of Object.keys(effect.elements).filter(key=>key!=='progress'&&!key.startsWith('progress-'))) assert.equal(result.elements[key],effect.elements[key],key);
+    for(const key of Object.keys(effect.elements).filter(key=>key!=='progress'&&!key.startsWith('progress-'))) assert.deepEqual(result.elements[key],effect.elements[key],key);
     assert.deepEqual(effect,original); core.validate(result);
 });
 
@@ -603,4 +603,40 @@ test('caption entrance animations are independent and survive portable exports',
     const legacy=core.fromYaml('template: aurora\nelements:\n  text-animation: slide-left\n');
     for(const line of ['title','subtitle','detail']) assert.equal(legacy.elements[line+'-animation'],'slide-left');
     const bad=core.clone(effect);bad.elements['subtitle-animation']='spin';assert.throws(()=>core.validate(bad));
+});
+
+
+test('multiple pictures and captions retain independent transforms through YAML and ZIP', async () => {
+    const effect=core.userCopy(core.createEffect('fade-out'),[],[]);
+    effect.elements.objects={
+        'text-1':{...core.objectDefaults(),text:'Welcome {player}',x:.2,y:.25,color:'#aabbcc'},
+        'text-2':{...core.objectDefaults(),text:'Enjoy {world}',x:.8,y:.7,animation:'grow'},
+        'image-1':{...core.objectDefaults('image'),image:'images/first.png',x:.25},
+        'image-2':{...core.objectDefaults('image'),image:'images/second.png',x:.75}
+    };
+    const yaml=core.toYaml(effect); assert.deepEqual(core.fromYaml(yaml),effect);
+    const entries=await core.unzip(core.zip({['effects/'+effect.id+'.yml']:yaml,'images/first.png':new Uint8Array([1,2]),'images/second.png':new Uint8Array([3,4])}));
+    assert.deepEqual(core.fromYaml(core.decoder.decode(entries['effects/'+effect.id+'.yml'])),effect);
+    const moved=core.translateElement(effect.elements,'text-1',.1,-.1);
+    assert.ok(Math.abs(moved.objects['text-1'].x-.3)<1e-9); assert.deepEqual(moved.objects['text-2'],effect.elements.objects['text-2']);
+    assert.deepEqual(moved.objects['image-1'],effect.elements.objects['image-1']);
+    const resized=core.transformElement(effect.elements,'image-2',.1,.05,'se',{x:.6,y:.3,width:.3,height:.4});
+    assert.ok(resized.objects['image-2'].scale>effect.elements.objects['image-2'].scale);
+    assert.deepEqual(resized.objects['image-1'],effect.elements.objects['image-1']);
+});
+
+test('additional objects enforce count, finite layout, safe sources and distinct IDs', () => {
+    const effect=core.createEffect('fade-out');
+    for(let i=1;i<=12;i++) effect.elements.objects['text-'+i]=core.objectDefaults();
+    assert.equal(core.nextObjectId(effect.elements.objects,'text'),'text-13');core.validate(effect);
+    effect.elements.objects['text-13']=core.objectDefaults(); assert.throws(()=>core.validate(effect)); delete effect.elements.objects['text-13'];
+    for(let i=1;i<=8;i++) effect.elements.objects['image-'+i]={...core.objectDefaults('image'),image:'images/a.png'};
+    core.validate(effect); effect.elements.objects['image-9']={...core.objectDefaults('image'),image:'images/a.png'};assert.throws(()=>core.validate(effect));delete effect.elements.objects['image-9'];
+    effect.elements.objects['image-1'].image='images/../outside.png';assert.throws(()=>core.validate(effect));
+    effect.elements.objects['image-1'].image='images/a.png';effect.elements.objects['text-1'].scale=NaN;assert.throws(()=>core.validate(effect));
+});
+
+test('resetting one added object preserves content and all other layers', () => {
+    const effect=core.createEffect('fade-out'); effect.elements.objects={'text-1':{...core.objectDefaults(),text:'Keep me',x:.2,scale:4},'image-1':{...core.objectDefaults('image'),image:'images/picture.png'}};
+    const reset=core.resetComponent(effect,'text-1');assert.equal(reset.elements.objects['text-1'].text,'Keep me');assert.equal(reset.elements.objects['text-1'].x,.5);assert.deepEqual(reset.elements.objects['image-1'],effect.elements.objects['image-1']);
 });

@@ -21,6 +21,8 @@
 
 FrameUI Studio is a free browser editor for FrameUI loading screens, with 50 animations, 10 editable presets and your own saved designs.
 
+Use **Design → Additional elements** to add independent text and images. Each can be selected, moved, resized and removed. Up to 12 extra text objects and 8 extra pictures are preserved by ZIP export, browser drafts and connected-server saves.
+
 ## Features
 
 - Preview loading screens and edit colors, timing, text, images and indicators.
