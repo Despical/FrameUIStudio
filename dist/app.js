@@ -946,13 +946,17 @@
         commit: before => { const previous = snapshot(); previous.effect.elements = before; commitChange(previous); }
     });
     async function start() {
-        await window.FrameStudioFont.load();
+        const [, library] = await Promise.all([
+            window.FrameStudioFont.load(),
+            window.FrameStudioLibrary.all().then(entries => ({entries}), error => ({error}))
+        ]);
         const renamed = new Map();
         try {
-            for (const entry of await window.FrameStudioLibrary.listDeleted()) {
+            if (library.error) throw library.error;
+            for (const entry of library.entries.filter(entry => entry.deleted)) {
                 legacyDeletedIds.add(entry.id);
             }
-            for (const entry of await window.FrameStudioLibrary.list()) {
+            for (const entry of library.entries.filter(entry => !entry.deleted)) {
                 try { entry.effect = core.normalize(entry.effect); entry.effect.category = core.categories[2]; savedEffects.set(entry.id, entry); } catch {}
             }
             const names = [...savedEffects.values()].filter(entry => !/ · (?:Copy|Kopya)(?: \d+)?$/.test(entry.effect.name)).map(entry => entry.effect.name);
@@ -965,7 +969,7 @@
         try { const stored = localStorage.getItem(storageKey); if (stored) { const draft = JSON.parse(stored); if (draft.version === core.VERSION) { effect = core.normalize(draft.effect); if (draft.image) await setImage(fromDataUrl(draft.image)); } } } catch { toast('Previous draft unavailable.', true); }
         if (effect.category === core.categories[2] && legacyDeletedIds.has(effect.id)) { const template = effect.template; await setImage(null); effect = core.createEffect(template); }
         const rename = renamed.get(effect.id); if (effect.category === core.categories[2] && rename?.original === effect.name) effect.name = rename.name;
-        if (effect.appearance.image && !imageBytes) { const preset = core.catalog.find(item => item.id === effect.id); if (preset?.image) { try { await setImage(new Uint8Array(await (await fetch(preset.image)).arrayBuffer())); } catch { toast('Preset image could not load. Choose the matching PNG.', true); } } }
+        if (effect.appearance.image && !imageBytes) { const preset = core.catalog.find(item => item.id === effect.id); if (preset?.image) { try { const initialImage = preset.image === 'assets/frameui-logo.png' && window.FrameStudioStartup?.presetImage; await setImage(new Uint8Array(initialImage ? await initialImage : await (await fetch(preset.image)).arrayBuffer())); } catch { toast('Preset image could not load. Choose the matching PNG.', true); } } }
         activeCategory = effect.category;
         if (effect.category === core.categories[2]) await save();
         renderSettings(); renderCatalog(); sync(); previewReady=true; sizePreview();

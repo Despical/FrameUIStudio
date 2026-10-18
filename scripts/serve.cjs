@@ -16,7 +16,7 @@ const root = path.resolve(__dirname, '../dist');
 const port = Number(process.env.PORT || 5173);
 if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('PORT must be 1024..65535');
 const types = {'.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
-    '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon'};
+    '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon'};
 const server = http.createServer(async (request, response) => {
     try {
         if (!['GET', 'HEAD'].includes(request.method)) { response.writeHead(405); response.end(); return; }

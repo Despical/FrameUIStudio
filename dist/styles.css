@@ -27,7 +27,14 @@ h1,h2,h3,p{margin:0}
 .svg-defs{width:0;height:0;position:absolute}
 /* Keep fallback markup out of the first paint until the restored editor is ready. */
 .studio-starting body{visibility:hidden}
-.studio-starting::before{content:"FrameUI Studio";position:fixed;inset:0;display:grid;place-items:center;color:#d2deec;font:600 18px system-ui,sans-serif;letter-spacing:-.025em;background:#0b1019;z-index:100}
+.startup-screen{display:none}
+.studio-starting .startup-screen{visibility:visible;position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:#0b1019}
+.startup-screen>img{width:min(400px,calc(100vw - 64px));height:auto;object-fit:contain}
+.startup-screen>p{margin:0;color:#a6b8cb;font-size:13px;line-height:1.5;letter-spacing:.04em}
+.startup-progress{width:180px;height:3px;overflow:hidden;border-radius:3px;background:#243344}
+.startup-progress>span{display:block;width:36%;height:100%;border-radius:inherit;background:#75e8dc;animation:startup-progress 1.4s ease-in-out infinite}
+@keyframes startup-progress{from{transform:translateX(-110%)}to{transform:translateX(390%)}}
+@media(prefers-reduced-motion:reduce){.startup-progress>span{animation:none;margin-inline:auto}}
 .app-header{height:84px;padding:0 26px;display:flex;align-items:center;border-bottom:1px solid var(--border);gap:32px}
 .brand{display:flex;align-items:center;gap:12px;font-size:21px;font-weight:700;letter-spacing:-.6px;white-space:nowrap}
 .brand b{font-weight:400;color:#b5c5d5}

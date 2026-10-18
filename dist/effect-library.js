@@ -45,6 +45,7 @@
         return removed;
     }
     window.FrameStudioLibrary = {
+        all: () => transaction('readonly', store => store.getAll()),
         list: async () => (await transaction('readonly', store => store.getAll())).filter(entry => !entry.deleted),
         listDeleted: async () => (await transaction('readonly', store => store.getAll())).filter(entry => entry.deleted),
         put: entry => transaction('readwrite', store => store.put({ ...entry, deleted: false })),

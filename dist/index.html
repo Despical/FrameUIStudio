@@ -19,10 +19,19 @@ See the LICENSE file or <https://www.gnu.org/licenses/> for details.
     <title>Home | FrameUI Studio</title>
     <link rel="canonical" href="https://frameui.despical.dev/">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
-    <link rel="stylesheet" href="styles.css?v=startup-1">
-    <script src="startup.js"></script>
+    <link rel="preload" as="image" href="assets/startup-logo.webp" fetchpriority="high">
+    <link rel="preload" as="image" href="assets/font/ascii.png">
+    <link rel="preload" as="image" href="assets/font/accented.png">
+    <link rel="preload" as="image" href="assets/font/nonlatin_european.png">
+    <link rel="stylesheet" href="styles.css?v=startup-2">
+    <script src="startup.js?v=startup-2"></script>
 </head>
 <body>
+    <div class="startup-screen" role="status" aria-live="polite">
+        <img src="assets/startup-logo.webp" width="768" height="153" alt="FrameUI" fetchpriority="high">
+        <div class="startup-progress" aria-hidden="true"><span></span></div>
+        <p>Loading</p>
+    </div>
     <svg class="svg-defs" aria-hidden="true"><defs>
         <symbol id="icon-frame" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5M8 8h8v8H8z"/></symbol>
         <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></symbol>
@@ -125,6 +134,6 @@ See the LICENSE file or <https://www.gnu.org/licenses/> for details.
         <div class="cookie-actions"><button id="cookie-reject" class="button button-quiet" type="button">Necessary only</button><button id="cookie-accept" class="button button-primary" type="button">Accept all</button></div>
     </section>
     <script src="i18n-data.js"></script><script src="i18n.js"></script><script src="cookies.js"></script><script src="core.js"></script><script src="font-data.js"></script><script src="caption-font.js"></script><script src="shaders.js"></script><script src="dropdowns.js"></script><script src="canvas-editor.js"></script><script src="preview-loop.js"></script>
-    <script src="effect-library.js"></script><script src="server-link.js"></script><script src="app.js?v=startup-1"></script>
+    <script src="effect-library.js?v=startup-2"></script><script src="server-link.js"></script><script src="app.js?v=startup-2"></script>
 </body>
 </html>
