@@ -18,7 +18,7 @@
     const MAX_AGE = 180 * 24 * 60 * 60 * 1000;
     const hosted = !!canonical && !location.hash.includes('server=');
     const banner = document.getElementById('cookie-banner');
-    const dialog = document.getElementById('cookie-dialog');
+    let returnFocus = null;
     let loaded = false;
     let preference = read();
 
@@ -77,20 +77,19 @@
         try { localStorage.setItem(KEY, JSON.stringify(preference)); } catch (_) { /* Apply for this visit even without storage. */ }
         apply();
         banner.hidden = true;
-        dialog.close();
+        returnFocus?.focus();
+        returnFocus = null;
     }
 
     function open() {
-        dialog.showModal();
+        returnFocus = document.activeElement;
+        banner.hidden = false;
+        document.getElementById('cookie-reject').focus();
     }
 
     document.getElementById('cookie-settings').addEventListener('click', open);
-    document.getElementById('cookie-customize').addEventListener('click', open);
-    document.getElementById('cookie-close').addEventListener('click', () => dialog.close());
     document.getElementById('cookie-accept').addEventListener('click', () => save(true));
     document.getElementById('cookie-reject').addEventListener('click', () => save(false));
-    document.getElementById('cookie-dialog-reject').addEventListener('click', () => save(false));
-    document.getElementById('cookie-dialog-accept').addEventListener('click', () => save(true));
     window.addEventListener('storage', event => {
         if (event.key !== KEY) return;
         preference = read();
