@@ -13,6 +13,8 @@
 </p>
 <p align="center">
   <a href="https://frameui.despical.dev/">Open Studio</a> ·
+  <a href="https://docs.despical.dev/frameui-studio/">Documentation</a> ·
+  <a href="https://docs.despical.dev/frameui/effects/">Effect Gallery</a> ·
   <a href="https://hub.despical.dev/">Get FrameUI</a> ·
   <a href="https://discord.gg/uXVU8jmtpU">Discord</a>
 </p>
@@ -24,7 +26,7 @@ FrameUI Studio is a free browser editor for FrameUI loading screens, with 50 ani
 - Preview loading screens and edit colors, timing, text, images and indicators.
 - Drag and resize screen elements directly on the preview, with undo and redo.
 - Import YAML or Studio ZIPs; export a complete effect with its PNG and installation instructions.
-- Keep drafts and image libraries in your browser. No Studio account or subscription is required.
+- Keep drafts and image libraries in your browser. No account or subscription is required.
 - Connect to your Minecraft server with `/frameui editor` and save effects directly.
 - Choose from 28 interface languages.
 - Edit on desktop, tablet or mobile.
