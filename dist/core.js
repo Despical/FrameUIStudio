@@ -139,7 +139,7 @@
             captions: { 'title-color':'#f1f4fa', 'subtitle-color':'#8595ad', 'detail-color':'#8595ad', enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
             presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
             appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1, 'image-motion': 'still', 'title-motion': 'still' },
-            elements: { 'title-animation':'still', 'subtitle-animation':'still', 'detail-animation':'still', 'title-offset-x': 0, 'title-offset-y': 0, 'title-scale': 1, 'title-stretch-x': 1, 'title-stretch-y': 1, 'subtitle-offset-x': 0, 'subtitle-offset-y': 0, 'subtitle-scale': 1, 'subtitle-stretch-x': 1, 'subtitle-stretch-y': 1, 'detail-offset-x': 0, 'detail-offset-y': 0, 'detail-scale': 1, 'detail-stretch-x': 1, 'detail-stretch-y': 1, background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1, 'image-stretch-x': 1, 'image-stretch-y': 1, 'text-stretch-x': 1, 'text-stretch-y': 1 },
+            elements: { objects: {}, 'title-animation':'still', 'subtitle-animation':'still', 'detail-animation':'still', 'title-offset-x': 0, 'title-offset-y': 0, 'title-scale': 1, 'title-stretch-x': 1, 'title-stretch-y': 1, 'subtitle-offset-x': 0, 'subtitle-offset-y': 0, 'subtitle-scale': 1, 'subtitle-stretch-x': 1, 'subtitle-stretch-y': 1, 'detail-offset-x': 0, 'detail-offset-y': 0, 'detail-scale': 1, 'detail-stretch-x': 1, 'detail-stretch-y': 1, background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1, 'image-stretch-x': 1, 'image-stretch-y': 1, 'text-stretch-x': 1, 'text-stretch-y': 1 },
             filters: { permission: '', 'deny-permissions': [], worlds: { include: [], exclude: [] }, 'source-worlds': { include: [], exclude: [] }, 'addon-targets': { include: [], exclude: [] }, 'game-modes': { include: [], exclude: [] }, 'teleport-causes': [], triggers: [...triggers], distance: { min: 0, max: -1 }, height: { min: -30000000, max: 30000000 }, time: { min: 0, max: 23999 }, weather: [], 'cooldown-ticks': 0 }
         };
     }
@@ -149,6 +149,7 @@
         for (const key of Object.keys(input)) {
             if (!Object.hasOwn(defaults, key)) throw new Error(`Unknown setting: ${path}${key}.`);
             const value = input[key], base = defaults[key];
+            if (path + key === 'elements.objects') { if(!value || typeof value!=='object' || Array.isArray(value)) throw new Error('Objects must be a mapping.'); result[key]=Object.fromEntries(Object.entries(value).map(([id,o])=>[id,{...objectDefaults(o?.type),...o}])); continue; }
             result[key] = base && typeof base === 'object' && !Array.isArray(base) ? merge(base, value, `${path}${key}.`) : value;
         }
         return result;
@@ -242,7 +243,37 @@
         if (f.height.max < f.height.min) fail('Maximum height must be at least the minimum height.');
         for (const key of ['min', 'max']) number(f.time[key], `Time ${key}`, 0, 23999);
         number(f['cooldown-ticks'], 'Cooldown', 0, 1728000);
+        validateObjects(effect.elements.objects);
         return effect;
+    }
+    function objectDefaults(type='text') {
+        return {type,text:'Text',color:'#f1f4fa',image:'',x:.5,y:.5,scale:type==='text'?2:.35,'stretch-x':1,'stretch-y':1,opacity:1,fit:'contain',animation:'fade'};
+    }
+    function validateObjects(objects) {
+        if (!objects || typeof objects !== 'object' || Array.isArray(objects)) throw new Error('Objects must be a mapping.');
+        const counts={text:0,image:0}, keys=Object.keys(objectDefaults());
+        for (const [id,o] of Object.entries(objects)) {
+            if (!/^[a-z][a-z0-9-]{0,31}$/.test(id) || !o || !['text','image'].includes(o.type)) throw new Error('Invalid composition object.');
+            if (++counts[o.type] > (o.type==='text'?12:8)) throw new Error('Use at most 12 extra text objects and 8 extra pictures.');
+            if (Object.keys(o).some(key=>!keys.includes(key)) || keys.some(key=>!Object.hasOwn(o,key))) throw new Error('Invalid object settings.');
+            if (typeof o.text !== 'string' || o.text.length>128 || /[\u0000-\u001f\u007f]/.test(o.text) || !/^#[0-9a-f]{6}$/i.test(o.color)) throw new Error('Invalid object text or color.');
+            for (const [key,min,max] of [['x',-10,10],['y',-10,10],['scale',.01,10],['stretch-x',.01,10],['stretch-y',.01,10],['opacity',0,1]]) if (!Number.isFinite(o[key]) || o[key]<min || o[key]>max) throw new Error('Invalid object '+key+'.');
+            if (!['cover','contain'].includes(o.fit) || !['fade','grow','slide-up','slide-down','slide-left','slide-right','none',...(o.type==='image'?['wipe','page']:[])].includes(o.animation)) throw new Error('Invalid object appearance.');
+            if (typeof o.image!=='string' || (o.type==='image' && !/^images\/[a-zA-Z0-9_-]+\.png$/.test(o.image))) throw new Error('Invalid object image path.');
+        }
+    }
+    function nextObjectId(objects,type) { let n=1; while(objects[type+'-'+n]) n++; return type+'-'+n; }
+    function objectRect(o,image,width,height,font) {
+        if (o.type==='image') {
+            if(!image) return null;
+            const ratio=(width/height)/(image.width/image.height), contain=o.fit==='contain';
+            const w=(contain?Math.min(1/ratio,1):Math.max(1/ratio,1))*o.scale*o['stretch-x'];
+            const h=(contain?Math.min(ratio,1):Math.max(ratio,1))*o.scale*o['stretch-y'];
+            return {x:o.x-w/2,y:o.y-h/2,width:w,height:h};
+        }
+        if(!o.text.trim()) return null;
+        const metrics=font.measure(o.text), fit=Math.min(width/640,height/360), unit=.7*fit*o.scale;
+        return {x:o.x-metrics.width*unit*o['stretch-x']/width/2,y:o.y+metrics.top*unit*o['stretch-y']/height,width:Math.max(1,metrics.width)*unit*o['stretch-x']/width,height:metrics.height*unit*o['stretch-y']/height};
     }
     // The same normalized coordinates are exported to the plugin. One transform can be committed
     // as one history entry by any input surface (pointer, touch or keyboard).
@@ -263,8 +294,9 @@
             x:direction[0]*(1-progress),y:direction[1]*(1-progress)};
     }
     function resetComponent(effect, kind) {
-        if (!['image','progress',...Object.keys(captionLines)].includes(kind)) throw new Error('Unknown canvas element.');
+        if (!effect.elements.objects?.[kind] && !['image','progress',...Object.keys(captionLines)].includes(kind)) throw new Error('Unknown canvas element.');
         const next = clone(effect), defaults = createEffect(effect.template);
+        if (effect.elements.objects?.[kind]) { const object=next.elements.objects[kind]; next.elements.objects[kind]={...objectDefaults(object.type),text:object.text,image:object.image}; return next; }
         if (kind === 'image') {
             for (const key of Object.keys(defaults.elements).filter(key => key.startsWith('image-'))) next.elements[key] = defaults.elements[key];
             for (const key of ['image-fit','image-opacity','image-motion']) next.appearance[key] = defaults.appearance[key];
@@ -278,12 +310,14 @@
         return next;
     }
     function elementAnchor(elements, kind) {
+        if (elements.objects?.[kind]) return {x:elements.objects[kind].x,y:elements.objects[kind].y};
         if (!captionLines[kind]) return {x:elements[kind+'-x'], y:elements[kind+'-y']};
         return {x:elements['text-x'] + elements[kind+'-offset-x'],
             y:elements['text-y'] + captionLines[kind].delta * elements['text-scale'] * elements['text-stretch-y'] + elements[kind+'-offset-y']};
     }
     function translateElement(elements, kind, dx, dy) {
         const next = clone(elements), caption = !!captionLines[kind];
+        if (next.objects?.[kind]) { next.objects[kind].x=Math.max(-10,Math.min(10,next.objects[kind].x+dx)); next.objects[kind].y=Math.max(-10,Math.min(10,next.objects[kind].y+dy)); return next; }
         for (const [axis, delta] of [['x',dx],['y',dy]]) {
             const key = kind + (caption ? '-offset-' : '-') + axis;
             next[key] = Math.round(Math.max(caption ? -20 : -10, Math.min(caption ? 20 : 10, next[key] + delta)) * 1000000) / 1000000;
@@ -291,6 +325,15 @@
         return next;
     }
     function transformElement(elements, kind, dx, dy, corner = '', rect = null, limits = {}) {
+        if (elements.objects?.[kind]) {
+            const o=elements.objects[kind], proxy=clone(elements), text=o.type==='text';
+            Object.assign(proxy,{'image-x':o.x,'image-y':o.y,'image-scale':o.scale,'image-stretch-x':o['stretch-x'],'image-stretch-y':o['stretch-y']});
+            delete proxy.objects;
+            const transformed=transformElement(proxy,'image',dx,dy,corner,rect,limits), next=clone(elements), object=next.objects[kind];
+            for(const key of ['x','y','scale','stretch-x','stretch-y']) object[key]=transformed['image-'+key];
+            if(text && corner) object.y=o.y+(transformed['image-y']-o.y)-(rect.height*(object.scale*object['stretch-y']/(o.scale*o['stretch-y'])-1))/2;
+            return next;
+        }
         if (captionLines[kind]) {
             const anchor = elementAnchor(elements, kind), proxy = clone(elements);
             Object.assign(proxy, {'image-x':anchor.x,'image-y':anchor.y,'image-scale':elements[kind+'-scale'],
@@ -383,7 +426,7 @@
         function mapping(value, indent) {
             return Object.entries(value).map(([key, entry]) => {
                 const prefix = ' '.repeat(indent) + key + ':';
-                if (entry && typeof entry === 'object' && !Array.isArray(entry)) return prefix + '\n' + mapping(entry, indent + 2);
+                if (entry && typeof entry === 'object' && !Array.isArray(entry)) return Object.keys(entry).length ? prefix + '\n' + mapping(entry, indent + 2) : prefix + ' {}';
                 return prefix + ' ' + JSON.stringify(entry);
             }).join('\n');
         }
@@ -405,6 +448,7 @@
         const error = () => { throw new Error(`Unsupported YAML value on line ${line}. Use plain values, quoted text or inline lists.`); };
         if (/^[&*!|>]/.test(text)) error();
         if (text === 'true') return true; if (text === 'false') return false;
+        if (text === '{}') return {};
         if (text === 'null' || text === '~') return null;
         if (/^-?(?:\d+\.?\d*|\d*\.\d+)$/.test(text)) return Number(text);
         if (text.startsWith('"')) { try { return JSON.parse(text); } catch { error(); } }
@@ -511,6 +555,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1-2048 pixels.');
         return { width, height };
     }
-    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, clone, createEffect, normalize, validate, captionLines, coverageAt, captionFrame, resetComponent, elementAnchor, translateElement, transformElement, snapElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, objectDefaults, validateObjects, nextObjectId, objectRect, clone, createEffect, normalize, validate, captionLines, coverageAt, captionFrame, resetComponent, elementAnchor, translateElement, transformElement, snapElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

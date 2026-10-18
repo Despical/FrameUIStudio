@@ -37,7 +37,8 @@
             }
         }
 
-        for (const kind of Object.keys(labels)) {
+        function addObjectControl(kind,label) {
+            labels[kind]=label;
             const button = document.createElement('button'); button.type = 'button';
             button.textContent = t(labels[kind]); button.dataset.canvasSelect = kind;
             button.setAttribute('aria-pressed', 'false');
@@ -60,6 +61,7 @@
             }
             boxes.set(kind, box); overlay.append(box);
         }
+        for (const kind of ['image','title','subtitle','detail','progress']) addObjectControl(kind,labels[kind]);
         stage.parentElement.before(toolbar); stage.append(overlay);
         const translatedAttributes = [...toolbar.querySelectorAll('[aria-label]'), toolbar, ...overlay.querySelectorAll('[aria-label],[title]')].map(node => ({node,
             aria:node.getAttribute('aria-label'), title:node.getAttribute('title')}));
@@ -78,7 +80,7 @@
         }
         toolbar.setAttribute('aria-label',t('Arrange screen elements'));
         scope.addEventListener('frameui:language', () => {
-            for (const [kind, button] of buttons) button.textContent = t(labels[kind]);
+            for (const [kind, button] of buttons) {const o=options.effect().elements.objects?.[kind];button.textContent=o?t(o.type==='image'?'Image':'Text')+' '+kind.split('-').pop():t(labels[kind]);}
             for (const entry of translatedAttributes) {
                 if (entry.aria) entry.node.setAttribute('aria-label',t(entry.aria));
                 if (entry.title) entry.node.setAttribute('title',t(entry.title));
@@ -109,6 +111,8 @@
             const definition = options.effect(), e = definition.elements, width = stage.clientWidth, height = stage.clientHeight;
             if (!width || !height) return;
             const image = options.image();
+            for (const [kind,object] of Object.entries(e.objects || {})) if (!boxes.has(kind)) addObjectControl(kind,t(object.type==='image'?'Image':'Text')+' '+kind.split('-').pop());
+            for (const kind of [...boxes.keys()]) if (!['image','title','subtitle','detail','progress'].includes(kind) && !e.objects?.[kind]) {boxes.get(kind).remove();buttons.get(kind).remove();boxes.delete(kind);buttons.delete(kind);if(selected===kind) select('');}
             const key = JSON.stringify([e,definition.captions,definition.name,definition.appearance['image-fit'],width,height,image?.width,image?.height]);
             if (key === renderedKey) {options.geometry?.(selected,rects.get(selected));return;}
             renderedKey = key; rects.clear();
@@ -121,6 +125,11 @@
             }
             if (definition.captions.enabled) for (const kind of Object.keys(core.captionLines)) {
                 const rect = captionRect(definition,kind,width,height); if (rect) rects.set(kind,rect);
+            }
+            for (const [kind,object] of Object.entries(e.objects || {})) {
+                const display={...object,text:options.text?options.text(object.text):object.text};
+                const rect=core.objectRect(display,options.objectImage?.(object.image),width,height,scope.FrameStudioFont);
+                if(rect) rects.set(kind,rect);
             }
             if (e.progress !== 'none') {
                 const h = e.progress === 'ring' ? e['progress-width'] * width / height : (e.progress === 'dots' ? 7.2 : 6) * width / 640 * e['progress-scale'] / height;

@@ -577,3 +577,5 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
     .footer-links a,.footer-links button{max-width:100%}
     .footer-links a span{min-width:0}
 }
+
+.object-list-row{display:flex;align-items:center;gap:8px}.object-list-row .component-entry{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.object-text-preview{position:absolute;pointer-events:none;transform-origin:50% 0;z-index:4;image-rendering:pixelated}.canvas-toolbar{flex-wrap:wrap}
