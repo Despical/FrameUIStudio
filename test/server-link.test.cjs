@@ -22,6 +22,32 @@ function fixture(responses, connected = true, address) {
 }
 const response = (json,status=200) => ({ok:status===200,status,json:async()=>json});
 
+test('compact relay links use the fixed relay without an endpoint in the link', async () => {
+    const token = 'a'.repeat(43), channel = 'b'.repeat(43);
+    const address = 'https://frameui.despical.dev/?lang=tr#server=' + token + '&channel=' + channel;
+    const {api, calls} = fixture([response({player:'Admin'})], true, address);
+    assert.equal(api.available, true);
+    await api.connect();
+    assert.equal(calls[0].url, 'https://studio-relay.despical.dev/frameui-relay/v1/servers/' + channel + '/studio/api/session');
+    assert.equal(calls[0].headers.Authorization, 'Bearer ' + token);
+    assert.equal(calls[0].credentials, 'omit');
+    assert.equal(calls[0].redirect, 'error');
+    assert.equal(calls[0].referrerPolicy, 'no-referrer');
+    assert.ok(!calls[0].url.includes(token));
+});
+
+test('invalid or ambiguous relay channels never send credentials', async () => {
+    for (const channel of ['', '../other', 'https://evil.example/', 'b'.repeat(42), 'b'.repeat(44)]) {
+        const {api, calls} = fixture([], true, 'https://frameui.despical.dev/#server=' + 'a'.repeat(43) + '&channel=' + encodeURIComponent(channel));
+        await assert.rejects(api.connect(), /Invalid server/);
+        assert.equal(calls.length, 0);
+    }
+    const {api, calls} = fixture([], true, 'https://frameui.despical.dev/#server=' + 'a'.repeat(43)
+        + '&channel=' + 'b'.repeat(43) + '&endpoint=' + encodeURIComponent('https://mc.example/studio/'));
+    await assert.rejects(api.connect(), /Invalid server/);
+    assert.equal(calls.length, 0);
+});
+
 test('hosted Studio connects directly to the server endpoint using fragment-only credentials', async () => {
     const address='https://frameui.despical.dev/?lang=tr#server='+'a'.repeat(43)+'&endpoint='+encodeURIComponent('https://mc.example:8443/studio/');
     const {api,calls}=fixture([response({player:'Admin'})],true,address);

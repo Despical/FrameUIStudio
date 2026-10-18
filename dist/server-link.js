@@ -14,11 +14,18 @@
     // The capability stays in memory and the URL fragment, never in cookies, storage or request URLs.
     const parameters = new URLSearchParams(location.hash.slice(1));
     const token = parameters.get('server');
+    const channel = parameters.get('channel');
     const endpointValue = parameters.get('endpoint');
+    const relayBase = 'https://studio-relay.despical.dev/frameui-relay/v1/';
     let endpoint = null, connectionError = null;
     if (token) {
         try {
-            endpoint = endpointValue ? new URL(endpointValue) : location.pathname.endsWith('/studio/') ? new URL('./', location.href) : null;
+            if (channel !== null) {
+                if (!/^[A-Za-z0-9_-]{43}$/.test(channel) || parameters.has('endpoint')) throw new Error();
+                endpoint = new URL('servers/' + channel + '/studio/', relayBase);
+            } else {
+                endpoint = endpointValue ? new URL(endpointValue) : location.pathname.endsWith('/studio/') ? new URL('./', location.href) : null;
+            }
             if (!endpoint || !['http:','https:'].includes(endpoint.protocol) || endpoint.username || endpoint.password
                 || endpoint.search || endpoint.hash || !endpoint.pathname.endsWith('/studio/')) throw new Error();
             const loopback = endpoint.hostname === 'localhost' || endpoint.hostname === '127.0.0.1' || endpoint.hostname === '[::1]';
