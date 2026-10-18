@@ -25,6 +25,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 h1,h2,h3,p{margin:0}
 .svg-defs{width:0;height:0;position:absolute}
+/* Keep fallback markup out of the first paint until the restored editor is ready. */
+.studio-starting body{visibility:hidden}
+.studio-starting::before{content:"FrameUI Studio";position:fixed;inset:0;display:grid;place-items:center;color:#d2deec;font:600 18px system-ui,sans-serif;letter-spacing:-.025em;background:#0b1019;z-index:100}
 .app-header{height:84px;padding:0 26px;display:flex;align-items:center;border-bottom:1px solid var(--border);gap:32px}
 .brand{display:flex;align-items:center;gap:12px;font-size:21px;font-weight:700;letter-spacing:-.6px;white-space:nowrap}
 .brand b{font-weight:400;color:#b5c5d5}
