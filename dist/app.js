@@ -91,6 +91,7 @@
     async function setObjectAssets(assets={}, current=()=>true) {
         const pictures=new Map();
         for(const [path,url] of Object.entries(assets)) {
+            if(objectAssets[path]===url && objectPictures.has(path)) {pictures.set(path,objectPictures.get(path));continue;}
             core.validatePng(fromDataUrl(url)); const image=new Image(); image.src=url; await image.decode(); pictures.set(path,image);
         }
         if(!current()) return false;
@@ -132,6 +133,7 @@
         visual.append(objects);
     }
     async function setImage(bytes, current = () => true) {
+        if(bytes===imageBytes) return current();
         let nextUrl = '', nextImage = null;
         if (bytes) {
             core.validatePng(bytes); nextUrl = URL.createObjectURL(new Blob([bytes], { type: 'image/png' })); const image = new Image(); image.src = nextUrl;
@@ -144,7 +146,7 @@
         if (renderer) renderer.setImage(imageElement);
         return true;
     }
-    async function restore(state) { const kind = selectedComponent, next = core.clone(state.effect); await setImage(state.image); await setObjectAssets(state.assets); effect = next; activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); if (kind) directEditor.select(kind); scheduleSave(); }
+    async function restore(state) { const kind = selectedComponent, next = core.clone(state.effect); await setImage(state.image); await setObjectAssets(state.assets); effect = next; activeCategory = effect.category; renderSettings(); renderCatalog(); sync(); if (kind && (['image','title','subtitle','detail','progress'].includes(kind) || effect.elements.objects[kind])) directEditor.select(kind); scheduleSave(); }
     async function historyStep(isRedo) { const source = isRedo ? redo : undo, destination = isRedo ? undo : redo; if (!source.length) return; const target = source.pop(); destination.push(snapshot()); await restore(target); }
     const FIELD_HELP = {
         ...Object.fromEntries(['title','subtitle','detail'].map(kind=>['elements.'+kind+'-animation',['Entrance animation for this caption line only.','None (instant) shows it immediately. Fade, Grow and Slide use the effect’s fade-in and fade-out durations. Other lines keep their own entrance.']])),
