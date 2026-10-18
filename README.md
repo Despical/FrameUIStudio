@@ -15,7 +15,7 @@
   <a href="https://frameui.despical.dev/">Open Studio</a> ·
   <a href="https://docs.despical.dev/frameui-studio/">Documentation</a> ·
   <a href="https://docs.despical.dev/frameui/effects/">Effect Gallery</a> ·
-  <a href="https://hub.despical.dev/">Get FrameUI</a> ·
+  <a href="https://hub.despical.dev/plugins/frameui">Get FrameUI</a> ·
   <a href="https://discord.gg/uXVU8jmtpU">Discord</a>
 </p>
 
