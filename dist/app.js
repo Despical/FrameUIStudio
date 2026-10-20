@@ -1233,7 +1233,8 @@
     for (const tab of tabs) { tab.addEventListener('click', () => selectTab(tab)); tab.addEventListener('keydown', event => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const index = tabs.indexOf(tab), next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length; selectTab(tabs[next]); tabs[next].focus(); } }); }
     selectTab(tabs[0]);
     document.addEventListener('keydown', event => {
-        const editing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '') || document.activeElement?.getAttribute('role') === 'combobox';
+        if (event.defaultPrevented || document.querySelector('dialog[open]')) return;
+        const editing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '') || document.activeElement?.getAttribute('role') === 'combobox' || document.activeElement?.isContentEditable;
         if (event.key === '/' && !editing) { event.preventDefault(); $('search').focus(); }
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !editing) { event.preventDefault(); historyStep(event.shiftKey); }
         if (event.code === 'Space' && !editing && document.activeElement === document.body) { event.preventDefault(); playing = !playing; sync(); }
@@ -1243,7 +1244,7 @@
         select:showComponent, geometry:syncComponentGeometry,
         stage: $('stage'),
         effect: () => effect, image: () => imageElement, objectImage:path=>objectPictures.get(path), text:captionText,
-        pause: () => { playing = false; playTick = Math.max(effect.timing['fade-in-ticks'], Math.min(playTick, effect.timing['minimum-ticks'] - 1)); sync(); },
+        pause: () => { playing = false; sync(); },
         update: elements => { effect.elements = elements; sync(); },
         commit: before => { const previous = snapshot(); previous.effect.elements = before; commitChange(previous); }
     });
