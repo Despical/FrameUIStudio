@@ -75,9 +75,9 @@
             const text = node.textContent.trim();
             if (text && Object.hasOwn(data.messages.en,text)) originals.push({node,text,raw:node.textContent});
         }
-        for (const node of document.querySelectorAll('[aria-label],[title],[placeholder],[alt]')) {
+        for (const node of document.querySelectorAll('[aria-label],[data-tooltip],[placeholder],[alt]')) {
             if (node.closest('.language-control')) continue;
-            for (const attr of ['aria-label','title','placeholder','alt']) {
+            for (const attr of ['aria-label','data-tooltip','placeholder','alt']) {
                 const text = node.getAttribute(attr);
                 if (text && Object.hasOwn(data.messages.en,text)) originals.push({node,attr,text});
             }
