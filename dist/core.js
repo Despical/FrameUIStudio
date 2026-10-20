@@ -380,12 +380,11 @@
     }
     function transformElement(elements, kind, dx, dy, corner = '', rect = null, limits = {}) {
         if (elements.objects?.[kind]) {
-            const o=elements.objects[kind], proxy=clone(elements), text=o.type==='text';
+            const o=elements.objects[kind], proxy=clone(elements);
             Object.assign(proxy,{'image-x':o.x,'image-y':o.y,'image-scale':o.scale,'image-stretch-x':o['stretch-x'],'image-stretch-y':o['stretch-y']});
             delete proxy.objects;
             const transformed=transformElement(proxy,'image',dx,dy,corner,rect,limits), next=clone(elements), object=next.objects[kind];
             for(const key of ['x','y','scale','stretch-x','stretch-y']) object[key]=transformed['image-'+key];
-            if(text && corner) object.y=o.y+(transformed['image-y']-o.y)-(rect.height*(object.scale*object['stretch-y']/(o.scale*o['stretch-y'])-1))/2;
             return next;
         }
         if (captionLines[kind]) {
