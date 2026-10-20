@@ -67,3 +67,27 @@ test('legacy growing captions use the editable title entrance without hiding the
     assert.equal(effect.elements['subtitle-animation'],'still');
     assert.deepEqual(core.fromYaml(core.toYaml(effect)),effect);
 });
+
+test('text background padding expands selection bounds without shifting the text anchor', () => {
+    const object=core.objectDefaults(), plain=core.objectRect(object,null,1280,720,font);
+    object['background-opacity']=.5;
+    const filled=core.objectRect(object,null,1280,720,font);
+    assert.ok(filled.width>plain.width);assert.ok(filled.height>plain.height);
+    assert.ok(Math.abs(filled.x+filled.width/2-object.x)<1e-9);
+    assert.equal(object.y,.5);
+});
+
+test('large text resizing keeps the opposite painted edge fixed with or without a background', () => {
+    for (const opacity of [0,1]) for (const handle of ['n','s','e','w','nw','ne','sw','se']) {
+        const effect=core.createEffect('aurora'), object={...core.objectDefaults(),text:'Text',scale:4,'background-opacity':opacity,x:.45,y:.25};
+        effect.elements.objects={'text-1':object};
+        const before=core.objectRect(object,null,640,360,font);
+        const next=core.transformElement(effect.elements,'text-1',handle.includes('w')?-.2:.3,handle.includes('n')?-.2:.35,handle,before);
+        const after=core.objectRect(next.objects['text-1'],null,640,360,font);
+        if(handle.includes('s')) assert.ok(Math.abs(after.y-before.y)<.0002,handle+' top moved');
+        if(handle.includes('n')) assert.ok(Math.abs(after.y+after.height-before.y-before.height)<.0002,handle+' bottom moved');
+        if(handle.includes('e')) assert.ok(Math.abs(after.x-before.x)<.0002,handle+' left moved');
+        if(handle.includes('w')) assert.ok(Math.abs(after.x+after.width-before.x-before.width)<.0002,handle+' right moved');
+        core.validate({...effect,elements:next});
+    }
+});
