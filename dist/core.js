@@ -110,6 +110,17 @@
         if (e['image-animation'] === 'none') block(['elements.image-delay'], 'Image entrance is None (instant), so there is no entrance animation to delay.');
         if (effect.timing['fade-in-ticks'] === 0) block(['elements.image-delay'], 'Fade in is zero seconds, so there is no entrance phase to delay.');
         if (e.progress === 'none') block(['elements.progress-x', 'elements.progress-y', 'elements.progress-width', 'elements.progress-scale'], 'Loading indicator is None. Choose an indicator style to adjust its placement and size.');
+        const textStyles = [
+            ...Object.keys(captionLines).map(kind => ['captions.' + kind + '-', {...captionStyle(effect, kind), 'background-opacity': effect.captions[kind + '-background-opacity']}, !effect.captions.enabled]),
+            ...Object.entries(e.objects || {}).filter(([, object]) => object.type === 'text').map(([id, object]) => ['elements.objects.' + id + '.', object, false])
+        ];
+        for (const [prefix, style, hidden] of textStyles) {
+            if (hidden) block([...Object.keys(textDefaults()), 'color', 'background', 'background-opacity'].map(key => prefix + key), 'Show captions is off. Enable it to edit the on-screen text and its placement.');
+            if (!style.shadow) block(['shadow-color', 'shadow-offset'].map(key => prefix + key), 'Enable text shadow to adjust its color and offset.');
+            if (style['shadow-offset'] === 0) block([prefix + 'shadow-color'], 'Increase shadow offset to adjust its color.');
+            if (!style['outline-width']) block([prefix + 'outline-color'], 'Increase outline width to adjust its color.');
+            if (!style['background-opacity']) block([prefix + 'background'], 'Increase background opacity to adjust its color.');
+        }
         return disabled;
     }
     const modes = ['SURVIVAL', 'CREATIVE', 'ADVENTURE', 'SPECTATOR'];
@@ -346,8 +357,8 @@
         } else if (kind === 'progress') {
             for (const key of Object.keys(defaults.elements).filter(key => key === 'progress' || key.startsWith('progress-'))) next.elements[key] = defaults.elements[key];
         } else {
-            for (const key of ['offset-x','offset-y','scale','stretch-x','stretch-y','animation']) next.elements[kind+'-'+key] = defaults.elements[kind+'-'+key];
-            next.captions[kind+'-color'] = defaults.captions[kind+'-color'];
+            for (const key of ['offset-x','offset-y','scale','stretch-x','stretch-y','animation','priority']) next.elements[kind+'-'+key] = defaults.elements[kind+'-'+key];
+            for (const key of ['color','background','background-opacity',...Object.keys(textDefaults())]) next.captions[kind+'-'+key] = defaults.captions[kind+'-'+key];
             for (const key of kind === 'detail' ? ['join-detail','teleport-detail','preview-detail'] : [kind]) next.captions[key] = defaults.captions[key];
         }
         return next;
