@@ -426,11 +426,13 @@ dialog .dialog-note{font-size:13px;border-top:1px solid var(--border);padding-to
 .inspector-panel .image-info>span,.inspector-panel .image-upload strong{font-size:14px}
 .inspector-panel .image-info small,.inspector-panel .image-upload small{font-size:12px}
 .inspector-footer,.inspector-footer .text-button{font-size:13px}
-.switch-field{padding:13px 14px;min-height:64px;background:#15202e;border:1px solid #2b3a4e;border-radius:8px;gap:14px;transition:background-color .18s ease,border-color .18s ease}
-.switch-field:hover{background:#192737;border-color:#40546c}
-.switch-field:has(input:checked){background:#142c2d;border-color:#345c59}
+.switch-field{padding:13px 14px;min-height:64px;background:#0d141f;border:1px solid #344359;border-radius:8px;gap:14px;cursor:pointer;transition:background-color .18s ease,border-color .18s ease}
+.switch-field:hover{background:#111b28;border-color:#40546c}
+.switch-field:has(input:checked){background:#0d141f;border-color:#344359}
 .switch-field:focus-within{outline:2px solid var(--accent);outline-offset:2px}
 .switch-copy{font-size:15px;line-height:1.5;color:#d3dfed}
+.switch-copy .field-heading{margin-bottom:0;align-items:center}
+.switch-copy .switch-heading{align-items:center}
 .switch-copy small{font-size:13px;color:#a7b7ca;line-height:1.55}
 .switch{width:42px;height:24px}
 .switch>span{border-radius:14px;transition:background-color .2s ease,border-color .2s ease}
