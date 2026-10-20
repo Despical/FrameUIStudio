@@ -386,11 +386,21 @@
         for (const key of ['min', 'max', 'step', 'maxLength']) if (options[key] !== undefined) input[key] = options[key];
         if (options.type === 'range') { const output = element('output'); output.htmlFor = input.id; output.dataset.output = path; heading.append(output); }
         const update = () => {
+            if (input.disabled) return false;
+            if (['range','number'].includes(options.type) && (!input.value.trim() || !input.checkValidity())) return false;
             const value = options.list ? input.value.split(/[,\n]/).map(item => item.trim()).filter(Boolean) : ['range', 'number'].includes(options.type) ? Number(input.value) : input.value;
             mutate(path, options.seconds ? Math.round(value * 20) : options.imageDelay ? Math.max(0, Math.min(.8, value * 20 / (effect.timing['fade-in-ticks'] || 1))) : value);
+            return true;
         };
         input.addEventListener(options.options ? 'change' : 'input', update);
-        if (!options.options) input.addEventListener('change', () => { update(); sync(); });
+        const restoreValue = () => {input.value = options.seconds ? pathGet(path)/20 : options.imageDelay ? Number((pathGet(path)*effect.timing['fade-in-ticks']/20).toFixed(3)) : pathGet(path);};
+        if (!options.options) input.addEventListener('change', () => {
+            if (update() === false) restoreValue();
+            sync();
+        });
+        if (['range','number'].includes(options.type)) input.addEventListener('blur',()=>{
+            if (!input.value.trim() || !input.checkValidity()) restoreValue();
+        });
         wrap.append(input); return wrap;
     }
     function toggle(label, path, note = '', info = false) {
@@ -403,7 +413,7 @@
         input.type = 'checkbox'; input.id = caption.htmlFor; input.checked = pathGet(path); input.dataset.path = path;
         input.setAttribute('aria-label', t(label)); input.addEventListener('change', () => mutate(path, input.checked));
         slider.append(input, element('span')); row.append(copy, slider);
-        row.addEventListener('click', event => { if (!event.target.closest('button,input,label')) input.click(); });
+        row.addEventListener('click', event => { if (!input.disabled && !event.target.closest('button,input,label')) input.click(); });
         return row;
     }
     function section(title, tag = '') { const result = element('section', 'settings-section'), heading = element('div', 'section-heading'); heading.append(element('h3', '', title)); if (tag) heading.append(element('span', '', tag)); result.append(heading); return result; }
@@ -427,7 +437,26 @@
         const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         chevron.setAttribute('viewBox', '0 0 16 16'); chevron.setAttribute('aria-hidden', 'true'); chevron.classList.add('details-chevron');
         const path = document.createElementNS(chevron.namespaceURI, 'path'); path.setAttribute('d', 'm4 6 4 4 4-4'); chevron.append(path);
-        summary.append(chevron, document.createTextNode(t(title))); result.append(summary, ...children); return result;
+        summary.append(chevron, document.createTextNode(t(title))); result.append(summary, ...children); animateDetails(result); return result;
+    }
+    function animateDetails(result) {
+        let animation = null, targetOpen = result.open;
+        result.querySelector('summary').addEventListener('click', event => {
+            event.preventDefault();
+            targetOpen = animation ? !targetOpen : !result.open;
+            const start = result.getBoundingClientRect().height;
+            animation?.cancel(); animation = null;
+            result.open = targetOpen;
+            const end = result.getBoundingClientRect().height;
+            if (matchMedia('(prefers-reduced-motion: reduce)').matches) { result.style.overflow = ''; return; }
+            result.open = true; result.style.overflow = 'hidden';
+            const current = result.animate([{height:start+'px'},{height:end+'px'}], {duration:200,easing:'cubic-bezier(.2,0,0,1)'});
+            animation = current;
+            current.onfinish = () => {
+                if (animation !== current) return;
+                result.open = targetOpen; result.style.overflow = ''; animation = null;
+            };
+        });
     }
     function renderSettings() {
         directEditor?.select('');
