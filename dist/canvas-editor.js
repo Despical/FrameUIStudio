@@ -19,7 +19,19 @@
         toolbar.setAttribute('role', 'toolbar'); toolbar.setAttribute('aria-label', t('Arrange screen elements'));
         const overlay = document.createElement('div'); overlay.className = 'canvas-editor';
         const boxes = new Map(), buttons = new Map(), rects = new Map();
-        let selected = '', gesture = null, renderedKey = '';
+        let selected = '', gesture = null, renderedKey = '', snapping = true;
+        const snapButton = document.createElement('button'); snapButton.type = 'button';
+        snapButton.className = 'icon-button canvas-snap-toggle'; snapButton.dataset.canvasSnap = '';
+        const snapIcon=document.createElementNS('http://www.w3.org/2000/svg','svg'),snapUse=document.createElementNS('http://www.w3.org/2000/svg','use');
+        snapUse.setAttribute('href','#icon-guides');snapIcon.setAttribute('aria-hidden','true');snapIcon.append(snapUse);snapButton.append(snapIcon);
+        const snapHelp = 'Snap to canvas edges, centers and other elements. Hold Alt while dragging to move freely.';
+        function refreshSnapButton() {
+            snapButton.setAttribute('aria-label',t('Alignment guides'));
+            snapButton.dataset.tooltip=t('Alignment guides')+'. '+t(snapHelp);
+            snapButton.setAttribute('aria-pressed', String(snapping));
+        }
+        refreshSnapButton();
+        snapButton.addEventListener('click', () => {snapping=!snapping;refreshSnapButton();showGuides();});
         const guides = {};
         for (const axis of ['x', 'y']) {
             const line = document.createElement('div'); line.className = 'canvas-guide canvas-guide-' + axis;
@@ -30,6 +42,7 @@
                 const line = lines.find(item => item.axis === axis), node = guides[axis]; node.hidden = !line;
                 if (!line) continue;
                 const horizontal = axis === 'y';
+                node.classList.toggle('canvas-guide-screen', line.from === 0 && line.to === 1);
                 node.style.left = (horizontal ? line.from : line.position) * 100 + '%';
                 node.style.top = (horizontal ? line.position : line.from) * 100 + '%';
                 node.style.width = horizontal ? (line.to - line.from) * 100 + '%' : '1px';
@@ -54,7 +67,7 @@
                 handle.className = 'canvas-handle canvas-handle-' + corner; handle.dataset.corner = corner;
                 const sideNames = {n:'top edge',s:'bottom edge',e:'right edge',w:'left edge',nw:'top-left corner',ne:'top-right corner',sw:'bottom-left corner',se:'bottom-right corner'};
                 handle.setAttribute('aria-label', t('Resize ' + labels[kind].toLowerCase() + ' ' + sideNames[corner]));
-                handle.title = t(corner.length === 2 ? 'Resize proportionally' : corner === 'e' || corner === 'w' ? 'Change width only' : kind === 'progress' ? 'Change thickness only' : 'Change height only');
+                handle.dataset.tooltip = corner.length === 2 ? 'Resize proportionally' : corner === 'e' || corner === 'w' ? 'Change width only' : kind === 'progress' ? 'Change thickness only' : 'Change height only';
                 handle.addEventListener('pointerdown', event => begin(event, kind, corner));
                 handle.addEventListener('keydown', event => nudge(event, kind, corner));
                 box.append(handle);
@@ -62,9 +75,18 @@
             boxes.set(kind, box); overlay.append(box);
         }
         for (const kind of ['image','title','subtitle','detail','progress']) addObjectControl(kind,labels[kind]);
+        document.querySelector('.playback-bar').insertBefore(snapButton,document.querySelector('.loop-toggle'));
+        toolbar.addEventListener('keydown', event => {
+            if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+            const enabled=[...toolbar.querySelectorAll('button:not(:disabled)')],index=enabled.indexOf(event.target);
+            if(index<0) return;
+            event.preventDefault(); event.stopPropagation();
+            const direction=(document.documentElement.dir==='rtl'?-1:1)*(event.key==='ArrowRight'?1:-1);
+            enabled[event.key==='Home'?0:event.key==='End'?enabled.length-1:(index+direction+enabled.length)%enabled.length].focus();
+        });
         stage.parentElement.before(toolbar); stage.append(overlay);
-        const translatedAttributes = [...toolbar.querySelectorAll('[aria-label]'), toolbar, ...overlay.querySelectorAll('[aria-label],[title]')].map(node => ({node,
-            aria:node.getAttribute('aria-label'), title:node.getAttribute('title')}));
+        const translatedAttributes = [...toolbar.querySelectorAll('[aria-label]'), toolbar, ...overlay.querySelectorAll('[aria-label],[data-tooltip]')].map(node => ({node,
+            aria:node.getAttribute('aria-label'), title:node.getAttribute('data-tooltip')}));
         // Store English sources so switching repeatedly never translates a previous translation.
         for (const entry of translatedAttributes) {
             if (entry.node === toolbar) entry.aria = 'Arrange screen elements';
@@ -80,10 +102,11 @@
         }
         toolbar.setAttribute('aria-label',t('Arrange screen elements'));
         scope.addEventListener('frameui:language', () => {
+            refreshSnapButton();
             for (const [kind, button] of buttons) {const o=options.effect().elements.objects?.[kind];button.textContent=o?t(o.type==='image'?'Image':'Text')+' '+kind.split('-').pop():t(labels[kind]);}
             for (const entry of translatedAttributes) {
                 if (entry.aria) entry.node.setAttribute('aria-label',t(entry.aria));
-                if (entry.title) entry.node.setAttribute('title',t(entry.title));
+                if (entry.title) entry.node.setAttribute('data-tooltip',t(entry.title));
             }
         });
 
@@ -159,7 +182,7 @@
             const g = gesture; if (!g || event.pointerId !== g.pointer) return;
             event.preventDefault();
             let next = core.transformElement(g.before,g.kind,(event.clientX-g.x)/g.width,(event.clientY-g.y)/g.height,g.corner,g.rect);
-            if (!g.corner && !event.altKey) {
+            if (!g.corner && snapping && !event.altKey) {
                 const snapped = core.snapElement(g.before,next,g.kind,g.rect,g.width,g.height,8,g.targets);
                 next = snapped.elements; showGuides(snapped.lines);
             } else showGuides();
@@ -174,6 +197,9 @@
             render();
         }
         function nudge(event, kind, corner = '') {
+            if (!corner && ['Enter',' '].includes(event.key)) {
+                event.preventDefault();event.stopPropagation();select(kind);render();return;
+            }
             if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) return;
             event.preventDefault(); event.stopPropagation(); options.pause(); select(kind); render();
             const before = core.clone(options.effect().elements), amount = event.shiftKey ? 10 : 1;
@@ -185,7 +211,11 @@
         overlay.addEventListener('pointerup', event => { if (gesture && event.pointerId===gesture.pointer) {move(event); finish(false);} });
         overlay.addEventListener('pointercancel', () => finish(true));
         overlay.addEventListener('lostpointercapture', () => finish(true));
-        document.addEventListener('keydown', event => {if(event.key==='Escape') {event.preventDefault(); if(gesture) finish(true); else select('');}});
+        document.addEventListener('keydown', event => {
+            if (event.key!=='Escape' || event.defaultPrevented || document.querySelector('dialog[open]') || event.target.closest('input,textarea,select,[role=combobox],[contenteditable=true]')) return;
+            if (gesture) {event.preventDefault();finish(true);}
+            else if(selected) {const button=buttons.get(selected);event.preventDefault();select('');button?.focus({preventScroll:true});}
+        });
         window.addEventListener('blur', () => finish(true));
         window.addEventListener('resize', () => {finish(true);render();});
         overlay.addEventListener('pointerdown', event => { if (event.target === overlay) select(''); });
