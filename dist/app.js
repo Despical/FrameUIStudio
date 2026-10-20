@@ -16,6 +16,7 @@
     const dropdowns = window.FrameStudioDropdowns;
     const server = window.FrameStudioServer;
     let serverBusy = false, linkedEffectId = null, selectedComponent = '';
+    const textSamples = {player:'Player',world:'world'};
     const componentLabels = {image:'Image', title:'Title', subtitle:'Subtitle', detail:'Extra line', progress:'Loading indicator'};
     const serverEffects = new Map();
     const isServerEffect = () => effect.id === linkedEffectId && serverEffects.has(effect.id);
@@ -114,23 +115,38 @@
         pendingObjectImage=id; $('image-file').click();
     }
     function removeObject(id) {
+        if (selectedComponent === id) directEditor.select('');
         const previous=snapshot(), path=effect.elements.objects[id]?.image; delete effect.elements.objects[id];
         if(path && !Object.values(effect.elements.objects).some(o=>o.image===path)) {delete objectAssets[path];objectPictures.delete(path);}
         commitChange(previous);renderSettings();sync();
     }
-    function objectSection(visual) {
-        const objects=section('Additional elements'), actions=row();
-        const text=element('button','button button-quiet','Add text'), image=element('button','button button-quiet','Add image');
-        text.type=image.type='button';text.addEventListener('click',addTextObject);image.addEventListener('click',()=>chooseObjectImage());
-        actions.append(text,image);objects.append(actions);
-        for(const [id,o] of Object.entries(effect.elements.objects)) {
-            componentLabels[id]=t(o.type==='image'?'Image':'Text')+' '+id.split('-').pop();
-            const item=element('div','object-list-row'), edit=element('button','component-entry',o.type==='text'?o.text || 'Text':componentLabels[id],true);
-            edit.dataset.objectEntry=id; edit.type='button';edit.addEventListener('click',()=>directEditor.select(id));
-            const remove=element('button','icon-button','×');remove.type='button';remove.setAttribute('aria-label',t('Remove element')+': '+componentLabels[id]);remove.addEventListener('click',()=>removeObject(id));
-            item.append(edit,remove);objects.append(item);
+    function addElementButton(section, type) {
+        const label = type === 'text' ? 'Add text' : 'Add image';
+        const button = element('button', 'section-add');
+        const plus = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        plus.setAttribute('viewBox','0 0 20 20'); plus.setAttribute('aria-hidden','true');
+        const strokes = document.createElementNS(plus.namespaceURI,'path');
+        strokes.setAttribute('d','M10 4v12M4 10h12'); plus.append(strokes); button.append(plus);
+        button.type = 'button'; button.dataset.tooltip = t(label); button.setAttribute('aria-label', t(label));
+        button.dataset.addElement = type;
+        button.disabled = Object.values(effect.elements.objects).filter(o => o.type === type).length >= (type === 'text' ? 12 : 8);
+        button.addEventListener('click', type === 'text' ? addTextObject : () => chooseObjectImage());
+        section.querySelector('.section-heading').append(button);
+    }
+    function objectSection(section, type) {
+        addElementButton(section, type);
+        for (const [id, object] of Object.entries(effect.elements.objects)) {
+            if (object.type !== type) continue;
+            componentLabels[id] = t(type === 'image' ? 'Image' : 'Text') + ' ' + id.split('-').pop();
+            const item = element('div', 'object-list-row');
+            const edit = element('button', 'component-entry', type === 'text' ? object.text || t('Text') : componentLabels[id], true);
+            edit.dataset.objectEntry = id; edit.type = 'button'; edit.addEventListener('click', () => directEditor.select(id));
+            const remove = element('button', 'icon-button object-remove'); remove.type = 'button';
+            const trash = icon('trash'); trash.setAttribute('aria-hidden', 'true'); remove.append(trash);
+            remove.setAttribute('aria-label', t('Remove element') + ': ' + componentLabels[id]);
+            remove.addEventListener('click', () => removeObject(id));
+            item.append(edit, remove); section.append(item);
         }
-        visual.append(objects);
     }
     async function setImage(bytes, current = () => true) {
         if(bytes===imageBytes) return current();
@@ -377,7 +393,7 @@
         const identity = section('Your effect');
         identity.append(field('Display name', 'name', { maxLength: 64 }));
         visual.append(identity);
-        const captions = section('Captions'); captions.append(toggle('Show captions','captions.enabled'));
+        const captions = section('Text'); captions.append(toggle('Show captions','captions.enabled'));
         for (const kind of ['title','subtitle','detail']) {
             const key = core.captionLines[kind].key, wrap = element('div','field');
             const input = element('input'); input.id = 'caption-entry-'+kind; input.readOnly = true;
@@ -387,7 +403,7 @@
             input.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' ') {event.preventDefault();open();}});
             wrap.append(fieldHeading(componentLabels[kind],input.id,'captions.'+key),input); captions.append(wrap);
         }
-        visual.append(captions); objectSection(visual);
+        objectSection(captions, 'text'); visual.append(captions);
         const background = section('Background');
         background.append(field('Background layout', 'elements.background', { options: [['none','None'],['template','Shader template'],['solid','Solid color'],['split','Split panels'],['grid','Technical grid'],['terminal','Terminal'],['pulse','Expanding pulse']] }));
         visual.append(background);
@@ -397,11 +413,11 @@
         const colors = element('div', 'colors-row'); colors.id = 'custom-colors';
         for (const [key, label] of [['background', 'Base'], ['primary', 'Primary'], ['secondary', 'Accent']]) { const wrap = element('div', 'field color-field'), well = element('span', 'color-well'), input = element('input'), text = element('input'); input.type = 'color'; input.value = effect.appearance[key]; input.dataset.path = `appearance.${key}`; input.setAttribute('aria-label', t(label + ' color')); text.type = 'text'; text.value = effect.appearance[key]; text.maxLength = 7; text.dataset.path = `appearance.${key}`; text.setAttribute('aria-label', t(label + ' hex color')); input.addEventListener('input', () => mutate(`appearance.${key}`, input.value)); text.addEventListener('input', () => { if (/^#[0-9a-f]{6}$/i.test(text.value)) mutate(`appearance.${key}`, text.value); }); text.addEventListener('change', () => mutate(`appearance.${key}`, text.value)); well.append(input, text); const heading = fieldHeading(label, '', 'appearance.' + key, label + ' color'); wrap.append(heading, well); colors.append(wrap); }
         palette.append(segments, colors, field('Brightness', 'appearance.intensity', { type: 'range', min: 0, max: 4, step: 0.05 })); visual.append(palette);
-        const picture = section('Your image'), upload = element('button', 'image-upload'); upload.id = 'upload-image'; upload.append(icon('image'), element('strong', '', 'Choose an image'), element('span', '', 'Add a logo, artwork or your own photo'), element('small', '', 'PNG / JPEG · up to 8 MB · resized to 2048 px')); upload.addEventListener('click', () => {pendingObjectImage='';$('image-file').click();});
+        const picture = section('Image'), upload = element('button', 'image-upload'); upload.id = 'upload-image'; upload.append(icon('image'), element('strong', '', 'Choose an image'), element('span', '', 'Add a logo, artwork or your own photo'), element('small', '', 'PNG / JPEG · up to 8 MB · resized to 2048 px')); upload.addEventListener('click', () => {pendingObjectImage='';$('image-file').click();});
         const info = element('div', 'image-info'); info.id = 'image-info'; const thumbnail = element('img'); thumbnail.id = 'image-thumbnail'; thumbnail.alt = t('Uploaded effect image'); const label = element('span'); label.id = 'image-description'; const remove = element('button', 'icon-button', '×'); remove.setAttribute('aria-label', t('Remove image')); remove.addEventListener('click', async () => { const previous = snapshot(); await setImage(null); effect.appearance.image = ''; commitChange(previous); renderSettings(); sync(); }); info.append(thumbnail, label, remove);
         const editImage = element('button','component-entry','Edit image'); editImage.append(element('span','','›'));
         editImage.id = 'edit-image'; editImage.addEventListener('click',()=>directEditor.select('image'));
-        picture.append(info,upload,editImage); visual.append(picture);
+        picture.append(info,upload,editImage); objectSection(picture, 'image'); visual.append(picture);
         const indicator = section('Loading indicator');
         indicator.append(field('Indicator style', 'elements.progress', { options: [['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']] }), note('An animated visual indicator, not a measurement of server loading progress.'));
         visual.append(indicator);
@@ -476,6 +492,7 @@
         for (const pane of document.querySelectorAll('.settings-pane:not(#settings-component)')) pane.hidden = !!kind || pane.id !== 'settings-'+activeTab;
         document.querySelector('.inspector-scroll').scrollTop = 0;
         if (kind) renderComponent(kind);
+        else $('settings-component').replaceChildren();
     }
     function geometryValues(rect) {
         if (!rect) return;
@@ -484,15 +501,18 @@
             input.value = Number((rect[input.dataset.geometry]*100).toFixed(2));
         }
     }
-    function captionColor(kind) {
-        const path = 'captions.'+kind+'-color', wrap = element('div','field color-field caption-color'), well = element('span','color-well');
+    function componentColor(label, path) {
+        const wrap = element('div','field color-field component-color'), well = element('span','color-well');
         const picker = element('input'), hex = element('input');
-        picker.type = 'color'; picker.dataset.path = path; picker.value = pathGet(path); picker.setAttribute('aria-label',t('Text color'));
-        hex.type = 'text'; hex.dataset.path = path; hex.value = pathGet(path); hex.maxLength = 7; hex.setAttribute('aria-label',t('Text hex color'));
+        picker.type = 'color'; picker.id = 'component-field-' + path.replaceAll('.','-');
+        picker.dataset.path = path; picker.value = pathGet(path); picker.setAttribute('aria-label',t(label));
+        hex.type = 'text'; hex.dataset.path = path; hex.value = pathGet(path); hex.maxLength = 7;
+        hex.id = picker.id + '-hex'; hex.spellcheck = false;
+        hex.setAttribute('aria-label',t('{0} hex color',t(label)));
         picker.addEventListener('input',()=>mutate(path,picker.value));
         hex.addEventListener('input',()=>{if(/^#[0-9a-f]{6}$/i.test(hex.value)) mutate(path,hex.value);});
         hex.addEventListener('change',()=>{hex.value=pathGet(path);sync();});
-        well.append(picker,hex); wrap.append(fieldHeading('Color','',path,'Text color'),well); return wrap;
+        well.append(picker,hex); wrap.append(fieldHeading(label,picker.id,path),well); return wrap;
     }
     function renderComponent(kind) {
         const pane = $('settings-component'); pane.replaceChildren();
@@ -523,43 +543,105 @@
             input.addEventListener('keydown',event=>{if(event.key==='Enter') input.blur();});
             wrap.append(label,input); layout.append(wrap);
         }
-        pane.append(layout);
-        if (effect.elements.objects[kind]) {
-            const object=effect.elements.objects[kind], path='elements.objects.'+kind+'.', content=section('Appearance');
-            if(object.type==='text') content.append(field('Text',path+'text',{component:true,maxLength:128}),field('Text color',path+'color',{component:true,type:'color'}));
-            else {
-                content.append(field('Image fitting',path+'fit',{component:true,options:[['contain','Contain'],['cover','Cover']]}),field('Image opacity',path+'opacity',{component:true,type:'range',min:0,max:1,step:.01}));
-                const replace=element('button','button button-quiet full-width','Replace image');replace.addEventListener('click',()=>chooseObjectImage(kind));content.append(replace);
-            }
-            content.append(field('Entrance animation',path+'animation',{component:true,options:[['none','None (instant)'],['fade','Fade'],['grow','Grow'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right']]}));
-            const remove=element('button','button button-danger full-width','Remove element');remove.addEventListener('click',()=>removeObject(kind));content.append(remove);pane.append(content);
-        } else if (core.captionLines[kind]) {
-            const content = element('section','settings-section caption-content');
-            if (kind==='detail') {
+        const object = effect.elements.objects[kind], isText = object?.type === 'text' || !!core.captionLines[kind];
+        const path = object ? 'elements.objects.' + kind + '.' : '';
+        if (kind !== 'progress') {
+            const priorityPath = object ? path+'priority' : 'elements.'+kind+'-priority';
+            layout.append(field('Layer priority',priorityPath,{component:true,type:'number',min:-100,max:100,step:1}));
+        }
+        const animations = [['none','None (instant)'],[object?'fade':'still','Fade'],['grow','Grow'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right']];
+        if (isText) {
+            const content = section('Text'), appearance = section('Appearance'), motion = section('Motion');
+            content.querySelector('.section-heading').remove();
+            if (object) content.append(field('Text',path+'text',{component:true,maxLength:128}));
+            else if (kind === 'detail') {
                 for (const [key,label] of [['join-detail','Joining'],['teleport-detail','Teleporting'],['preview-detail','Preview']]) content.append(field(label,'captions.'+key,{maxLength:128,component:true}));
             } else content.append(field(componentLabels[kind],'captions.'+kind,{maxLength:kind==='title'?64:96,component:true}));
-            content.append(captionColor(kind),field('Entrance','elements.'+kind+'-animation',{component:true,options:[['none','None (instant)'],['still','Fade'],['grow','Grow'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right']]}));
-            pane.append(content);
+            const backgroundPath = object ? path : 'captions.'+kind+'-';
+            const typography=section('Typography'), readability=section('Shadow & outline');
+            const textBox = details('Text box',
+                field('Box width · font units',backgroundPath+'box-width',{component:true,type:'number',min:0,max:1024,step:1}),
+                field('Box height · font units',backgroundPath+'box-height',{component:true,type:'number',min:0,max:256,step:1}),
+                field('Padding · font units',backgroundPath+'padding',{component:true,type:'number',min:0,max:32,step:1}),
+                note('Use 0 for automatic box dimensions. Font size changes the lettering inside the box.'));
+            textBox.classList.add('component-details');
+            typography.append(field('Font size · %',backgroundPath+'font-size',{component:true,type:'number',min:10,max:400,step:1}),
+                row(field('Horizontal alignment',backgroundPath+'align-x',{component:true,options:[['left','Left'],['center','Center'],['right','Right']]}),
+                    field('Vertical alignment',backgroundPath+'align-y',{component:true,options:[['top','Top'],['middle','Middle'],['bottom','Bottom']]})));
+            layout.append(field('Rotation · °',backgroundPath+'rotation',{component:true,type:'number',min:-180,max:180,step:1}));
+            let textInput=content.querySelector('input[data-path],textarea[data-path]');
+            for (const input of content.querySelectorAll('[data-path]')) input.addEventListener('focus',()=>{textInput=input; for (const button of variables.querySelectorAll('button')) button.dataset.textTarget=input.dataset.path;});
+            const variables=element('div','text-variables');
+            for (const [token,label] of [['{player}','Player name'],['{world}','World name'],['{effect}','Effect name']]) {
+                const insert=element('button','button button-quiet',label);insert.type='button';
+                insert.dataset.textTarget=textInput.dataset.path;
+                insert.addEventListener('click',()=>{
+                    const input=textInput;
+                    if (input.disabled) return;
+                    const start=input.selectionStart??input.value.length,end=input.selectionEnd??start;
+                    const value=input.value.slice(0,start)+token+input.value.slice(end);
+                    if(value.length>input.maxLength) return;
+                    mutate(input.dataset.path,value);input.value=value;input.focus();input.setSelectionRange(start+token.length,start+token.length);
+                });
+                variables.append(insert);
+            }
+            content.append(variables,note('Variables are replaced in game. Preview values below are only used in Studio.'));
+            const samples=element('details','text-samples'),summary=element('summary','','Preview values');samples.append(summary);
+            for (const [key,label] of [['player','Sample player'],['world','Sample world']]) {
+                const wrap=element('div','field'), input=element('input');input.id='sample-'+key;input.value=textSamples[key];input.maxLength=64;
+                input.addEventListener('input',()=>{textSamples[key]=input.value;sync();});
+                wrap.append(fieldHeading(label,input.id,'sample.'+key),input);samples.append(wrap);
+            }
+            animateDetails(samples); content.append(samples);
+            readability.append(toggle('Text shadow',backgroundPath+'shadow','',true),
+                row(componentColor('Shadow color',backgroundPath+'shadow-color'),field('Shadow offset',backgroundPath+'shadow-offset',{component:true,type:'number',min:0,max:8,step:.1})),
+                row(componentColor('Outline color',backgroundPath+'outline-color'),field('Outline width',backgroundPath+'outline-width',{component:true,type:'number',min:0,max:3,step:1})));
+            appearance.append(componentColor('Text color',object?path+'color':'captions.'+kind+'-color'),
+                field('Text opacity',backgroundPath+'opacity',{component:true,type:'range',min:0,max:1,step:.01}),
+                componentColor('Background color',backgroundPath+'background'),
+                field('Background opacity',backgroundPath+'background-opacity',{component:true,type:'range',min:0,max:1,step:.01}));
+            motion.append(field('Entrance animation',object?path+'animation':'elements.'+kind+'-animation',{component:true,options:animations}));
+            const fold = group => {
+                const title = group.querySelector('h3').textContent;
+                const children = [...group.children].slice(1);
+                const collapsed = details(title, ...children); collapsed.classList.add('component-details');
+                return collapsed;
+            };
+            pane.append(content,typography,appearance,textBox,fold(readability),fold(layout),fold(motion));
+        } else if (object) {
+            const appearance=section('Appearance'), motion=section('Motion');
+            appearance.append(field('Image fitting',path+'fit',{component:true,options:[['contain','Contain'],['cover','Cover']]}),field('Image opacity',path+'opacity',{component:true,type:'range',min:0,max:1,step:.01}));
+            const replace=element('button','button button-quiet full-width','Replace image');replace.type='button';replace.addEventListener('click',()=>chooseObjectImage(kind));appearance.append(replace);
+            motion.append(field('Entrance animation',path+'animation',{component:true,options:animations}));
+            pane.append(appearance,layout,motion);
         } else if (kind==='image') {
             const appearance = section('Appearance');
             appearance.append(field('Image fit','appearance.image-fit',{component:true,options:[['cover','Cover - fill screen'],['contain','Contain - show entire image']]}),field('Image opacity','appearance.image-opacity',{component:true,type:'range',min:0,max:1,step:.01}));
-            const replace = element('button','button button-quiet full-width','Replace image'); replace.addEventListener('click',()=>{pendingObjectImage='';$('image-file').click();}); appearance.append(replace); pane.append(appearance);
+            const replace = element('button','button button-quiet full-width','Replace image'); replace.type='button';replace.addEventListener('click',()=>{pendingObjectImage='';$('image-file').click();}); appearance.append(replace);
             const motion = section('Motion');
-            motion.append(field('Image entrance','elements.image-animation',{component:true,options:[['none','None (instant)'],['inherit','Follow template'],['fade','Fade'],['grow','Grow from center'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right'],['wipe','Left-to-right reveal'],['page','Diagonal page']]}),field('Image entrance delay · seconds','elements.image-delay',{component:true,type:'number',min:0,max:.8*effect.timing['fade-in-ticks']/20,step:.01,imageDelay:true}),field('Ambient image motion','appearance.image-motion',{component:true,options:[['still','Still'],['panorama','Slow zoom and pan'],['page','Legacy page reveal']]})); pane.append(motion);
+            motion.append(field('Image entrance','elements.image-animation',{component:true,options:[['none','None (instant)'],['inherit','Follow template'],['fade','Fade'],['grow','Grow from center'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right'],['wipe','Left-to-right reveal'],['page','Diagonal page']]}),field('Image entrance delay · seconds','elements.image-delay',{component:true,type:'number',min:0,max:.8*effect.timing['fade-in-ticks']/20,step:.01,imageDelay:true}),field('Ambient image motion','appearance.image-motion',{component:true,options:[['still','Still'],['panorama','Slow zoom and pan'],['page','Legacy page reveal']]}));
+            pane.append(appearance,layout,motion);
         } else {
-            const appearance = section('Appearance'); appearance.append(field('Indicator style','elements.progress',{component:true,options:[['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']]})); pane.append(appearance);
+            const appearance = section('Appearance'); appearance.append(field('Indicator style','elements.progress',{component:true,options:[['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']]})); pane.append(appearance,layout);
+        }
+        if (object) {
+            const actions=element('div','component-actions'), remove=element('button','button button-danger full-width','Remove element');
+            remove.type='button';remove.addEventListener('click',()=>removeObject(kind));actions.append(remove);pane.append(actions);
         }
         wireDisabledHelp(); dropdowns.enhance(); sync();
     }
     function syncComponentGeometry(kind,rect) {
         if (!kind || kind!==selectedComponent) return;
         geometryValues(rect);
-        const reason = kind==='progress' ? 'Choose an indicator style to adjust its layout.' : kind==='image' ? 'Add an image to adjust its layout.' : effect.captions.enabled ? 'Enter text for this line to adjust its layout.' : 'Enable Show captions in Effect settings to adjust this line.';
+        const object=effect.elements.objects[kind];
+        const reason = kind==='progress' ? 'Choose an indicator style to adjust its layout.' : kind==='image' || object?.type==='image' ? 'Add an image to adjust its layout.' : object || effect.captions.enabled ? 'Enter text for this line to adjust its layout.' : 'Enable Show captions in Effect settings to adjust this line.';
         const thickness = $('component-thickness');
         for (const input of document.querySelectorAll('[data-geometry],#component-thickness')) {
             input.disabled = !rect;
             const field = input.closest('.field'); field.classList.toggle('is-disabled',!rect);
             field.dataset.disabledReason = rect ? '' : reason;
+            if (!rect) {field.tabIndex=0;field.setAttribute('aria-disabled','true');field.setAttribute('aria-description',t(reason));}
+            else {field.removeAttribute('tabindex');field.removeAttribute('aria-disabled');field.removeAttribute('aria-description');}
         }
         if (thickness && document.activeElement!==thickness) thickness.value = Number((effect.elements['progress-scale']*(effect.elements.progress==='ring'?4.4:effect.elements.progress==='dots'?7.2:6)).toFixed(2));
     }
@@ -715,14 +797,17 @@
         }
         updateAvailability();
         dropdowns.refresh();
-        for (const output of document.querySelectorAll('[data-output]')) { const value = pathGet(output.dataset.output); output.textContent = t(/(?:image-opacity|\.opacity)$/.test(output.dataset.output) ? `${Math.round(value * 100)}%` : `${value.toFixed(2).replace(/0$/, '')}×`); }
+        for (const output of document.querySelectorAll('[data-output]')) { const value = pathGet(output.dataset.output); output.textContent = t(/(?:-opacity|\.opacity)$/.test(output.dataset.output) ? `${Math.round(value * 100)}%` : `${value.toFixed(2).replace(/0$/, '')}×`); }
         for (const button of document.querySelectorAll('[data-palette]')) button.classList.toggle('active', button.dataset.palette === effect.appearance.palette);
         if ($('image-info')) { $('image-info').hidden = !effect.appearance.image; $('upload-image').hidden = !!imageBytes; if (imageUrl) $('image-thumbnail').src = imageUrl; else $('image-thumbnail').removeAttribute('src'); const label = $('image-description'); label.textContent = effect.appearance.image; label.append(element('small', '', imageElement ? `${imageElement.width} × ${imageElement.height} · ${(imageBytes.length / 1024).toFixed(0)} KB` : 'Missing image · choose the matching file')); }
         $('play-button').setAttribute('aria-label', t(playing ? 'Pause preview' : 'Play preview')); $('play-button').replaceChildren(icon(playing ? 'pause' : 'play'));
         for (const button of document.querySelectorAll('[data-template]')) { const selected = button.dataset.template === effect.id && button.dataset.libraryGroup === effect.category; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected)); }
         if ($('edit-image')) $('edit-image').hidden = !imageBytes;
         directEditor?.render();
-        if (previewReady) previewLoop.invalidate();
+        if (previewReady) {
+            if (!playing) previewFrame(performance.now(),0,true);
+            previewLoop.invalidate();
+        }
     }
     function duration() { return Math.max(1, effect.timing['minimum-ticks'] + effect.timing['fade-out-ticks']); }
     class ShaderRenderer {
@@ -758,20 +843,49 @@
     let directEditor = null;
     let renderer = null, previewLoop = null, previewReady = false, previewInView = true;
     let previewFit = 1, previewDraws = 0;
-    try { renderer = new ShaderRenderer($('preview-canvas')); } catch (error) { $('renderer-error').hidden = false; $('renderer-error').textContent = t(error.message); }
-    const objectTextNodes=new Map();
-    function captionText(text) { return text.replaceAll('{effect}',effect.name).replaceAll('{world}','world').replaceAll('{player}',server.session?.player || 'Player'); }
+    try { renderer = new ShaderRenderer(document.createElement('canvas')); } catch (error) { $('renderer-error').hidden = false; $('renderer-error').textContent = t(error.message); }
+    const objectTextNodes=new Map(), imageLayerNodes=new Map();
+    function drawPreviewLayer(id, definition, image, transition, active) {
+        let canvas=imageLayerNodes.get(id);
+        if (!canvas) {canvas=element('canvas','preview-layer');canvas.dataset.previewLayer=id;canvas.setAttribute('aria-hidden','true');$('stage').append(canvas);imageLayerNodes.set(id,canvas);}
+        const source=renderer.canvas;
+        if(canvas.width!==source.width || canvas.height!==source.height) {canvas.width=source.width;canvas.height=source.height;}
+        canvas.style.zIndex=String(10+core.layerIndex(effect,id)); canvas.hidden=!active;
+        if (!active) return;
+        renderer.setImage(image); renderer.draw(definition,playTick/20,transition);
+        const context=canvas.getContext('2d');context.clearRect(0,0,canvas.width,canvas.height);context.drawImage(source,0,0);
+    }
+    function renderPreviewLayers(transition, active) {
+        const display=$('preview-canvas'), surface=renderer.canvas;
+        if(surface.width!==display.width || surface.height!==display.height) {surface.width=display.width;surface.height=display.height;}
+        const keep=new Set(['progress']);
+        const empty={...effect,elements:{...effect.elements,background:'none',progress:'none',decoration:'none'}};
+        if (imageElement && effect.appearance.image) {keep.add('image');drawPreviewLayer('image',empty,imageElement,transition,active);}
+        for (const [id,object] of Object.entries(effect.elements.objects)) if(object.type==='image' && objectPictures.has(object.image)) {
+            keep.add(id);
+            const definition={...empty,appearance:{...effect.appearance,'image-fit':object.fit,'image-opacity':object.opacity,'image-motion':'still'},elements:{...empty.elements,'image-animation':object.animation,'image-delay':0,'image-x':object.x,'image-y':object.y,'image-scale':object.scale,'image-stretch-x':object['stretch-x'],'image-stretch-y':object['stretch-y']}};
+            drawPreviewLayer(id,definition,objectPictures.get(object.image),transition,active);
+        }
+        drawPreviewLayer('progress',{...effect,elements:{...effect.elements,background:'none'}},null,transition,active);
+        for(const [id,node] of imageLayerNodes) if(!keep.has(id)) {node.remove();imageLayerNodes.delete(id);}
+        renderer.setImage(null);
+        if(active) renderer.draw({...effect,elements:{...effect.elements,progress:'none',decoration:'none'}},playTick/20,transition);
+        else renderer.clear();
+        const context=display.getContext('2d');context.clearRect(0,0,display.width,display.height);context.drawImage(surface,0,0);
+    }
+    function captionText(text) { return text.replace(/\{(effect|world|player)\}/g,(_,key)=>({effect:effect.name,world:textSamples.world,player:textSamples.player||server.session?.player||'Player'})[key]); }
     function renderObjectText(opacity,active) {
         const stage=$('stage'), objects=effect.elements.objects;
         for(const [id,node] of objectTextNodes) if(!objects[id] || objects[id].type!=='text') {node.remove();objectTextNodes.delete(id);}
         const fit=Math.min(stage.clientWidth/640,stage.clientHeight/360);
         for(const [id,o] of Object.entries(objects)) if(o.type==='text') {
             let node=objectTextNodes.get(id);if(!node) {node=element('div','object-text-preview');node.setAttribute('aria-hidden','true');stage.append(node);objectTextNodes.set(id,node);}
-            const signature=JSON.stringify([captionText(o.text),o.color,fit]);
-            if(node.dataset.signature!==signature) {window.FrameStudioFont.render(node,captionText(o.text),o.color,7*fit);node.dataset.signature=signature;}
+            const signature=JSON.stringify([captionText(o.text),o,fit]);
+            if(node.dataset.signature!==signature) {window.FrameStudioFont.render(node,captionText(o.text),o.color,7*fit,o.background,o['background-opacity'],o);node.dataset.signature=signature;}
             const frame=core.captionFrame({...effect,elements:{...effect.elements,'title-animation':o.animation==='fade'?'still':o.animation}},'title',opacity);
+            node.style.zIndex=String(10+core.layerIndex(effect,id));
             node.style.left=o.x*100+'%';node.style.top=o.y*100+'%';node.style.opacity=active?frame.alpha:0;
-            node.style.transform=`translateX(-50%) translate(${frame.x*fit}px,${frame.y*fit}px) scale(${o.scale*o['stretch-x']*frame.grow},${o.scale*o['stretch-y']*frame.grow})`;
+            node.style.transform=`translateX(-50%) translate(${frame.x*fit}px,${frame.y*fit}px) rotate(${o.rotation}deg) scale(${o.scale*o['stretch-x']*frame.grow},${o.scale*o['stretch-y']*frame.grow})`;
         }
     }
     function previewFrame(time,elapsed,changed) {
@@ -784,16 +898,7 @@
         }
         const transition = core.coverageAt(effect,playTick), opacity = Math.abs(transition);
         const active = playTick < duration();
-        if (renderer) {
-            renderer.setImage(imageElement);
-            if(active) {
-                renderer.draw(effect,playTick/20,transition);
-                for(const object of Object.values(effect.elements.objects)) if(object.type==='image' && objectPictures.has(object.image)) {
-                    const definition={...effect,appearance:{...effect.appearance,'image-fit':object.fit,'image-opacity':object.opacity,'image-motion':'still'},elements:{...effect.elements,background:'none',progress:'none',decoration:'none','image-animation':object.animation,'image-delay':0,'image-x':object.x,'image-y':object.y,'image-scale':object.scale,'image-stretch-x':object['stretch-x'],'image-stretch-y':object['stretch-y']}};
-                    renderer.setImage(objectPictures.get(object.image));renderer.draw(definition,playTick/20,transition,true);
-                }
-            } else renderer.clear();
-        }
+        if (renderer) renderPreviewLayers(transition,active);
         renderObjectText(opacity,active);
         $('preview-canvas').dataset.renderCount = String(++previewDraws);
         const phase = playTick < effect.timing['fade-in-ticks'] ? t('FADE IN') : playTick < effect.timing['minimum-ticks'] ? t('HOLD') : t('FADE OUT');
@@ -805,19 +910,19 @@
         if (changed) {
             previewFit = Math.min($('stage').clientWidth/640,$('stage').clientHeight/360);
             caption.style.inset = '0'; caption.style.transform = 'none'; caption.style.opacity = '1';
-            const captionText = text => text.replace(/\{effect\}/g,effect.name).replace(/\{world\}/g,'world').replace(/\{player\}/g,server.session?.player || 'Player');
             for (const [kind,definition] of Object.entries(core.captionLines)) {
                 const line = $('preview-'+kind), anchor = core.elementAnchor(layout,kind);
                 line.style.position = 'absolute'; line.style.left = anchor.x*100+'%'; line.style.right = 'auto';
                 line.style.top = anchor.y*100+'%'; line.style.margin = '0'; line.style.transformOrigin = '50% 0';
-                window.FrameStudioFont.render(line,captionText(effect.captions[definition.key]),effect.captions[kind+'-color'],definition.size*previewFit);
+                window.FrameStudioFont.render(line,captionText(effect.captions[definition.key]),effect.captions[kind+'-color'],definition.size*previewFit,effect.captions[kind+'-background'],effect.captions[kind+'-background-opacity'],core.captionStyle(effect,kind));
             }
             directEditor?.render();
         }
         for (const kind of Object.keys(core.captionLines)) {
             const line = $('preview-'+kind), frame = core.captionFrame(effect,kind,opacity);
+            line.style.zIndex=String(10+core.layerIndex(effect,kind));
             const scale = layout['text-scale']*layout[kind+'-scale']*frame.grow, alpha = String(frame.alpha);
-            const transform = `translateX(-50%) translate(${frame.x*previewFit}px,${frame.y*previewFit}px) scale(${layout['text-stretch-x']*layout[kind+'-stretch-x']*scale},${layout['text-stretch-y']*layout[kind+'-stretch-y']*scale})`;
+            const transform = `translateX(-50%) translate(${frame.x*previewFit}px,${frame.y*previewFit}px) rotate(${effect.captions[kind+'-rotation']}deg) scale(${layout['text-stretch-x']*layout[kind+'-stretch-x']*scale},${layout['text-stretch-y']*layout[kind+'-stretch-y']*scale})`;
             if (line.style.opacity !== alpha) line.style.opacity = alpha;
             if (line.style.transform !== transform) line.style.transform = transform;
         }
@@ -832,7 +937,12 @@
         const width = Math.max(1,Math.min(960,Math.round(stage.clientWidth*ratio)));
         const height = Math.max(1,Math.round(width*stage.clientHeight/Math.max(1,stage.clientWidth)));
         if (canvas.width !== width || canvas.height !== height) { canvas.width=width;canvas.height=height; }
-        if (previewReady) previewLoop.invalidate();
+        if (previewReady) {
+            // Resizing clears a canvas immediately. Repaint before returning to the editor,
+            // including paused or occluded previews whose animation frame may be delayed.
+            previewFrame(performance.now(),0,true);
+            previewLoop.invalidate();
+        }
     }
     document.addEventListener('visibilitychange',()=>{if(document.hidden) previewLoop.suspend();else {previewLoop.invalidate();generateThumbnails();}});
     if (typeof ResizeObserver !== 'undefined') new ResizeObserver(sizePreview).observe($('stage'));
