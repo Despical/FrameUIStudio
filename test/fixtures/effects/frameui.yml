@@ -15,9 +15,51 @@ captions:
   enabled: true
   title: ""
   subtitle: "YOUR WORLD. YOUR STYLE."
-  join-detail: "Preparing your next adventure"
-  teleport-detail: "Preparing your next adventure"
-  preview-detail: "Preparing your next adventure"
+  join-detail: "Make every arrival yours"
+  teleport-detail: "Make every arrival yours"
+  preview-detail: "Make every arrival yours"
+  title-color: "#F1F4FA"
+  title-font-size: 100
+  title-box-width: 0
+  title-box-height: 0
+  title-align-x: "center"
+  title-align-y: "middle"
+  title-padding: 2
+  title-shadow: false
+  title-shadow-color: "#151018"
+  title-shadow-offset: 1
+  title-outline-width: 0
+  title-outline-color: "#251014"
+  title-background: "#081221"
+  title-background-opacity: 0
+  subtitle-color: "#F2DBA4"
+  subtitle-font-size: 125
+  subtitle-box-width: 0
+  subtitle-box-height: 0
+  subtitle-align-x: "center"
+  subtitle-align-y: "middle"
+  subtitle-padding: 2
+  subtitle-shadow: false
+  subtitle-shadow-color: "#151018"
+  subtitle-shadow-offset: 1
+  subtitle-outline-width: 0
+  subtitle-outline-color: "#251014"
+  subtitle-background: "#081221"
+  subtitle-background-opacity: 0
+  detail-color: "#A5B4C7"
+  detail-font-size: 90
+  detail-box-width: 0
+  detail-box-height: 0
+  detail-align-x: "center"
+  detail-align-y: "middle"
+  detail-padding: 2
+  detail-shadow: false
+  detail-shadow-color: "#151018"
+  detail-shadow-offset: 1
+  detail-outline-width: 0
+  detail-outline-color: "#251014"
+  detail-background: "#081221"
+  detail-background-opacity: 0
 presentation:
   show-hands: false
   hide-hud: true
@@ -35,13 +77,23 @@ appearance:
 elements:
   background: "solid"
   text-animation: "slide-up"
-  text-y: 0.64
+  text-y: 0.66
   progress: "segments"
-  progress-y: 0.81
-  progress-width: 0.28
+  progress-y: 0.95
+  progress-width: 0.24
   image-animation: "grow"
   image-scale: 0.72
   image-y: 0.5
   image-delay: 0.38
+  text-x: 0.5
+  title-offset-x: 0.0
+  subtitle-offset-x: 0.0
+  title-offset-y: -0.004
+  subtitle-offset-y: 0.061
+  subtitle-animation: "still"
+  detail-animation: "slide-up"
+  progress-x: 0.5
+  progress-scale: 0.65
+  detail-offset-y: -0.026
 filters:
   triggers: ["command"]

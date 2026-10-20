@@ -77,3 +77,129 @@ window.FrameStudioTranslations = {"languages":{"en":"English","es":"Español","r
         for (const [key,turkish] of Object.entries(additions)) messages[key] = language==='tr' ? turkish : messages[key] || key;
     }
 })(window.FrameStudioTranslations);
+
+// Shared image and indicator surface controls.
+(function(data) {
+    const labels={
+  "en": [
+    "Indicator opacity",
+    "Background padding · px"
+  ],
+  "tr": [
+    "Gösterge opaklığı",
+    "Arka plan iç boşluğu · px"
+  ],
+  "es": [
+    "Opacidad del indicador",
+    "Margen del fondo · px"
+  ],
+  "ru": [
+    "Непрозрачность индикатора",
+    "Отступ фона · px"
+  ],
+  "de": [
+    "Deckkraft der Ladeanzeige",
+    "Hintergrundabstand · px"
+  ],
+  "fr": [
+    "Opacité de l’indicateur",
+    "Marge du fond · px"
+  ],
+  "pt": [
+    "Opacidade do indicador",
+    "Espaçamento do fundo · px"
+  ],
+  "pl": [
+    "Krycie wskaźnika",
+    "Odstęp tła · px"
+  ],
+  "zh": [
+    "指示器不透明度",
+    "背景内边距 · px"
+  ],
+  "id": [
+    "Opasitas indikator",
+    "Jarak latar · px"
+  ],
+  "it": [
+    "Opacità dell’indicatore",
+    "Spaziatura dello sfondo · px"
+  ],
+  "vi": [
+    "Độ mờ của chỉ báo",
+    "Khoảng đệm nền · px"
+  ],
+  "nl": [
+    "Dekking van indicator",
+    "Achtergrondmarge · px"
+  ],
+  "ko": [
+    "표시기 불투명도",
+    "배경 안쪽 여백 · px"
+  ],
+  "cs": [
+    "Krytí ukazatele",
+    "Odsazení pozadí · px"
+  ],
+  "th": [
+    "ความทึบของตัวบ่งชี้",
+    "ระยะขอบพื้นหลัง · px"
+  ],
+  "hu": [
+    "Jelző átlátszatlansága",
+    "Háttér belső margója · px"
+  ],
+  "ar": [
+    "عتامة المؤشر",
+    "الحشو الداخلي للخلفية · px"
+  ],
+  "ja": [
+    "インジケーターの不透明度",
+    "背景の余白 · px"
+  ],
+  "uk": [
+    "Непрозорість індикатора",
+    "Відступ тла · px"
+  ],
+  "sv": [
+    "Indikatorns opacitet",
+    "Bakgrundens marginal · px"
+  ],
+  "da": [
+    "Indikatorens opacitet",
+    "Baggrundens indvendige afstand · px"
+  ],
+  "ro": [
+    "Opacitatea indicatorului",
+    "Spațierea fundalului · px"
+  ],
+  "sk": [
+    "Krytie ukazovateľa",
+    "Odsadenie pozadia · px"
+  ],
+  "he": [
+    "אטימות המחוון",
+    "ריווח פנימי של הרקע · px"
+  ],
+  "lt": [
+    "Indikatoriaus nepermatomumas",
+    "Fono vidinis tarpas · px"
+  ],
+  "ms": [
+    "Kelegapan penunjuk",
+    "Ruang latar · px"
+  ],
+  "ta": [
+    "குறிகாட்டியின் ஒளிபுகாநிலை",
+    "பின்னணி உள் இடைவெளி · px"
+  ]
+};
+    for (const [language,pair] of Object.entries(labels)) Object.assign(data.messages[language], {"Indicator opacity":pair[0],"Background padding · px":pair[1]});
+    const help={
+  "Visibility of the loading indicator and its background. Zero hides both.": "Yükleme göstergesi ve arka planının görünürlüğü. 0 ikisini de gizler.",
+  "Space around the loading indicator background, in pixels at 640 × 360. Decimal values are supported.": "640 × 360 ölçüsüne göre göstergenin etrafındaki arka plan boşluğu, piksel cinsinden. Ondalıklı değerler kullanılabilir.",
+  "Visibility of this element background. Zero hides the background.": "Öğenin arka plan görünürlüğü. 0 arka planı gizler.",
+  "Color behind this element. Increase background opacity to show it.": "Öğenin arkasındaki renk. Görünmesi için arka plan opaklığını artırın."
+};
+    for (const [language,messages] of Object.entries(data.messages)) for (const [key,value] of Object.entries(help)) messages[key]=language==='tr' ? value : messages[key] || key;
+})(window.FrameStudioTranslations);

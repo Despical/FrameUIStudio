@@ -13,11 +13,39 @@ timing:
   fade-out-ticks: 12
 captions:
   enabled: true
-  title: "YOUR SERVER"
-  subtitle: "Your next adventure is almost ready"
+  title: "LET'S PLAY"
+  subtitle: "Your next session starts here"
   join-detail: ""
   teleport-detail: ""
   preview-detail: ""
+  title-color: "#FFB5DF"
+  title-font-size: 180
+  title-box-width: 220
+  title-box-height: 24
+  title-align-x: "center"
+  title-align-y: "middle"
+  title-padding: 2
+  title-shadow: true
+  title-shadow-color: "#151018"
+  title-shadow-offset: 0.75
+  title-outline-width: 1
+  title-outline-color: "#251014"
+  title-background: "#081221"
+  title-background-opacity: 0
+  subtitle-color: "#F0D8ED"
+  subtitle-font-size: 105
+  subtitle-box-width: 0
+  subtitle-box-height: 0
+  subtitle-align-x: "center"
+  subtitle-align-y: "middle"
+  subtitle-padding: 2
+  subtitle-shadow: false
+  subtitle-shadow-color: "#151018"
+  subtitle-shadow-offset: 1
+  subtitle-outline-width: 0
+  subtitle-outline-color: "#251014"
+  subtitle-background: "#081221"
+  subtitle-background-opacity: 0
 presentation:
   show-hands: false
   hide-hud: true
@@ -33,10 +61,19 @@ appearance:
 elements:
   background: "pulse"
   text-animation: "slide-up"
-  text-y: 0.48
+  text-y: 0.32
   progress: "dots"
-  progress-y: 0.66
-  progress-width: 0.18
+  progress-y: 0.7
+  progress-width: 0.22
   decoration: "pulse"
+  text-x: 0.5
+  title-offset-x: 0.0
+  subtitle-offset-x: 0.0
+  title-offset-y: -0.004
+  subtitle-offset-y: 0.141
+  title-animation: "grow"
+  subtitle-animation: "slide-up"
+  progress-x: 0.5
+  progress-scale: 0.9
 filters:
   triggers: ["command"]

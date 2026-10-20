@@ -13,11 +13,39 @@ timing:
   fade-out-ticks: 14
 captions:
   enabled: true
-  title: "YOUR SERVER"
-  subtitle: "Your next adventure is almost ready"
+  title: "SYNCING YOUR WORLD"
+  subtitle: "Preparing terrain and session data"
   join-detail: ""
   teleport-detail: ""
   preview-detail: ""
+  title-color: "#B5DCFF"
+  title-font-size: 115
+  title-box-width: 0
+  title-box-height: 0
+  title-align-x: "center"
+  title-align-y: "middle"
+  title-padding: 2
+  title-shadow: false
+  title-shadow-color: "#151018"
+  title-shadow-offset: 1
+  title-outline-width: 0
+  title-outline-color: "#251014"
+  title-background: "#081221"
+  title-background-opacity: 0
+  subtitle-color: "#B0C6DF"
+  subtitle-font-size: 115
+  subtitle-box-width: 0
+  subtitle-box-height: 0
+  subtitle-align-x: "center"
+  subtitle-align-y: "middle"
+  subtitle-padding: 2
+  subtitle-shadow: false
+  subtitle-shadow-color: "#151018"
+  subtitle-shadow-offset: 1
+  subtitle-outline-width: 0
+  subtitle-outline-color: "#251014"
+  subtitle-background: "#081221"
+  subtitle-background-opacity: 0
 presentation:
   show-hands: false
   hide-hud: true
@@ -33,10 +61,19 @@ appearance:
 elements:
   background: "grid"
   text-animation: "slide-up"
-  text-y: 0.44
+  text-y: 0.43
   progress: "segments"
-  progress-y: 0.66
-  progress-width: 0.42
+  progress-y: 0.7
+  progress-width: 0.6
   decoration: "scan"
+  text-x: 0.5
+  title-offset-x: 0.0
+  subtitle-offset-x: 0.0
+  title-offset-y: -0.004
+  subtitle-offset-y: 0.051
+  title-animation: "slide-up"
+  subtitle-animation: "still"
+  progress-x: 0.5
+  progress-scale: 0.8
 filters:
   triggers: ["command"]

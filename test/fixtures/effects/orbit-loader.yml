@@ -13,11 +13,39 @@ timing:
   fade-out-ticks: 16
 captions:
   enabled: true
-  title: "YOUR SERVER"
-  subtitle: "Your next adventure is almost ready"
+  title: "A WORLD IN MOTION"
+  subtitle: "Finding your next orbit"
   join-detail: ""
   teleport-detail: ""
   preview-detail: ""
+  title-color: "#C5B8FF"
+  title-font-size: 115
+  title-box-width: 0
+  title-box-height: 0
+  title-align-x: "center"
+  title-align-y: "middle"
+  title-padding: 2
+  title-shadow: false
+  title-shadow-color: "#151018"
+  title-shadow-offset: 1
+  title-outline-width: 0
+  title-outline-color: "#251014"
+  title-background: "#081221"
+  title-background-opacity: 0
+  subtitle-color: "#E3DFF8"
+  subtitle-font-size: 120
+  subtitle-box-width: 0
+  subtitle-box-height: 0
+  subtitle-align-x: "center"
+  subtitle-align-y: "middle"
+  subtitle-padding: 2
+  subtitle-shadow: false
+  subtitle-shadow-color: "#151018"
+  subtitle-shadow-offset: 1
+  subtitle-outline-width: 0
+  subtitle-outline-color: "#251014"
+  subtitle-background: "#081221"
+  subtitle-background-opacity: 0
 presentation:
   show-hands: false
   hide-hud: true
@@ -33,9 +61,18 @@ appearance:
 elements:
   background: "solid"
   text-animation: "grow"
-  text-y: 0.55
+  text-y: 0.34
   progress: "ring"
-  progress-y: 0.3
-  progress-width: 0.11
+  progress-y: 0.7
+  progress-width: 0.15
+  text-x: 0.5
+  title-offset-x: 0.0
+  subtitle-offset-x: 0.0
+  title-offset-y: -0.004
+  subtitle-offset-y: 0.051
+  title-animation: "slide-up"
+  subtitle-animation: "still"
+  progress-x: 0.5
+  progress-scale: 1.2
 filters:
   triggers: ["command"]

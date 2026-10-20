@@ -88,6 +88,8 @@
     function disabledSettings(effect, hasImage) {
         const disabled = {}, e = effect.elements, a = effect.appearance;
         const template = e.background === 'template', none = e.background === 'none';
+        for (const kind of ['progress','image']) if (e[kind+'-background-opacity']===0) block(['elements.'+kind+'-background'], 'Increase background opacity to adjust its color.');
+        for (const [id,o] of Object.entries(e.objects)) if (o['background-opacity']===0) block(['elements.objects.'+id+'.background'], 'Increase background opacity to adjust its color.');
         const overlay = e.progress !== 'none' || e.decoration !== 'none';
         const mapped = template && a.palette === 'custom';
         function block(paths, reason) { for (const path of paths) if (!disabled[path]) disabled[path] = reason; }
@@ -106,10 +108,11 @@
             block(['appearance.speed'], 'This screen has no ambient movement. Motion speed does not change fades, entrances or total duration.');
         }
         if (!effect.captions.enabled) block(['elements.title-animation','elements.subtitle-animation','elements.detail-animation','captions.title-color', 'captions.subtitle-color', 'captions.detail-color', 'captions.title', 'captions.subtitle', 'captions.join-detail', 'captions.teleport-detail', 'captions.preview-detail', 'elements.text-x', 'elements.text-y', 'elements.text-scale', 'elements.text-animation'], 'Show captions is off. Enable it to edit the on-screen text and its placement.');
-        if (!hasImage) block(['appearance.image-fit', 'appearance.image-opacity', 'appearance.image-motion', 'elements.image-scale', 'elements.image-x', 'elements.image-y', 'elements.image-animation', 'elements.image-delay'], 'Add an image in Design before adjusting its appearance, placement or movement.');
+        if (!hasImage) block(['appearance.image-fit', 'appearance.image-opacity', 'appearance.image-motion', 'elements.image-background', 'elements.image-background-opacity', 'elements.image-priority', 'elements.image-scale', 'elements.image-x', 'elements.image-y', 'elements.image-animation', 'elements.image-delay'], 'Add an image in Design before adjusting its appearance, placement or movement.');
+        if (e['progress-background-opacity']===0) block(['elements.progress-padding'], 'Increase background opacity to adjust its color.');
         if (e['image-animation'] === 'none') block(['elements.image-delay'], 'Image entrance is None (instant), so there is no entrance animation to delay.');
         if (effect.timing['fade-in-ticks'] === 0) block(['elements.image-delay'], 'Fade in is zero seconds, so there is no entrance phase to delay.');
-        if (e.progress === 'none') block(['elements.progress-x', 'elements.progress-y', 'elements.progress-width', 'elements.progress-scale'], 'Loading indicator is None. Choose an indicator style to adjust its placement and size.');
+        if (e.progress === 'none') block(Object.keys(e).filter(key=>key.startsWith('progress-')).map(key=>'elements.'+key), 'Loading indicator is None. Choose an indicator style to adjust its placement and size.');
         const textStyles = [
             ...Object.keys(captionLines).map(kind => ['captions.' + kind + '-', {...captionStyle(effect, kind), 'background-opacity': effect.captions[kind + '-background-opacity']}, !effect.captions.enabled]),
             ...Object.entries(e.objects || {}).filter(([, object]) => object.type === 'text').map(([id, object]) => ['elements.objects.' + id + '.', object, false])
@@ -150,7 +153,7 @@
             captions: { ...Object.fromEntries(['title','subtitle','detail'].flatMap(kind=>[[kind+'-background','#081221'],[kind+'-background-opacity',0],...Object.entries(textDefaults()).map(([key,value])=>[kind+'-'+key,value])])), 'title-color':'#f1f4fa', 'subtitle-color':'#8595ad', 'detail-color':'#8595ad', enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
             presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
             appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1, 'image-motion': 'still', 'title-motion': 'still' },
-            elements: { objects: {}, 'image-priority':10, 'title-priority':20, 'subtitle-priority':20, 'detail-priority':20, 'title-animation':'still', 'subtitle-animation':'still', 'detail-animation':'still', 'title-offset-x': 0, 'title-offset-y': 0, 'title-scale': 1, 'title-stretch-x': 1, 'title-stretch-y': 1, 'subtitle-offset-x': 0, 'subtitle-offset-y': 0, 'subtitle-scale': 1, 'subtitle-stretch-x': 1, 'subtitle-stretch-y': 1, 'detail-offset-x': 0, 'detail-offset-y': 0, 'detail-scale': 1, 'detail-stretch-x': 1, 'detail-stretch-y': 1, background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1, 'image-stretch-x': 1, 'image-stretch-y': 1, 'text-stretch-x': 1, 'text-stretch-y': 1 },
+            elements: { objects: {}, 'progress-priority':15, 'progress-opacity':1, 'progress-background':'#081221', 'progress-background-opacity':0, 'progress-padding':6, 'image-background':'#081221', 'image-background-opacity':0, 'image-priority':10, 'title-priority':20, 'subtitle-priority':20, 'detail-priority':20, 'title-animation':'still', 'subtitle-animation':'still', 'detail-animation':'still', 'title-offset-x': 0, 'title-offset-y': 0, 'title-scale': 1, 'title-stretch-x': 1, 'title-stretch-y': 1, 'subtitle-offset-x': 0, 'subtitle-offset-y': 0, 'subtitle-scale': 1, 'subtitle-stretch-x': 1, 'subtitle-stretch-y': 1, 'detail-offset-x': 0, 'detail-offset-y': 0, 'detail-scale': 1, 'detail-stretch-x': 1, 'detail-stretch-y': 1, background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1, 'image-stretch-x': 1, 'image-stretch-y': 1, 'text-stretch-x': 1, 'text-stretch-y': 1 },
             filters: { permission: '', 'deny-permissions': [], worlds: { include: [], exclude: [] }, 'source-worlds': { include: [], exclude: [] }, 'addon-targets': { include: [], exclude: [] }, 'game-modes': { include: [], exclude: [] }, 'teleport-causes': [], triggers: [...triggers], distance: { min: 0, max: -1 }, height: { min: -30000000, max: 30000000 }, time: { min: 0, max: 23999 }, weather: [], 'cooldown-ticks': 0 }
         };
     }
@@ -228,11 +231,17 @@
         if (!['still', 'grow'].includes(a['title-motion'])) fail('Invalid title motion.');
         const e = effect.elements;
         const choice = (key, values) => { if (!values.includes(e[key])) fail(`Invalid element ${key}.`); };
-        for (const kind of ['image','title','subtitle','detail']) number(e[kind+'-priority'], 'Layer priority', -100, 100);
+        for (const kind of ['image','progress','title','subtitle','detail']) number(e[kind+'-priority'], 'Layer priority', -100, 100);
         choice('background', ['template', 'solid', 'split', 'grid', 'terminal', 'pulse', 'none']);
         choice('image-animation', ['inherit', 'fade', 'grow', 'slide-up', 'slide-left', 'wipe', 'page', 'slide-right', 'slide-down', 'none']);
         choice('text-animation', ['still', 'grow', 'slide-up', 'slide-down', 'slide-left', 'slide-right', 'none']);
         choice('progress', ['none', 'bar', 'segments', 'dots', 'ring']);
+        for (const kind of ['progress','image']) {
+            if (!/^#[0-9a-f]{6}$/i.test(e[kind+'-background'])) fail('Invalid element background color.');
+            number(e[kind+'-background-opacity'], 'Background opacity', 0, 1, false);
+        }
+        number(e['progress-opacity'], 'Indicator opacity', 0, 1, false);
+        number(e['progress-padding'], 'Indicator padding', 0, 32, false);
         choice('decoration', ['none', 'embers', 'petals', 'scan', 'pulse']);
         for (const key of ['image-x', 'image-y', 'text-x', 'text-y', 'progress-x', 'progress-y']) number(e[key], key, -10, 10, false);
         for (const kind of ['title', 'subtitle', 'detail']) {
@@ -311,7 +320,7 @@
         const entries = [{id:'image',priority:effect.elements['image-priority']}];
         const objects = Object.entries(effect.elements.objects);
         for (const [id, object] of objects) if (object.type === 'image') entries.push({id,priority:object.priority});
-        entries.push({id:'progress',priority:15});
+        entries.push({id:'progress',priority:effect.elements['progress-priority']});
         for (const id of ['title','subtitle','detail']) entries.push({id,priority:effect.elements[id+'-priority']});
         for (const [id, object] of objects) if (object.type === 'text') entries.push({id,priority:object.priority});
         return entries.sort((a,b)=>a.priority-b.priority).map(entry=>entry.id);

@@ -162,7 +162,7 @@ test('canvas movement uses the exported coordinates and respects bounds', () => 
     assert.equal(moved['image-x'], .7); assert.equal(moved['image-y'], .4);
     assert.equal(original['image-x'], .5);
     const text = core.transformElement(original, 'text', .2, -.1);
-    assert.equal(text['text-x'], .7); assert.equal(text['text-y'], .34);
+    assert.equal(text['text-x'], .7); assert.ok(Math.abs(text['text-y']-(original['text-y']-.1))<1e-9);
     const bounded = core.transformElement(original, 'progress', 100, -100);
     assert.equal(bounded['progress-x'], 10); assert.equal(bounded['progress-y'], -10);
     assert.throws(() => core.transformElement(original,'unknown',0,0));
@@ -171,6 +171,8 @@ test('canvas movement uses the exported coordinates and respects bounds', () => 
 
 test('corner resizing preserves aspect and fixes the opposite corner', () => {
     const original = core.createEffect('clean-loader').elements;
+    original['progress-width']=.34;
+    original['progress-scale']=1;
     const resized = core.transformElement(original,'image',.2,.1,'se',{x:.3,y:.4,width:.4,height:.2});
     assert.equal(resized['image-scale'],1.5);
     assert.equal(resized['image-x'],.6); assert.equal(resized['image-y'],.55);

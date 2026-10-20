@@ -291,6 +291,11 @@
     }
     function fieldHelp(path) {
         if (FIELD_HELP[path]) return FIELD_HELP[path];
+        if (path==='elements.progress-opacity') return ['Visibility of the loading indicator and its background. Zero hides both.'];
+        if (path==='elements.progress-padding') return ['Space around the loading indicator background, in pixels at 640 × 360. Decimal values are supported.'];
+        if (/^elements\.(?:progress|image)-background(?:-opacity)?$/.test(path) || /^elements\.objects\.[^.]+\.background(?:-opacity)?$/.test(path) && effect.elements.objects[path.split('.')[2]]?.type==='image') {
+            return [path.endsWith('-opacity') ? 'Visibility of this element background. Zero hides the background.' : 'Color behind this element. Increase background opacity to show it.'];
+        }
         const objectField=path.match(/^elements\.objects\.([^.]+)\.(opacity|fit|animation)$/);
         if (objectField && effect.elements.objects[objectField[1]]?.type==='image') {
             return FIELD_HELP[{opacity:'appearance.image-opacity',fit:'appearance.image-fit',animation:'elements.image-animation'}[objectField[2]]];
@@ -319,7 +324,7 @@
         };
         if (textHelp[textKey]) return [textHelp[textKey]];
         if (/^sample\.(player|world)$/.test(path)) return ['Example value used only in the Studio preview. In game, the real value is used.'];
-        if (/^elements\.(?:(?:image|title|subtitle|detail)-priority|objects\.[^.]+\.priority)$/.test(path)) return ['Higher values appear in front. Equal values keep their existing order.'];
+        if (/^elements\.(?:(?:image|progress|title|subtitle|detail)-priority|objects\.[^.]+\.priority)$/.test(path)) return ['Higher values appear in front. Equal values keep their existing order.'];
         const match = path.match(/^filters\.(worlds|source-worlds|addon-targets)\.(include|exclude)$/);
         if (match) {
             const target = { worlds: 'destination worlds', 'source-worlds': 'worlds the player leaves', 'addon-targets': 'named homes, warps, portals, towns, nations, lands or islands' }[match[1]];
@@ -619,7 +624,7 @@
         }
         const object = effect.elements.objects[kind], isText = object?.type === 'text' || !!core.captionLines[kind];
         const path = object ? 'elements.objects.' + kind + '.' : '';
-        if (kind !== 'progress') {
+        {
             const priorityPath = object ? path+'priority' : 'elements.'+kind+'-priority';
             layout.append(field('Layer priority',priorityPath,{component:true,type:'number',min:-100,max:100,step:1}));
         }
@@ -684,19 +689,23 @@
             pane.append(content,typography,appearance,textBox,fold(readability),fold(layout),fold(motion));
         } else if (object) {
             const appearance=section('Appearance'), motion=section('Motion');
-            appearance.append(field('Image fitting',path+'fit',{component:true,options:[['contain','Contain'],['cover','Cover']]}),field('Image opacity',path+'opacity',{component:true,type:'range',min:0,max:1,step:.01}));
+            appearance.append(field('Image fitting',path+'fit',{component:true,options:[['contain','Contain'],['cover','Cover']]}),field('Image opacity',path+'opacity',{component:true,type:'range',min:0,max:1,step:.01}),componentColor('Background color',path+'background'),field('Background opacity',path+'background-opacity',{component:true,type:'range',min:0,max:1,step:.01}));
             const replace=element('button','button button-quiet full-width','Replace image');replace.type='button';replace.addEventListener('click',()=>chooseObjectImage(kind));appearance.append(replace);
             motion.append(field('Entrance animation',path+'animation',{component:true,options:animations}));
             pane.append(appearance,layout,motion);
         } else if (kind==='image') {
             const appearance = section('Appearance');
-            appearance.append(field('Image fit','appearance.image-fit',{component:true,options:[['cover','Cover - fill screen'],['contain','Contain - show entire image']]}),field('Image opacity','appearance.image-opacity',{component:true,type:'range',min:0,max:1,step:.01}));
+            appearance.append(field('Image fit','appearance.image-fit',{component:true,options:[['cover','Cover - fill screen'],['contain','Contain - show entire image']]}),field('Image opacity','appearance.image-opacity',{component:true,type:'range',min:0,max:1,step:.01}),componentColor('Background color','elements.image-background'),field('Background opacity','elements.image-background-opacity',{component:true,type:'range',min:0,max:1,step:.01}));
             const replace = element('button','button button-quiet full-width','Replace image'); replace.type='button';replace.addEventListener('click',()=>{pendingObjectImage='';$('image-file').click();}); appearance.append(replace);
             const motion = section('Motion');
             motion.append(field('Image entrance','elements.image-animation',{component:true,options:[['none','None (instant)'],['inherit','Follow template'],['fade','Fade'],['grow','Grow from center'],['slide-up','Slide from bottom'],['slide-down','Slide from top'],['slide-left','Slide from left'],['slide-right','Slide from right'],['wipe','Left-to-right reveal'],['page','Diagonal page']]}),field('Image entrance delay · seconds','elements.image-delay',{component:true,type:'number',min:0,max:.8*effect.timing['fade-in-ticks']/20,step:.01,imageDelay:true}),field('Ambient image motion','appearance.image-motion',{component:true,options:[['still','Still'],['panorama','Slow zoom and pan'],['page','Legacy page reveal']]}));
             pane.append(appearance,layout,motion);
         } else {
-            const appearance = section('Appearance'); appearance.append(field('Indicator style','elements.progress',{component:true,options:[['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']]})); pane.append(appearance,layout);
+            const appearance = section('Appearance'); appearance.append(field('Indicator style','elements.progress',{component:true,options:[['none','None'],['bar','Moving bar'],['segments','Segmented bar'],['dots','Pulsing dots'],['ring','Rotating ring']]})); appearance.append(field('Indicator opacity','elements.progress-opacity',{component:true,type:'range',min:0,max:1,step:.01}),
+                componentColor('Background color','elements.progress-background'),
+                field('Background opacity','elements.progress-background-opacity',{component:true,type:'range',min:0,max:1,step:.01}),
+                field('Background padding · px','elements.progress-padding',{component:true,type:'number',min:0,max:32,step:.5}));
+            pane.append(appearance,layout);
         }
         if (object) {
             const actions=element('div','component-actions'), remove=element('button','button button-danger full-width','Remove element');
@@ -891,7 +900,7 @@
             function compile(type, code) { const shader = gl.createShader(type); gl.shaderSource(shader, code); gl.compileShader(shader); if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error('Shader preview failed: ' + gl.getShaderInfoLog(shader)); return shader; }
             const program = this.program = gl.createProgram(); gl.attachShader(program, compile(gl.VERTEX_SHADER, 'attribute vec2 position; void main(){gl_Position=vec4(position,0.0,1.0);}')); gl.attachShader(program, compile(gl.FRAGMENT_SHADER, window.FrameStudioShader)); gl.linkProgram(program); if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error('Shader preview could not link. Editing and export still work.'); gl.useProgram(program);
             const buffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW); const position = gl.getAttribLocation(program, 'position'); gl.enableVertexAttribArray(position); gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-            this.uniforms = Object.fromEntries(['ScreenSize','uTime','uSpeed','frameLoadingEffect','frameLoadingTransition','uCustom','uBackground','uPrimary','uSecondary','uIntensity','uImage','uHasImage','uImageSize','uContain','uImageOpacity','uBackgroundStyle','uImageAnimation','uImageMotion','uGrowingTitle','uPlacement','uIndicator','uDecoration','uProgressScale','uImageStretch'].map(name => [name, gl.getUniformLocation(program, name)]));
+            this.uniforms = Object.fromEntries(['ScreenSize','uTime','uSpeed','frameLoadingEffect','frameLoadingTransition','uCustom','uBackground','uPrimary','uSecondary','uIntensity','uImage','uHasImage','uImageSize','uContain','uImageOpacity','uBackgroundStyle','uImageAnimation','uImageMotion','uGrowingTitle','uPlacement','uIndicator','uDecoration','uProgressScale','uImageStretch','uIndicatorBackdrop','uIndicatorStyle','uImageBackdrop'].map(name => [name, gl.getUniformLocation(program, name)]));
             this.texture = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.texture); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0])); this.picture = null;
         }
         setImage(image) { this.picture = image; const gl = this.gl; this.textures ||= new WeakMap(); if(image && this.textures.has(image)) {this.texture=this.textures.get(image);return;} if(image) {this.texture=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,this.texture);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);this.textures.set(image,this.texture);} gl.bindTexture(gl.TEXTURE_2D, this.texture); if (image) { gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image); } }
@@ -910,6 +919,11 @@
             gl.uniform4f(u.uPlacement, e['image-x'], e['image-y'], e['image-scale'], e['image-delay']);
             gl.uniform4f(u.uIndicator, ['none','bar','segments','dots','ring'].indexOf(e.progress), e['progress-x'], e['progress-y'], e['progress-width']);
             gl.uniform1f(u.uProgressScale, e['progress-scale']);
+            for (const [uniform,kind] of [[u.uIndicatorBackdrop,'progress'],[u.uImageBackdrop,'image']]) {
+                const color=rgb(e[kind+'-background']);
+                gl.uniform4f(uniform,...color,e[kind+'-background-opacity']);
+            }
+            gl.uniform4f(u.uIndicatorStyle,e['progress-opacity'],e['progress-padding'],0,0);
             gl.uniform1i(u.uDecoration, ['none','embers','petals','scan','pulse'].indexOf(e.decoration));
             gl.viewport(0, 0, c.width, c.height); gl.useProgram(this.program); gl.uniform2f(u.ScreenSize, c.width, c.height); gl.uniform1f(u.uTime, seconds); gl.uniform1f(u.uSpeed, a.speed); gl.uniform1i(u.frameLoadingEffect, core.catalog.find(item => item.id === definition.template)?.shaderId || 0); gl.uniform1f(u.frameLoadingTransition, transition); gl.uniform1i(u.uCustom, a.palette === 'custom' ? 1 : 0); gl.uniform3fv(u.uBackground, rgb(a.background)); gl.uniform3fv(u.uPrimary, rgb(a.primary)); gl.uniform3fv(u.uSecondary, rgb(a.secondary)); gl.uniform1f(u.uIntensity, definition.elements.background === 'template' ? a.intensity : 1); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.texture); gl.uniform1i(u.uImage, 0); gl.uniform1i(u.uHasImage, !!this.picture); gl.uniform2f(u.uImageSize, this.picture?.width || 1, this.picture?.height || 1); gl.uniform1i(u.uContain, a['image-fit'] === 'contain'); gl.uniform1f(u.uImageOpacity, a['image-opacity']); gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
@@ -937,7 +951,7 @@
         if (imageElement && effect.appearance.image) {keep.add('image');drawPreviewLayer('image',empty,imageElement,transition,active);}
         for (const [id,object] of Object.entries(effect.elements.objects)) if(object.type==='image' && objectPictures.has(object.image)) {
             keep.add(id);
-            const definition={...empty,appearance:{...effect.appearance,'image-fit':object.fit,'image-opacity':object.opacity,'image-motion':'still'},elements:{...empty.elements,'image-animation':object.animation,'image-delay':0,'image-x':object.x,'image-y':object.y,'image-scale':object.scale,'image-stretch-x':object['stretch-x'],'image-stretch-y':object['stretch-y']}};
+            const definition={...empty,appearance:{...effect.appearance,'image-fit':object.fit,'image-opacity':object.opacity,'image-motion':'still'},elements:{...empty.elements,'image-animation':object.animation,'image-delay':0,'image-x':object.x,'image-y':object.y,'image-scale':object.scale,'image-stretch-x':object['stretch-x'],'image-stretch-y':object['stretch-y'],'image-background':object.background,'image-background-opacity':object['background-opacity']}};
             drawPreviewLayer(id,definition,objectPictures.get(object.image),transition,active);
         }
         drawPreviewLayer('progress',{...effect,elements:{...effect.elements,background:'none'}},null,transition,active);

@@ -15,6 +15,28 @@ const core = require('../dist/core.js');
 const font = require('../dist/caption-font.js');
 core.configureCatalog(require('./catalog.json'));
 
+test('indicator and image backgrounds preserve ordering, export and inactive controls', async () => {
+    const effect=core.createEffect('cherry-valley'),e=effect.elements;
+    Object.assign(e,{'progress-priority':-50,'progress-opacity':.65,'progress-background':'#123456','progress-background-opacity':.7,'progress-padding':8.5,'image-background':'#654321','image-background-opacity':.4});
+    e.objects['image-1']={...core.objectDefaults('image'),image:'images/probe.png',background:'#345678','background-opacity':.3};
+    assert.ok(core.layerIndex(effect,'progress')<core.layerIndex(effect,'image'));
+    e['progress-priority']=100;
+    assert.ok(core.layerIndex(effect,'progress')>core.layerIndex(effect,'subtitle'));
+    const entries=await core.unzip(core.zip({'effects/test.yml':core.utf8.encode(core.toYaml(effect))}));
+    assert.deepEqual(core.fromYaml(core.decoder.decode(entries['effects/test.yml'])),effect);
+    e.progress='none';
+    let disabled=core.disabledSettings(effect,true);
+    for (const key of ['priority','opacity','background','background-opacity','padding']) assert.ok(disabled['elements.progress-'+key]);
+    e.progress='dots';e['progress-background-opacity']=0;
+    disabled=core.disabledSettings(effect,false);
+    assert.ok(disabled['elements.progress-background']);assert.ok(disabled['elements.progress-padding']);
+    assert.equal(disabled['elements.progress-background-opacity'],undefined);
+    assert.ok(disabled['elements.image-background-opacity']);
+    for (const [key,value] of [['progress-priority',.5],['progress-opacity',1.1],['progress-background','red'],['progress-background-opacity',-1],['progress-padding',33],['image-background-opacity',2]]) {
+        const invalid=core.clone(effect);invalid.elements[key]=value;assert.throws(()=>core.validate(invalid),undefined,key);
+    }
+});
+
 test('new text is centered on both axes and stored alignment remains unchanged', () => {
     const object=core.objectDefaults();
     assert.equal(object['align-x'],'center');
@@ -40,12 +62,45 @@ test('title subtitle and detail keep zero-size boxes fixed across all nine align
             assert.deepEqual(placed.box,fixedBox,kind);
             assert.deepEqual(rect,fixedRect,kind);
             positions.add(placed.x+','+placed.y);
-            assert.equal(placed.box.height,placed.metrics.height*1.5);
+            assert.equal(placed.box.height,placed.metrics.height*placed.size*1.5);
             assert.ok(placed.x>=0 && placed.x+placed.metrics.width*placed.size<=placed.box.width);
             assert.ok(placed.y>=placed.box.top && placed.y+placed.metrics.height*placed.size<=placed.box.top+placed.box.height);
         }
         assert.equal(positions.size,9,kind);
     }
+});
+
+test('ready-made text presets have distinct themes and fit common screen proportions', () => {
+    const presets=core.catalog.filter(entry=>entry.definition && entry.definition.captions.enabled);
+    assert.equal(presets.length,9);
+    const signatures=new Set(),alignments=new Set(),animations=new Set();
+    for (const preset of presets) {
+        const effect=core.createEffect(preset.id),e=effect.elements,c=effect.captions;
+        const main=c.title?'title':'subtitle';
+        signatures.add(JSON.stringify([core.elementAnchor(e,main),core.captionStyle(effect,main),e[main+'-animation']]));
+        alignments.add(c[main+'-align-x']);animations.add(e[main+'-animation']);
+        assert.notEqual(c.title,'YOUR NEXT ADVENTURE');assert.notEqual(c.title,'YOUR SERVER');
+        for (const [width,height] of [[640,360],[800,600],[1280,720]]) {
+            for (const [kind,line] of Object.entries(core.captionLines)) {
+                const text=c[line.key].replaceAll('{player}','Player');
+                if (!text.trim()) continue;
+                const anchor=core.elementAnchor(e,kind),fit=Math.min(width/640,height/360);
+                assert.equal(anchor.x,.5,preset.id+'/'+kind+' stays centered');
+                const style=core.captionStyle(effect,kind);
+                const rect=core.textRect(text,style,c[kind+'-background-opacity'],anchor.x,anchor.y,line.size/10*fit*e['text-scale']*e[kind+'-scale'],e['text-stretch-x']*e[kind+'-stretch-x'],e['text-stretch-y']*e[kind+'-stretch-y'],width,height,font);
+                assert.ok(rect.x>=0 && rect.y>=0 && rect.x+rect.width<=1 && rect.y+rect.height<=1,preset.id+'/'+kind);
+                const placed=font.layout(text,style,c[kind+'-background-opacity']);
+                assert.ok(placed.metrics.width*placed.size+style.padding*2<=placed.box.width+1e-9,preset.id+'/'+kind+' text fits');
+                if (style['box-height']>0) assert.ok(placed.metrics.height*placed.size+style.padding*2<=placed.box.height+1e-9,preset.id+'/'+kind+' height fits');
+            }
+        }
+    }
+    assert.equal(signatures.size,presets.length);
+    assert.deepEqual([...alignments],['center']);assert.ok(animations.size>=4);
+    const valley=core.createEffect('cherry-valley'),forge=core.createEffect('nether-forge');
+    assert.notDeepEqual(core.elementAnchor(valley.elements,'title'),core.elementAnchor(forge.elements,'title'));
+    assert.ok(forge.captions['title-font-size']>valley.captions['title-font-size']);
+    assert.equal(core.createEffect('overworld').captions.enabled,false);
 });
 
 test('text dependencies disable inactive controls and recover without changing values', () => {

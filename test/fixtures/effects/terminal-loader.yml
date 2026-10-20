@@ -13,11 +13,53 @@ timing:
   fade-out-ticks: 16
 captions:
   enabled: true
-  title: "INITIALIZING"
-  subtitle: "Preparing the next session"
-  join-detail: ""
-  teleport-detail: ""
-  preview-detail: ""
+  title: "> CONNECTING_"
+  subtitle: "Establishing your next session"
+  join-detail: "STATUS: WAITING FOR WORLD"
+  teleport-detail: "STATUS: WAITING FOR WORLD"
+  preview-detail: "STATUS: WAITING FOR WORLD"
+  title-color: "#94FFB8"
+  title-font-size: 110
+  title-box-width: 0
+  title-box-height: 0
+  title-align-x: "center"
+  title-align-y: "middle"
+  title-padding: 2
+  title-shadow: false
+  title-shadow-color: "#151018"
+  title-shadow-offset: 1
+  title-outline-width: 0
+  title-outline-color: "#251014"
+  title-background: "#081221"
+  title-background-opacity: 0
+  subtitle-color: "#82DDA5"
+  subtitle-font-size: 115
+  subtitle-box-width: 0
+  subtitle-box-height: 0
+  subtitle-align-x: "center"
+  subtitle-align-y: "middle"
+  subtitle-padding: 2
+  subtitle-shadow: false
+  subtitle-shadow-color: "#151018"
+  subtitle-shadow-offset: 1
+  subtitle-outline-width: 0
+  subtitle-outline-color: "#251014"
+  subtitle-background: "#081221"
+  subtitle-background-opacity: 0
+  detail-color: "#D2F8D7"
+  detail-font-size: 100
+  detail-box-width: 0
+  detail-box-height: 0
+  detail-align-x: "center"
+  detail-align-y: "middle"
+  detail-padding: 2
+  detail-shadow: false
+  detail-shadow-color: "#151018"
+  detail-shadow-offset: 1
+  detail-outline-width: 0
+  detail-outline-color: "#251014"
+  detail-background: "#081221"
+  detail-background-opacity: 0
 presentation:
   show-hands: false
   hide-hud: true
@@ -33,10 +75,21 @@ appearance:
 elements:
   background: "terminal"
   text-animation: "slide-up"
-  text-y: 0.44
+  text-y: 0.32
   progress: "segments"
-  progress-y: 0.66
-  progress-width: 0.46
+  progress-y: 0.71
+  progress-width: 0.45
   decoration: "scan"
+  text-x: 0.5
+  title-offset-x: 0.0
+  subtitle-offset-x: 0.0
+  title-offset-y: -0.004
+  subtitle-offset-y: 0.051
+  title-animation: "none"
+  subtitle-animation: "none"
+  detail-animation: "still"
+  progress-x: 0.5
+  progress-scale: 0.55
+  detail-offset-y: 0.004
 filters:
   triggers: ["command"]

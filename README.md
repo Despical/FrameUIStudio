@@ -87,6 +87,8 @@ Select a caption, text object, image or indicator to open its settings. Text sup
 
 Expand **Text box**, **Shadow & outline**, **Position & size** or **Motion** below the basic text controls. A dimension of `0` uses an automatic box with room for alignment. Changing alignment moves only the lettering. Explicit dimensions fix a custom box; the Studio preview clips overflowing lettering at its edges. Higher layer priorities draw in front, with a stable order for equal values.
 
+Loading indicators and images also have background color, background opacity and layer priority controls. Indicators include overall opacity and background padding, so dots, bars and rings stay visible over detailed artwork. Set background opacity above zero to enable its color; the background follows its element's position and layer. Image backgrounds show through transparent pixels. These settings are preserved in YAML, ZIP exports and connected server saves.
+
 The alignment icon beside **Loop** enables snapping to canvas edges, the center and other elements. Hold **Alt** while dragging to move freely. Selecting an element pauses the preview at its current time. Arrow keys nudge a focused element; Shift increases the step.
 
 Use **Transfer → Import** for YAML or ZIP files and **Transfer → Export effect** for the complete ZIP. Connected-server import/save remain separate actions. Hover or focus information icons and icon buttons for custom tooltips; Escape closes them.
