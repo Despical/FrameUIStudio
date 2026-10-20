@@ -230,29 +230,45 @@
     };
     let helpPopup = null, helpOwner = null;
     function closeFieldHelp() {
-        if (helpOwner) { helpOwner.setAttribute('aria-expanded', 'false'); helpOwner.removeAttribute('aria-describedby'); }
+        if (helpOwner) { if (helpOwner.hasAttribute('aria-expanded')) helpOwner.setAttribute('aria-expanded', 'false'); helpOwner.removeAttribute('aria-describedby'); }
         if (helpPopup) helpPopup.hidden = true;
         helpOwner = null;
     }
     function showFieldHelp(anchor, text) {
         if (!helpPopup) { helpPopup = element('div', 'field-help-popup'); helpPopup.id = 'field-help-popup'; helpPopup.role = 'tooltip'; document.body.append(helpPopup); }
-        helpPopup.textContent = t(text); helpPopup.hidden = false;
+        helpPopup.textContent = t(text).replace(/[\u2013\u2014]/g,'.'); helpPopup.hidden = false;
         const rect = anchor.getBoundingClientRect(), box = helpPopup.getBoundingClientRect();
         helpPopup.style.left = Math.max(12, Math.min(innerWidth - box.width - 12, rect.right - box.width)) + 'px';
         helpPopup.style.top = Math.max(12, rect.bottom + box.height + 10 <= innerHeight ? rect.bottom + 10 : rect.top - box.height - 10) + 'px';
     }
+    function openTooltip(button) {
+        if (!button || helpOwner === button) return;
+        closeFieldHelp();helpOwner=button;showFieldHelp(button,button.dataset.tooltip);
+        button.setAttribute('aria-describedby',helpPopup.id);
+    }
+    document.addEventListener('pointerover',event=>openTooltip(event.target.closest('[data-tooltip]')));
+    document.addEventListener('focusin',event=>openTooltip(event.target.closest('[data-tooltip]')));
+    document.addEventListener('pointerout',event=>{
+        const button=event.target.closest('[data-tooltip]');
+        if(button && helpOwner===button && !button.contains(event.relatedTarget) && !button.matches(':focus-visible'))closeFieldHelp();
+    });
+    document.addEventListener('focusout',event=>{
+        const button=event.target.closest('[data-tooltip]');
+        if(button && helpOwner===button && !button.contains(event.relatedTarget))closeFieldHelp();
+    });
     function updateAvailability() {
         const disabled = core.disabledSettings(effect, !!imageBytes);
         for (const input of document.querySelectorAll('[data-path]')) {
             const reason = disabled[input.dataset.path] || '';
             input.disabled = !!reason;
-            const wrapper = input.closest('.field');
+            const wrapper = input.closest('.field, .switch-field');
             if (!wrapper) continue;
             wrapper.classList.toggle('is-disabled', !!reason);
             wrapper.dataset.disabledReason = reason;
-            if (reason) { wrapper.tabIndex = 0; wrapper.setAttribute('aria-description', t(reason)); }
+            if (reason) { wrapper.tabIndex = 0; wrapper.setAttribute('aria-disabled', 'true'); wrapper.setAttribute('aria-description', t(reason)); }
             else { wrapper.removeAttribute('tabindex'); wrapper.removeAttribute('aria-disabled'); wrapper.removeAttribute('aria-description'); }
         }
+        for (const button of document.querySelectorAll('.text-variables button')) button.disabled = !!disabled[button.dataset.textTarget];
         const modes = document.querySelector('.segmented');
         if (modes) {
             const reason = disabled['appearance.palette'] || '';
@@ -264,7 +280,7 @@
         }
     }
     function wireDisabledHelp() {
-        for (const wrapper of document.querySelectorAll('.field, .segmented')) {
+        for (const wrapper of document.querySelectorAll('.field, .switch-field, .segmented')) {
             if (wrapper.dataset.disabledHelpReady) continue;
             wrapper.dataset.disabledHelpReady = 'true';
             wrapper.addEventListener('pointerenter', () => { if (wrapper.dataset.disabledReason) { closeFieldHelp(); showFieldHelp(wrapper, wrapper.dataset.disabledReason); } });
@@ -275,6 +291,35 @@
     }
     function fieldHelp(path) {
         if (FIELD_HELP[path]) return FIELD_HELP[path];
+        const objectField=path.match(/^elements\.objects\.([^.]+)\.(opacity|fit|animation)$/);
+        if (objectField && effect.elements.objects[objectField[1]]?.type==='image') {
+            return FIELD_HELP[{opacity:'appearance.image-opacity',fit:'appearance.image-fit',animation:'elements.image-animation'}[objectField[2]]];
+        }
+        const textKey = path.match(/^(?:captions\.(?:title|subtitle|detail)-|elements\.objects\.[^.]+\.)(.+)$/)?.[1];
+        const textHelp = {
+            text:'Text shown on screen. Supports {player}, {world} and {effect}.',
+            'font-size':'Changes the lettering size. Automatic boxes follow the text size; explicit box dimensions stay fixed.',
+            'align-x':'Places the text toward the left, center or right of its box.',
+            'align-y':'Places the text toward the top, middle or bottom of its box.',
+            'box-width':'Text box width in font units. Use 0 for automatic width.',
+            'box-height':'Text box height in font units. Use 0 for automatic height.',
+            padding:'Space between the lettering and the edges of its box, in font units.',
+            rotation:'Rotates the element around its anchor, in degrees.',
+            opacity:'Visibility of the text. Zero makes it invisible.',
+            color:'Color of the lettering.',
+            background:'Color behind the text. Increase background opacity to show it.',
+            'background-opacity':'Visibility of the text background. Zero hides the background.',
+            shadow:'Draws a shadow behind the lettering.',
+            'shadow-color':'Color of the text shadow. Enable text shadow first.',
+            'shadow-offset':'Distance between the lettering and its shadow, in font units. Decimal values such as 0.5 are supported. Zero hides the shadow.',
+            'outline-color':'Color of the lettering outline. Increase outline width first.',
+            'outline-width':'Thickness of the outline around the lettering, in font units.',
+            animation:'Choose how this element enters the screen.',
+            fit:'Contain shows the entire image. Cover fills the box and may crop edges.'
+        };
+        if (textHelp[textKey]) return [textHelp[textKey]];
+        if (/^sample\.(player|world)$/.test(path)) return ['Example value used only in the Studio preview. In game, the real value is used.'];
+        if (/^elements\.(?:(?:image|title|subtitle|detail)-priority|objects\.[^.]+\.priority)$/.test(path)) return ['Higher values appear in front. Equal values keep their existing order.'];
         const match = path.match(/^filters\.(worlds|source-worlds|addon-targets)\.(include|exclude)$/);
         if (match) {
             const target = { worlds: 'destination worlds', 'source-worlds': 'worlds the player leaves', 'addon-targets': 'named homes, warps, portals, towns, nations, lands or islands' }[match[1]];
@@ -724,11 +769,11 @@
             const seconds = catalogDuration(item) / 20;
             const copy = element('span', 'template-copy'); copy.append(element('b', '', displayName(item.name), true), element('small', '', secondsLabel(seconds)));
             if (saved?.remote) copy.append(element('span', 'server-effect-badge', saved.dirty ? 'Unsaved changes' : 'Server'));
-            button.title = displayName(item.name);
+            button.dataset.tooltip = displayName(item.name);
             button.append(thumb, copy); button.addEventListener('click', () => openLibraryItem(item, saved));
             if (own) {
                 const entry = element('div', 'template-row'), remove = element('button', 'icon-button effect-delete');
-                remove.append(icon('trash')); remove.title = t('Delete effect'); remove.setAttribute('aria-label', t('Delete {0}', displayName(item.name)));
+                remove.append(icon('trash')); remove.dataset.tooltip = t('Delete effect'); remove.setAttribute('aria-label', t('Delete {0}', displayName(item.name)));
                 remove.addEventListener('click', () => requestDelete(item.id)); entry.append(button, remove); list.append(entry);
             } else list.append(button);
         }
