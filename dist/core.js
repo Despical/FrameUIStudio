@@ -455,13 +455,13 @@
         const start = elementAnchor(before,kind), end = elementAnchor(candidate,kind);
         const moved = {...rect,x:rect.x+end.x-start.x,y:rect.y+end.y-start.y};
         for (const [axis,size,dimension,other,otherDimension] of [['x',width,'width','y','height'],['y',height,'height','x','width']]) {
-            const candidates = [{position:.5,from:0,to:1,screen:true}];
+            const candidates = [0,.5,1].map(position=>({position,from:0,to:1,screen:true}));
             for (const target of targets) {
                 for (const factor of [0,.5,1]) candidates.push({position:target[axis]+target[dimension]*factor,
                     from:Math.min(moved[other],target[other]),to:Math.max(moved[other]+moved[otherDimension],target[other]+target[otherDimension]),screen:false});
             }
             let best = null;
-            for (const target of candidates) for (const factor of target.screen ? [.5] : [.5,0,1]) {
+            for (const target of candidates) for (const factor of target.screen ? [target.position] : [.5,0,1]) {
                 const offset = target.position - moved[axis] - moved[dimension]*factor;
                 const distance = Math.abs(offset)*size;
                 if (distance <= tolerance && (!best || distance < best.distance)) best = {...target,offset,distance};
