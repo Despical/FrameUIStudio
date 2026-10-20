@@ -23,7 +23,7 @@ See the LICENSE file or <https://www.gnu.org/licenses/> for details.
     <link rel="preload" as="image" href="assets/font/ascii.png">
     <link rel="preload" as="image" href="assets/font/accented.png">
     <link rel="preload" as="image" href="assets/font/nonlatin_european.png">
-    <link rel="stylesheet" href="styles.css?v=objects-1">
+    <link rel="stylesheet" href="styles.css?v=text-tools-1">
     <script src="startup.js?v=startup-2"></script>
 </head>
 <body>
@@ -45,10 +45,12 @@ See the LICENSE file or <https://www.gnu.org/licenses/> for details.
         <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
         <symbol id="icon-undo" viewBox="0 0 24 24"><path d="m8 3-5 5 5 5M3 8h10a7 7 0 0 1 0 14"/></symbol>
         <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+        <symbol id="icon-guides" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 2v20M2 12h20"/></symbol>
+        <symbol id="icon-transfer" viewBox="0 0 24 24"><path d="M6 3v16m-4-4 4 4 4-4M18 21V5m-4 4 4-4 4 4"/></symbol>
     </defs></svg>
     <header class="app-header">
         <a class="brand" href="#" aria-label="FrameUI Studio home"><img class="brand-mark" src="icon.svg" width="43" height="43" alt=""><span>FrameUI <b>Studio</b></span></a>
-        <div class="header-actions"><div class="language-control"><select id="language-select" aria-label="Language"></select></div><span class="header-divider" aria-hidden="true"></span><button id="undo-button" class="icon-button" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><svg><use href="#icon-undo"/></svg></button><button id="redo-button" class="icon-button redo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled><svg><use href="#icon-undo"/></svg></button><span class="header-divider"></span><button id="import-button" class="button button-quiet"><svg><use href="#icon-upload"/></svg>Import</button><button id="server-import-button" class="button button-primary"><svg><use href="#icon-upload"/></svg><span>Connect server</span></button><button id="export-button" class="button button-quiet"><svg><use href="#icon-download"/></svg>Export effect</button></div>
+        <div class="header-actions"><div class="language-control"><select id="language-select" aria-label="Language"></select></div><span class="header-divider" aria-hidden="true"></span><button id="undo-button" class="icon-button" data-tooltip="Undo (Ctrl+Z)" aria-label="Undo" disabled><svg><use href="#icon-undo"/></svg></button><button id="redo-button" class="icon-button redo" data-tooltip="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled><svg><use href="#icon-undo"/></svg></button><span class="header-divider"></span><button id="server-import-button" class="button button-primary"><svg><use href="#icon-upload"/></svg><span>Connect server</span></button><div class="transfer-control"><button id="transfer-button" class="button button-quiet" aria-haspopup="menu" aria-expanded="false" aria-controls="transfer-menu"><svg><use href="#icon-transfer"/></svg><span>Transfer</span><svg class="transfer-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m5 8 5 5 5-5"/></svg></button><div id="transfer-menu" class="transfer-menu" role="menu" aria-label="Transfer" hidden><button id="import-button" role="menuitem"><svg><use href="#icon-upload"/></svg><span>Import</span></button><button id="export-button" role="menuitem"><svg><use href="#icon-download"/></svg><span>Export effect</span></button></div></div></div>
     </header>
     <main class="workspace">
         <aside class="catalog-panel" aria-label="Effect templates">
@@ -68,7 +70,7 @@ See the LICENSE file or <https://www.gnu.org/licenses/> for details.
                 <div class="stage-bottom"><span class="stage-chip" id="stage-phase">HOLD</span></div>
                 <div id="renderer-error" class="renderer-error" hidden></div>
             </div></div>
-            <div class="playback-bar"><button id="play-button" class="round-button" aria-label="Pause preview"><svg><use href="#icon-pause"/></svg></button><button id="restart-button" class="icon-button" aria-label="Restart preview" title="Restart preview"><svg><use href="#icon-restart"/></svg></button><div class="timeline-control"><div class="timeline-labels"><span id="time-label">00:00.0</span><span id="duration-label">5.2 s</span></div><input id="timeline" type="range" min="0" max="1000" value="160" aria-label="Preview position"></div><label class="loop-toggle"><input id="loop" type="checkbox" checked><span>Loop</span></label></div>
+            <div class="playback-bar"><button id="play-button" class="round-button" aria-label="Pause preview"><svg><use href="#icon-pause"/></svg></button><button id="restart-button" class="icon-button" aria-label="Restart preview" data-tooltip="Restart preview"><svg><use href="#icon-restart"/></svg></button><div class="timeline-control"><div class="timeline-labels"><span id="time-label">00:00.0</span><span id="duration-label">5.2 s</span></div><input id="timeline" type="range" min="0" max="1000" value="160" aria-label="Preview position"></div><label class="loop-toggle"><input id="loop" type="checkbox" checked><span>Loop</span></label></div>
             <div class="timing-strip"><div><span>FADE IN</span><b id="summary-in">0.8 s</b></div><div><span>HOLD</span><b id="summary-hold">4.3 s</b></div><div><span>FADE OUT</span><b id="summary-out">0.9 s</b></div><div><span>PLAY ON</span><b id="summary-triggers">Manual only</b></div></div>
             <div class="preview-note"><svg><use href="#icon-frame"/></svg><p>Rendered with the plugin’s shader. Captions, HUD and scene are illustrative; verify final placement in Minecraft.</p></div>
         </section>
@@ -133,7 +135,7 @@ See the LICENSE file or <https://www.gnu.org/licenses/> for details.
         <div><h2 id="cookie-banner-heading">Your cookie preferences</h2><p>We use essential browser storage to keep your drafts and preferences. With your permission, Google Analytics helps us understand site visits.</p></div>
         <div class="cookie-actions"><button id="cookie-reject" class="button button-quiet" type="button">Necessary only</button><button id="cookie-accept" class="button button-primary" type="button">Accept all</button></div>
     </section>
-    <script src="i18n-data.js?v=objects-1"></script><script src="i18n.js"></script><script src="cookies.js"></script><script src="core.js?v=objects-1"></script><script src="font-data.js"></script><script src="caption-font.js"></script><script src="shaders.js"></script><script src="dropdowns.js"></script><script src="canvas-editor.js?v=objects-1"></script><script src="preview-loop.js"></script>
-    <script src="effect-library.js?v=startup-2"></script><script src="server-link.js"></script><script src="app.js?v=objects-1"></script>
+    <script src="i18n-data.js?v=text-tools-1"></script><script src="i18n.js"></script><script src="cookies.js"></script><script src="core.js?v=text-tools-1"></script><script src="font-data.js"></script><script src="caption-font.js?v=text-tools-1"></script><script src="shaders.js"></script><script src="dropdowns.js"></script><script src="canvas-editor.js?v=text-tools-1"></script><script src="preview-loop.js"></script>
+    <script src="effect-library.js?v=startup-2"></script><script src="server-link.js"></script><script src="app.js?v=text-tools-1"></script>
 </body>
 </html>
