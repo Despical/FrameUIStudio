@@ -99,13 +99,10 @@
         }
         function captionRect(definition, kind, width, height) {
             const e = definition.elements, line = core.captionLines[kind], anchor = core.elementAnchor(e,kind);
-            const text = definition.captions[line.key].replaceAll('{effect}',definition.name).replaceAll('{world}','world');
+            const text = options.text ? options.text(definition.captions[line.key]) : definition.captions[line.key];
             if (!text.trim()) return null;
-            const fit = Math.min(width/640,height/360), scale = e['text-scale'] * e[kind+'-scale'];
-            const pixels = line.size / 10 * fit * scale, metrics = scope.FrameStudioFont.measure(text);
-            const w = Math.max(1,metrics.width) * pixels * e['text-stretch-x'] * e[kind+'-stretch-x'] / width;
-            const yScale = pixels * e['text-stretch-y'] * e[kind+'-stretch-y'] / height;
-            return {x:anchor.x-w/2,y:anchor.y+metrics.top*yScale,width:w,height:metrics.height*yScale};
+            const fit=Math.min(width/640,height/360),scale=e['text-scale']*e[kind+'-scale'];
+            return core.textRect(text,core.captionStyle(definition,kind),definition.captions[kind+'-background-opacity'],anchor.x,anchor.y,line.size/10*fit*scale,e['text-stretch-x']*e[kind+'-stretch-x'],e['text-stretch-y']*e[kind+'-stretch-y'],width,height,scope.FrameStudioFont);
         }
         function render() {
             const definition = options.effect(), e = definition.elements, width = stage.clientWidth, height = stage.clientHeight;
@@ -113,7 +110,7 @@
             const image = options.image();
             for (const [kind,object] of Object.entries(e.objects || {})) if (!boxes.has(kind)) addObjectControl(kind,t(object.type==='image'?'Image':'Text')+' '+kind.split('-').pop());
             for (const kind of [...boxes.keys()]) if (!['image','title','subtitle','detail','progress'].includes(kind) && !e.objects?.[kind]) {boxes.get(kind).remove();buttons.get(kind).remove();boxes.delete(kind);buttons.delete(kind);if(selected===kind) select('');}
-            const key = JSON.stringify([e,definition.captions,definition.name,definition.appearance['image-fit'],width,height,image?.width,image?.height]);
+            const key = JSON.stringify([e,definition.captions,definition.name,options.text?.('{player}|{world}'),definition.appearance['image-fit'],width,height,image?.width,image?.height]);
             if (key === renderedKey) {options.geometry?.(selected,rects.get(selected));return;}
             renderedKey = key; rects.clear();
             if (image && definition.appearance.image) {
@@ -138,12 +135,13 @@
             for (const [kind, box] of boxes) {
                 const rect = rects.get(kind); box.hidden = !rect; buttons.get(kind).disabled = !rect;
                 if (!rect) continue;
+                box.style.zIndex=String(10+core.layerIndex(definition,kind));
                 box.style.left = rect.x * 100 + '%'; box.style.top = rect.y * 100 + '%';
                 box.style.width = rect.width * 100 + '%'; box.style.height = rect.height * 100 + '%';
                 box.style.setProperty('--hit-padding', Math.max(0,(28-rect.height*height)/2)+'px');
                 box.style.setProperty('--hit-padding-x', Math.max(0,(28-rect.width*width)/2)+'px');
-                box.style.setProperty('--handle-pad-x', Math.max(8,(56-rect.width*width)/2)+'px');
-                box.style.setProperty('--handle-pad-y', Math.max(8,(44-rect.height*height)/2)+'px');
+                box.style.setProperty('--handle-pad-x', 0+'px');
+                box.style.setProperty('--handle-pad-y', 0+'px');
             }
             options.geometry?.(selected,rects.get(selected));
         }
