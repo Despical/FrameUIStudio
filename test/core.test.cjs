@@ -424,6 +424,21 @@ test('center snapping uses a pixel tolerance and the visible caption bounds', ()
     assert.deepEqual(core.snapElement(before,near,'text',rect,2000,500).guides,{x:false,y:true});
 });
 
+test('canvas edge snapping aligns matching edges with pixel-based tolerance', () => {
+    const before=core.createEffect('clean-loader').elements;
+    const rect={x:.2,y:.2,width:.3,height:.15};
+    for (const [dx,dy,x,y] of [[-.196,-.196,0,0],[.496,.646,.7,.85]]) {
+        const candidate=core.translateElement(before,'image',dx,dy);
+        const result=core.snapElement(before,candidate,'image',rect,1000,500);
+        assert.deepEqual(result.guides,{x:true,y:true});
+        const start=core.elementAnchor(before,'image'),end=core.elementAnchor(result.elements,'image');
+        assert.ok(Math.abs(rect.x+end.x-start.x-x)<1e-9);
+        assert.ok(Math.abs(rect.y+end.y-start.y-y)<1e-9);
+        assert.ok(result.lines.every(line=>line.from===0 && line.to===1));
+        assert.equal(candidate['image-x'],before['image-x']+dx);
+    }
+});
+
 test('expanded resize bounds remain finite and survive YAML validation', () => {
     const effect = core.createEffect('clean-loader');
     for (const kind of ['image','text','progress']) {
@@ -639,4 +654,43 @@ test('additional objects enforce count, finite layout, safe sources and distinct
 test('resetting one added object preserves content and all other layers', () => {
     const effect=core.createEffect('fade-out'); effect.elements.objects={'text-1':{...core.objectDefaults(),text:'Keep me',x:.2,scale:4},'image-1':{...core.objectDefaults('image'),image:'images/picture.png'}};
     const reset=core.resetComponent(effect,'text-1');assert.equal(reset.elements.objects['text-1'].text,'Keep me');assert.equal(reset.elements.objects['text-1'].x,.5);assert.deepEqual(reset.elements.objects['image-1'],effect.elements.objects['image-1']);
+});
+
+test('text backgrounds round-trip independently and old drafts remain transparent', () => {
+    const effect=core.createEffect('aurora');
+    effect.captions['title-background']='#123456'; effect.captions['title-background-opacity']=.65;
+    effect.elements.objects['text-1']={...core.objectDefaults(),background:'#654321','background-opacity':.35};
+    assert.deepEqual(core.fromYaml(core.toYaml(effect)),effect);
+    assert.equal(core.normalize({template:'aurora',elements:{objects:{'text-1':{type:'text',text:'Old draft'}}}}).elements.objects['text-1']['background-opacity'],0);
+    const reset=core.resetComponent(effect,'title');
+    assert.equal(reset.captions['title-background-opacity'],0);
+    assert.equal(reset.elements.objects['text-1']['background-opacity'],.35);
+    for(const value of [-.01,1.01,NaN]) {
+        const bad=core.clone(effect); bad.captions['title-background-opacity']=value; assert.throws(()=>core.validate(bad));
+        bad.captions['title-background-opacity']=.5;bad.elements.objects['text-1']['background-opacity']=value;assert.throws(()=>core.validate(bad));
+    }
+    effect.elements.objects['text-1'].background='red';assert.throws(()=>core.validate(effect));
+});
+
+test('image and text priorities share a stable order and survive YAML and legacy drafts', () => {
+    const effect=core.createEffect('aurora');
+    effect.elements.objects={
+        'text-1':core.objectDefaults(), 'image-1':{...core.objectDefaults('image'),image:'images/a.png'},
+        'text-2':core.objectDefaults(), 'image-2':{...core.objectDefaults('image'),image:'images/b.png'}
+    };
+    assert.deepEqual(core.layerOrder(effect),['image','image-1','image-2','progress','title','subtitle','detail','text-1','text-2']);
+    effect.elements['image-priority']=30; effect.elements['subtitle-priority']=-50;
+    effect.elements.objects['text-1'].priority=-100;effect.elements.objects['image-2'].priority=100;
+    assert.deepEqual(core.layerOrder(effect),['text-1','subtitle','image-1','progress','title','detail','text-2','image','image-2']);
+    assert.deepEqual(core.fromYaml(core.toYaml(effect)),effect);
+    const legacy=core.normalize({template:'aurora',elements:{objects:{'text-1':{type:'text'},'image-1':{type:'image',image:'images/a.png'}}}});
+    assert.equal(legacy.elements['image-priority'],10);assert.equal(legacy.elements['title-priority'],20);
+    assert.equal(legacy.elements.objects['text-1'].priority,20);assert.equal(legacy.elements.objects['image-1'].priority,10);
+    assert.equal(core.resetComponent(effect,'image').elements['image-priority'],10);
+    assert.equal(core.resetComponent(effect,'subtitle').elements['subtitle-priority'],20);
+    assert.equal(core.resetComponent(effect,'text-1').elements.objects['text-1'].priority,20);
+    for(const value of [-101,101,.5,NaN]) {
+        const bad=core.clone(effect);bad.elements['image-priority']=value;assert.throws(()=>core.validate(bad));
+        bad.elements['image-priority']=10;bad.elements.objects['text-1'].priority=value;assert.throws(()=>core.validate(bad));
+    }
 });
