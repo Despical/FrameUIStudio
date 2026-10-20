@@ -21,7 +21,7 @@
 
 FrameUI Studio is a free browser editor for FrameUI loading screens, with 50 animations, 10 editable presets and your own saved designs.
 
-Use **Design → Additional elements** to add independent text and images. Each can be selected, moved, resized and removed. Up to 12 extra text objects and 8 extra pictures are preserved by ZIP export, browser drafts and connected-server saves.
+Use **Add text** and **Add image** beside the Text and Image headings in Design to add independent elements. Each can be selected, moved, resized and removed. Up to 12 extra text objects and 8 extra pictures are preserved by ZIP export, browser drafts and connected-server saves.
 
 ## Features
 
@@ -80,3 +80,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development, [CODE_OF_CONDUCT.md](COD
 ## License
 
 Copyright © 2026 Berke Akçen. FrameUI Studio is licensed under the GNU General Public License version 3 ([GPL-3.0-only](LICENSE)). Third-party assets retain their own terms and notices.
+
+## Text and Layout Tools
+
+Select a caption, text object, image or indicator to open its settings. Text supports font size, alignment, opacity, rotation, a separate background, shadow and outline. New text objects start centered on both axes; existing saved alignments are preserved.
+
+Expand **Text box**, **Shadow & outline**, **Position & size** or **Motion** below the basic text controls. A dimension of `0` uses an automatic box with room for alignment. Changing alignment moves only the lettering. Explicit dimensions fix a custom box; the Studio preview clips overflowing lettering at its edges. Higher layer priorities draw in front, with a stable order for equal values.
+
+The alignment icon beside **Loop** enables snapping to canvas edges, the center and other elements. Hold **Alt** while dragging to move freely. Selecting an element pauses the preview at its current time. Arrow keys nudge a focused element; Shift increases the step.
+
+Use **Transfer → Import** for YAML or ZIP files and **Transfer → Export effect** for the complete ZIP. Connected-server import/save remain separate actions. Hover or focus information icons and icon buttons for custom tooltips; Escape closes them.
