@@ -64,6 +64,7 @@
                 value.textContent = languageSelect ? select.value.toUpperCase() : (select.selectedOptions[0]?.textContent || t('Choose an option'));
                 if (languageSelect) trigger.setAttribute('aria-label', t('Language') + ': ' + select.selectedOptions[0]?.textContent);
                 trigger.disabled = select.disabled;
+                if (select.disabled && opened?.trigger === trigger) close();
             };
             controls.set(select, update);
             update();
@@ -80,6 +81,7 @@
             }
 
             function choose(index) {
+                if (select.disabled) {close();return;}
                 const option = select.options[index];
                 if (!option || option.disabled) return;
                 close();
@@ -92,6 +94,7 @@
             }
 
             function open() {
+                if (select.disabled) return;
                 close();
                 typed = '';
                 popup = document.createElement('div');
@@ -144,6 +147,7 @@
 
             trigger.addEventListener('click', () => { if (opened?.trigger === trigger) close(); else open(); });
             trigger.addEventListener('keydown', event => {
+                if (select.disabled) return;
                 const isOpen = opened?.trigger === trigger;
                 const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End', 'Enter', ' ', 'Escape'];
                 if (keys.includes(event.key)) {
