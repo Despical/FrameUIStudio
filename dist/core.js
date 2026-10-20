@@ -136,10 +136,10 @@
             id: template.id, name: template.name, category: template.category, template: template.id,
             enabled: true, weight: 1, priority: 0, 'play-on': [],
             timing: { 'fade-in-ticks': template.fadeIn, 'minimum-ticks': template.minimum, 'maximum-ticks': template.id === 'loading' ? Math.max(template.minimum, 100 - template.fadeOut) : template.minimum, 'fade-out-ticks': template.fadeOut },
-            captions: { 'title-color':'#f1f4fa', 'subtitle-color':'#8595ad', 'detail-color':'#8595ad', enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
+            captions: { ...Object.fromEntries(['title','subtitle','detail'].flatMap(kind=>[[kind+'-background','#081221'],[kind+'-background-opacity',0],...Object.entries(textDefaults()).map(([key,value])=>[kind+'-'+key,value])])), 'title-color':'#f1f4fa', 'subtitle-color':'#8595ad', 'detail-color':'#8595ad', enabled: template.captions, title: template.id === 'loading' ? 'Preparing your world' : template.name, subtitle: template.id === 'loading' ? 'Your next adventure is almost ready' : template.id === 'aurora' ? 'A quiet moment between worlds' : 'Searching the horizon', 'join-detail': 'Joining the server', 'teleport-detail': 'Travelling to {world}', 'preview-detail': '{effect} preview' },
             presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
             appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1, 'image-motion': 'still', 'title-motion': 'still' },
-            elements: { objects: {}, 'title-animation':'still', 'subtitle-animation':'still', 'detail-animation':'still', 'title-offset-x': 0, 'title-offset-y': 0, 'title-scale': 1, 'title-stretch-x': 1, 'title-stretch-y': 1, 'subtitle-offset-x': 0, 'subtitle-offset-y': 0, 'subtitle-scale': 1, 'subtitle-stretch-x': 1, 'subtitle-stretch-y': 1, 'detail-offset-x': 0, 'detail-offset-y': 0, 'detail-scale': 1, 'detail-stretch-x': 1, 'detail-stretch-y': 1, background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1, 'image-stretch-x': 1, 'image-stretch-y': 1, 'text-stretch-x': 1, 'text-stretch-y': 1 },
+            elements: { objects: {}, 'image-priority':10, 'title-priority':20, 'subtitle-priority':20, 'detail-priority':20, 'title-animation':'still', 'subtitle-animation':'still', 'detail-animation':'still', 'title-offset-x': 0, 'title-offset-y': 0, 'title-scale': 1, 'title-stretch-x': 1, 'title-stretch-y': 1, 'subtitle-offset-x': 0, 'subtitle-offset-y': 0, 'subtitle-scale': 1, 'subtitle-stretch-x': 1, 'subtitle-stretch-y': 1, 'detail-offset-x': 0, 'detail-offset-y': 0, 'detail-scale': 1, 'detail-stretch-x': 1, 'detail-stretch-y': 1, background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1, 'image-stretch-x': 1, 'image-stretch-y': 1, 'text-stretch-x': 1, 'text-stretch-y': 1 },
             filters: { permission: '', 'deny-permissions': [], worlds: { include: [], exclude: [] }, 'source-worlds': { include: [], exclude: [] }, 'addon-targets': { include: [], exclude: [] }, 'game-modes': { include: [], exclude: [] }, 'teleport-causes': [], triggers: [...triggers], distance: { min: 0, max: -1 }, height: { min: -30000000, max: 30000000 }, time: { min: 0, max: 23999 }, weather: [], 'cooldown-ticks': 0 }
         };
     }
@@ -200,6 +200,11 @@
         if (t['maximum-ticks'] < t['minimum-ticks']) fail('Maximum duration must be at least the minimum duration.');
         for (const key of ['title', 'subtitle', 'join-detail', 'teleport-detail', 'preview-detail']) string(effect.captions[key], `Caption ${key}`, key === 'title' ? 64 : key === 'subtitle' ? 96 : 128);
         for (const key of ['title-color','subtitle-color','detail-color']) if (!/^#[0-9a-f]{6}$/i.test(effect.captions[key])) fail(`Caption ${key} must be a six-digit hexadecimal color.`);
+        for (const kind of ['title','subtitle','detail']) {
+            if (!/^#[0-9a-f]{6}$/i.test(effect.captions[kind+'-background'])) fail('Invalid text background color.');
+            number(effect.captions[kind+'-background-opacity'], 'Text background opacity', 0, 1, false);
+            validateText(captionStyle(effect,kind));
+        }
         if (typeof effect.captions.enabled !== 'boolean') fail('Captions enabled must be true or false.');
         for (const [key, value] of Object.entries(effect.presentation)) if (typeof value !== 'boolean') fail(`${key} must be true or false.`);
         if (effect.presentation['show-hands'] && effect.presentation['hide-hud']) fail('Show hands requires hide HUD to be disabled.');
@@ -212,6 +217,7 @@
         if (!['still', 'grow'].includes(a['title-motion'])) fail('Invalid title motion.');
         const e = effect.elements;
         const choice = (key, values) => { if (!values.includes(e[key])) fail(`Invalid element ${key}.`); };
+        for (const kind of ['image','title','subtitle','detail']) number(e[kind+'-priority'], 'Layer priority', -100, 100);
         choice('background', ['template', 'solid', 'split', 'grid', 'terminal', 'pulse', 'none']);
         choice('image-animation', ['inherit', 'fade', 'grow', 'slide-up', 'slide-left', 'wipe', 'page', 'slide-right', 'slide-down', 'none']);
         choice('text-animation', ['still', 'grow', 'slide-up', 'slide-down', 'slide-left', 'slide-right', 'none']);
@@ -246,8 +252,32 @@
         validateObjects(effect.elements.objects);
         return effect;
     }
+    function textDefaults() {
+        return {'font-size':100,'box-width':0,'box-height':0,'align-x':'center','align-y':'top',padding:2,
+            opacity:1,rotation:0,shadow:false,'shadow-color':'#000000','shadow-offset':1,'outline-width':0,'outline-color':'#000000'};
+    }
+    function validateText(style) {
+        for (const [key,min,max] of [['font-size',10,400],['box-width',0,1024],['box-height',0,256],['padding',0,32],['opacity',0,1],['rotation',-180,180],['shadow-offset',0,8],['outline-width',0,3]]) {
+            if (!Number.isFinite(style[key]) || style[key]<min || style[key]>max) throw new Error('Invalid text '+key+'.');
+        }
+        if (!Number.isInteger(style['outline-width'])) throw new Error('Outline width must be an integer.');
+        if (!['left','center','right'].includes(style['align-x']) || !['top','middle','bottom'].includes(style['align-y']) || typeof style.shadow!=='boolean') throw new Error('Invalid text alignment or shadow.');
+        for (const key of ['shadow-color','outline-color']) if (!/^#[0-9a-f]{6}$/i.test(style[key])) throw new Error('Invalid text effect color.');
+    }
+    function captionStyle(effect, kind) {
+        return Object.fromEntries(Object.keys(textDefaults()).map(key=>[key,effect.captions[kind+'-'+key]]));
+    }
+    function textRect(text,style,backgroundOpacity,x,y,unit,sx,sy,width,height,font) {
+        const box=font.layout(text,style,backgroundOpacity).box, angle=(style.rotation||0)*Math.PI/180;
+        const points=[[box.left,box.top],[box.left+box.width,box.top],[box.left,box.top+box.height],[box.left+box.width,box.top+box.height]].map(([px,py])=>{
+            px*=unit*sx; py*=unit*sy;
+            return {x:x+(px*Math.cos(angle)-py*Math.sin(angle))/width,y:y+(px*Math.sin(angle)+py*Math.cos(angle))/height};
+        });
+        const left=Math.min(...points.map(p=>p.x)), top=Math.min(...points.map(p=>p.y));
+        return {x:left,y:top,width:Math.max(...points.map(p=>p.x))-left,height:Math.max(...points.map(p=>p.y))-top};
+    }
     function objectDefaults(type='text') {
-        return {type,text:'Text',color:'#f1f4fa',image:'',x:.5,y:.5,scale:type==='text'?2:.35,'stretch-x':1,'stretch-y':1,opacity:1,fit:'contain',animation:'fade'};
+        return {...textDefaults(),'align-y':type==='text'?'middle':'top',type,priority:type==='text'?20:10,text:'Text',color:'#f1f4fa',background:'#081221','background-opacity':0,image:'',x:.5,y:.5,scale:type==='text'?2:.35,'stretch-x':1,'stretch-y':1,opacity:1,fit:'contain',animation:'fade'};
     }
     function validateObjects(objects) {
         if (!objects || typeof objects !== 'object' || Array.isArray(objects)) throw new Error('Objects must be a mapping.');
@@ -256,13 +286,26 @@
             if (!/^[a-z][a-z0-9-]{0,31}$/.test(id) || !o || !['text','image'].includes(o.type)) throw new Error('Invalid composition object.');
             if (++counts[o.type] > (o.type==='text'?12:8)) throw new Error('Use at most 12 extra text objects and 8 extra pictures.');
             if (Object.keys(o).some(key=>!keys.includes(key)) || keys.some(key=>!Object.hasOwn(o,key))) throw new Error('Invalid object settings.');
-            if (typeof o.text !== 'string' || o.text.length>128 || /[\u0000-\u001f\u007f]/.test(o.text) || !/^#[0-9a-f]{6}$/i.test(o.color)) throw new Error('Invalid object text or color.');
-            for (const [key,min,max] of [['x',-10,10],['y',-10,10],['scale',.01,10],['stretch-x',.01,10],['stretch-y',.01,10],['opacity',0,1]]) if (!Number.isFinite(o[key]) || o[key]<min || o[key]>max) throw new Error('Invalid object '+key+'.');
+            if (!Number.isInteger(o.priority) || o.priority < -100 || o.priority > 100) throw new Error('Invalid layer priority.');
+            validateText(o);
+            if (typeof o.text !== 'string' || o.text.length>128 || /[\u0000-\u001f\u007f]/.test(o.text) || (!/^#[0-9a-f]{6}$/i.test(o.color) || !/^#[0-9a-f]{6}$/i.test(o.background))) throw new Error('Invalid object text or color.');
+            for (const [key,min,max] of [['x',-10,10],['y',-10,10],['scale',.01,10],['stretch-x',.01,10],['stretch-y',.01,10],['opacity',0,1],['background-opacity',0,1]]) if (!Number.isFinite(o[key]) || o[key]<min || o[key]>max) throw new Error('Invalid object '+key+'.');
             if (!['cover','contain'].includes(o.fit) || !['fade','grow','slide-up','slide-down','slide-left','slide-right','none',...(o.type==='image'?['wipe','page']:[])].includes(o.animation)) throw new Error('Invalid object appearance.');
             if (typeof o.image!=='string' || (o.type==='image' && !/^images\/[a-zA-Z0-9_-]+\.png$/.test(o.image))) throw new Error('Invalid object image path.');
         }
     }
     function nextObjectId(objects,type) { let n=1; while(objects[type+'-'+n]) n++; return type+'-'+n; }
+    // Back-to-front order; equal priorities retain the established order of each layer.
+    function layerOrder(effect) {
+        const entries = [{id:'image',priority:effect.elements['image-priority']}];
+        const objects = Object.entries(effect.elements.objects);
+        for (const [id, object] of objects) if (object.type === 'image') entries.push({id,priority:object.priority});
+        entries.push({id:'progress',priority:15});
+        for (const id of ['title','subtitle','detail']) entries.push({id,priority:effect.elements[id+'-priority']});
+        for (const [id, object] of objects) if (object.type === 'text') entries.push({id,priority:object.priority});
+        return entries.sort((a,b)=>a.priority-b.priority).map(entry=>entry.id);
+    }
+    function layerIndex(effect, id) { return layerOrder(effect).indexOf(id); }
     function objectRect(o,image,width,height,font) {
         if (o.type==='image') {
             if(!image) return null;
@@ -272,8 +315,8 @@
             return {x:o.x-w/2,y:o.y-h/2,width:w,height:h};
         }
         if(!o.text.trim()) return null;
-        const metrics=font.measure(o.text), fit=Math.min(width/640,height/360), unit=.7*fit*o.scale;
-        return {x:o.x-metrics.width*unit*o['stretch-x']/width/2,y:o.y+metrics.top*unit*o['stretch-y']/height,width:Math.max(1,metrics.width)*unit*o['stretch-x']/width,height:metrics.height*unit*o['stretch-y']/height};
+        const fit=Math.min(width/640,height/360);
+        return textRect(o.text,o,o['background-opacity'],o.x,o.y,.7*fit*o.scale,o['stretch-x'],o['stretch-y'],width,height,font);
     }
     // The same normalized coordinates are exported to the plugin. One transform can be committed
     // as one history entry by any input surface (pointer, touch or keyboard).
@@ -555,6 +598,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1-2048 pixels.');
         return { width, height };
     }
-    const api = { VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, objectDefaults, validateObjects, nextObjectId, objectRect, clone, createEffect, normalize, validate, captionLines, coverageAt, captionFrame, resetComponent, elementAnchor, translateElement, transformElement, snapElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { textDefaults, captionStyle, textRect, VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, objectDefaults, layerOrder, layerIndex, validateObjects, nextObjectId, objectRect, clone, createEffect, normalize, validate, captionLines, coverageAt, captionFrame, resetComponent, elementAnchor, translateElement, transformElement, snapElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);
