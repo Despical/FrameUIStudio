@@ -198,8 +198,10 @@ test('exactly three groups classify stock, legacy and custom effects consistentl
 });
 
 test('custom copies never overwrite stock or existing saved IDs', () => {
-    assert.equal(core.copyId('frameui', ['frameui']), 'custom-frameui');
-    assert.equal(core.copyId('custom-frameui', ['custom-frameui', 'custom-frameui-2']), 'custom-frameui-3');
+    assert.equal(core.copyId('frameui', ['frameui']), 'frameui-copy');
+    assert.equal(core.copyId('frameui', ['frameui', 'frameui-copy']), 'frameui-copy-2');
+    assert.equal(core.copyId('frameui-copy', ['frameui', 'frameui-copy', 'frameui-copy-2']), 'frameui-copy-3');
+    assert.equal(core.copyId('custom-frameui', ['custom-frameui']), 'frameui-copy');
     const id = core.copyId('a'.repeat(48), ['a'.repeat(48)]);
     assert.ok(id.length <= 48);
     assert.match(id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
@@ -695,4 +697,23 @@ test('image and text priorities share a stable order and survive YAML and legacy
         const bad=core.clone(effect);bad.elements['image-priority']=value;assert.throws(()=>core.validate(bad));
         bad.elements['image-priority']=10;bad.elements.objects['text-1'].priority=value;assert.throws(()=>core.validate(bad));
     }
+});
+test('player events keep their per-event conditions through YAML and reject unknown choices', () => {
+    const effect=core.createEffect('fade-out');
+    assert.deepEqual(core.playerEvents.map(event=>event.id),['first-join','respawn','death','bed-enter','bed-leave','level-up','advancement','vehicle-enter','vehicle-exit']);
+    for(const event of core.playerEvents) assert.ok(core.automaticTriggers.includes(event.id));
+    effect['play-on']=['respawn','vehicle-enter','level-up'];
+    effect.filters.events.respawn.worlds.include=['survival-*'];
+    effect.filters.events.respawn.reasons=['death'];
+    effect.filters.events['vehicle-enter'].vehicles=['boat','horse'];
+    effect.filters.events['vehicle-enter'].seats=['driver'];
+    effect.filters.events['level-up']['min-level']=5;
+    const restored=core.fromYaml(core.toYaml(effect));
+    assert.deepEqual(restored.filters.events,effect.filters.events);
+    assert.deepEqual(core.normalize(restored).filters.events,effect.filters.events);
+    assert.deepEqual(core.fromYaml('id: legacy\ntemplate: fade-out\nplay-on: [RESPAWN, VEHICLE_ENTER]\n')['play-on'],['respawn','vehicle-enter']);
+    const bad=core.clone(effect);bad.filters.events.respawn.reasons=['teleport'];assert.throws(()=>core.validate(bad));
+    const levels=core.clone(effect);levels.filters.events['level-up']['max-level']=3;assert.throws(()=>core.validate(levels));
+    const unknown=core.clone(effect);unknown.filters.events.sneeze={worlds:{include:[],exclude:[]}};
+    assert.throws(()=>core.normalize(unknown));
 });
