@@ -186,6 +186,81 @@
           "max": 23999
         },
         "weather": [],
+        "events": {
+          "first-join": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "respawn": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "reasons": [],
+            "spawn-points": []
+          },
+          "death": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "causes": [],
+            "sources": []
+          },
+          "bed-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "bed-leave": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "wake": []
+          },
+          "level-up": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "min-level": 0,
+            "max-level": 0,
+            "every": 0
+          },
+          "advancement": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "kinds": [],
+            "include": [],
+            "exclude": []
+          },
+          "vehicle-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          },
+          "vehicle-exit": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          }
+        },
         "cooldown-ticks": 0
       }
     },
@@ -378,6 +453,81 @@
           "max": 23999
         },
         "weather": [],
+        "events": {
+          "first-join": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "respawn": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "reasons": [],
+            "spawn-points": []
+          },
+          "death": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "causes": [],
+            "sources": []
+          },
+          "bed-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "bed-leave": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "wake": []
+          },
+          "level-up": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "min-level": 0,
+            "max-level": 0,
+            "every": 0
+          },
+          "advancement": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "kinds": [],
+            "include": [],
+            "exclude": []
+          },
+          "vehicle-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          },
+          "vehicle-exit": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          }
+        },
         "cooldown-ticks": 0
       }
     },
@@ -570,6 +720,81 @@
           "max": 23999
         },
         "weather": [],
+        "events": {
+          "first-join": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "respawn": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "reasons": [],
+            "spawn-points": []
+          },
+          "death": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "causes": [],
+            "sources": []
+          },
+          "bed-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "bed-leave": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "wake": []
+          },
+          "level-up": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "min-level": 0,
+            "max-level": 0,
+            "every": 0
+          },
+          "advancement": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "kinds": [],
+            "include": [],
+            "exclude": []
+          },
+          "vehicle-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          },
+          "vehicle-exit": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          }
+        },
         "cooldown-ticks": 0
       }
     }
@@ -761,6 +986,81 @@
           "max": 23999
         },
         "weather": [],
+        "events": {
+          "first-join": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "respawn": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "reasons": [],
+            "spawn-points": []
+          },
+          "death": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "causes": [],
+            "sources": []
+          },
+          "bed-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "bed-leave": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "wake": []
+          },
+          "level-up": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "min-level": 0,
+            "max-level": 0,
+            "every": 0
+          },
+          "advancement": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "kinds": [],
+            "include": [],
+            "exclude": []
+          },
+          "vehicle-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          },
+          "vehicle-exit": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          }
+        },
         "cooldown-ticks": 0
       }
     },
@@ -953,6 +1253,81 @@
           "max": 23999
         },
         "weather": [],
+        "events": {
+          "first-join": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "respawn": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "reasons": [],
+            "spawn-points": []
+          },
+          "death": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "causes": [],
+            "sources": []
+          },
+          "bed-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "bed-leave": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "wake": []
+          },
+          "level-up": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "min-level": 0,
+            "max-level": 0,
+            "every": 0
+          },
+          "advancement": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "kinds": [],
+            "include": [],
+            "exclude": []
+          },
+          "vehicle-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          },
+          "vehicle-exit": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          }
+        },
         "cooldown-ticks": 0
       }
     }
@@ -1144,6 +1519,81 @@
           "max": 23999
         },
         "weather": [],
+        "events": {
+          "first-join": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "respawn": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "reasons": [],
+            "spawn-points": []
+          },
+          "death": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "causes": [],
+            "sources": []
+          },
+          "bed-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "bed-leave": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "wake": []
+          },
+          "level-up": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "min-level": 0,
+            "max-level": 0,
+            "every": 0
+          },
+          "advancement": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "kinds": [],
+            "include": [],
+            "exclude": []
+          },
+          "vehicle-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          },
+          "vehicle-exit": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          }
+        },
         "cooldown-ticks": 0
       }
     },
@@ -1336,6 +1786,81 @@
           "max": 23999
         },
         "weather": [],
+        "events": {
+          "first-join": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "respawn": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "reasons": [],
+            "spawn-points": []
+          },
+          "death": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "causes": [],
+            "sources": []
+          },
+          "bed-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "bed-leave": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "wake": []
+          },
+          "level-up": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "min-level": 0,
+            "max-level": 0,
+            "every": 0
+          },
+          "advancement": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "kinds": [],
+            "include": [],
+            "exclude": []
+          },
+          "vehicle-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          },
+          "vehicle-exit": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          }
+        },
         "cooldown-ticks": 0
       }
     }
@@ -1527,6 +2052,81 @@
           "max": 23999
         },
         "weather": [],
+        "events": {
+          "first-join": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "respawn": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "reasons": [],
+            "spawn-points": []
+          },
+          "death": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "causes": [],
+            "sources": []
+          },
+          "bed-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "bed-leave": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "wake": []
+          },
+          "level-up": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "min-level": 0,
+            "max-level": 0,
+            "every": 0
+          },
+          "advancement": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "kinds": [],
+            "include": [],
+            "exclude": []
+          },
+          "vehicle-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          },
+          "vehicle-exit": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          }
+        },
         "cooldown-ticks": 0
       }
     }
@@ -1718,6 +2318,81 @@
           "max": 23999
         },
         "weather": [],
+        "events": {
+          "first-join": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "respawn": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "reasons": [],
+            "spawn-points": []
+          },
+          "death": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "causes": [],
+            "sources": []
+          },
+          "bed-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "bed-leave": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "wake": []
+          },
+          "level-up": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "min-level": 0,
+            "max-level": 0,
+            "every": 0
+          },
+          "advancement": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "kinds": [],
+            "include": [],
+            "exclude": []
+          },
+          "vehicle-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          },
+          "vehicle-exit": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          }
+        },
         "cooldown-ticks": 0
       }
     }
@@ -1909,6 +2584,81 @@
           "max": 23999
         },
         "weather": [],
+        "events": {
+          "first-join": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "respawn": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "reasons": [],
+            "spawn-points": []
+          },
+          "death": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "causes": [],
+            "sources": []
+          },
+          "bed-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            }
+          },
+          "bed-leave": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "wake": []
+          },
+          "level-up": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "min-level": 0,
+            "max-level": 0,
+            "every": 0
+          },
+          "advancement": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "kinds": [],
+            "include": [],
+            "exclude": []
+          },
+          "vehicle-enter": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          },
+          "vehicle-exit": {
+            "worlds": {
+              "include": [],
+              "exclude": []
+            },
+            "vehicles": [],
+            "types": [],
+            "exclude-types": [],
+            "seats": []
+          }
+        },
         "cooldown-ticks": 0
       }
     }
