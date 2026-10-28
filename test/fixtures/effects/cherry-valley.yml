@@ -1,4 +1,17 @@
-# Ready-to-customize example. Change text, colors, image and elements in Studio.
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                                                             #
+#                                Cherry Valley                                #
+#                                                                             #
+#           https://docs.despical.dev/frameui/configuration/effects/          #
+#                                                                             #
+#    Customize this design in Studio or edit the settings below. To create    #
+#    a copy, use a new filename and matching id.                              #
+#                                                                             #
+#    IDs use lowercase letters, numbers and single hyphens (up to 48          #
+#    characters). Apply changes with /frameui reload.                         #
+#                                                                             #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 id: "cherry-valley"
 name: "Cherry Valley"
 category: "Presets"
