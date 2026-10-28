@@ -1,9 +1,21 @@
-# FrameUI effect: Ocean Mosaic. Copy this file with a new filename and matching ID to create a variation.
-# IDs: lowercase letters, numbers, single hyphens; maximum 48 characters.
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                                                             #
+#                                 Ocean Mosaic                                #
+#                                                                             #
+#           https://docs.despical.dev/frameui/configuration/effects/          #
+#                                                                             #
+#    Customize this design in Studio or edit the settings below. To create    #
+#    a copy, use a new filename and matching id.                              #
+#                                                                             #
+#    IDs use lowercase letters, numbers and single hyphens (up to 48          #
+#    characters). Apply changes with /frameui reload.                         #
+#                                                                             #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 id: 'mosaic'
 name: 'Ocean Mosaic'
 category: "Animations"
-# Reuse any of the 50 built-in animation templates; your variation gets its own shader slot.
+# Choose the built-in animation template used by this design.
 template: 'mosaic'
 enabled: true
 # Automatic selection first uses the highest eligible priority, then random weighted selection.
@@ -63,6 +75,7 @@ filters:
     exclude: []
   # Only checked for teleport/world-change requests; use Bukkit teleport cause names.
   teleport-causes: [] # Example: ['command', 'plugin', 'nether-portal']
+  # Base events allowed for this effect. Events listed in play-on are always allowed.
   triggers: ['join', 'teleport', 'world-change', 'command']
   # Distance applies only to travel. Cross-world travel has infinite distance.
   distance:
@@ -77,4 +90,62 @@ filters:
     min: 0
     max: 23999
   weather: [] # Empty means all; clear, rain, thunder are separate states.
+  # Extra rules for player events listed in play-on. Empty lists and 0 mean no restriction.
+  # Each event also accepts worlds.include / worlds.exclude for the world the player is in.
+  events:
+    first-join:
+      worlds:
+        include: []
+        exclude: []
+    respawn:
+      worlds:
+        include: []
+        exclude: []
+      reasons: [] # death, end-portal, plugin
+      spawn-points: [] # bed, anchor, world
+    death:
+      worlds:
+        include: []
+        exclude: []
+      causes: [] # Bukkit damage causes, e.g. fall, lava, entity-attack
+      sources: [] # player, mob, environment
+    bed-enter:
+      worlds:
+        include: []
+        exclude: []
+    bed-leave:
+      worlds:
+        include: []
+        exclude: []
+      wake: [] # morning, interrupted
+    level-up:
+      worlds:
+        include: []
+        exclude: []
+      min-level: 0
+      max-level: 0 # 0 means no maximum
+      every: 0 # 0 plays on every level; 5 plays on levels 5, 10, 15...
+    advancement:
+      worlds:
+        include: []
+        exclude: []
+      kinds: [] # task, goal, challenge
+      include: [] # Advancement IDs; * and ? are wildcards
+      exclude: []
+    vehicle-enter:
+      worlds:
+        include: []
+        exclude: []
+      vehicles: [] # boat, minecart, horse, camel, pig, strider, happy-ghast
+      types: [] # Extra entity IDs, e.g. ['*_boat']
+      exclude-types: []
+      seats: [] # driver, passenger
+    vehicle-exit:
+      worlds:
+        include: []
+        exclude: []
+      vehicles: []
+      types: []
+      exclude-types: []
+      seats: []
   cooldown-ticks: 0 # Per player and effect; 0 disables the cooldown.
