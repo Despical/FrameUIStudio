@@ -437,6 +437,28 @@
         }
         return grid;
     }
+    function eventCard(definition) {
+        const path = 'filters.events.' + definition.id, selected = effect['play-on'].includes(definition.id);
+        const card = element('div', 'event-card' + (selected ? ' on' : '')), head = element('label', 'event-card-head'), input = element('input');
+        input.type = 'checkbox'; input.checked = selected; input.dataset.checkPath = 'play-on'; input.value = definition.id;
+        const copy = element('span', 'event-card-copy'); copy.append(element('b', '', definition.name), element('small', '', definition.note));
+        head.append(input, copy);
+        const body = element('div', 'event-card-body'); body.hidden = !selected;
+        if (!definition.basic) body.append(field('Only in these worlds', path + '.worlds.include', { list: true, placeholder: 'world, survival-*' }), field('Never in these worlds', path + '.worlds.exclude', { list: true, placeholder: 'lobby, minigames-*' }));
+        for (const option of definition.options) {
+            if (option.type === 'checks') body.append(element('span', 'chip-note', option.label), checkboxList(`${path}.${option.key}`, Object.keys(core.eventChoices[option.key]), Object.fromEntries(Object.entries(core.eventChoices[option.key]).map(([value, name]) => [value, t(name)]))));
+            else if (option.type === 'list') body.append(field(option.label, `${path}.${option.key}`, { list: true, placeholder: option.placeholder }));
+            else body.append(field(option.label, `${path}.${option.key}`, { type: 'number', min: 0, max: option.max, step: 1 }));
+            if (option.note) body.append(note(option.note));
+        }
+        input.addEventListener('change', () => {
+            const current = effect['play-on'].filter(value => value !== definition.id);
+            if (input.checked) current.push(definition.id);
+            body.hidden = !input.checked; card.classList.toggle('on', input.checked);
+            mutate('play-on', current);
+        });
+        card.append(head); if (!definition.basic) card.append(body); return card;
+    }
     function details(title, ...children) {
         const result = element('details', 'advanced-details'), summary = element('summary');
         const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -538,8 +560,11 @@
         const animation = section('Animation');
         animation.append(field('Ambient motion speed', 'appearance.speed', { type: 'range', min: .05, max: 8, step: .05 }), note('0.5× = half-speed motion; 2× = double speed. Duration and entrances stay the same. Play the preview to compare.'));
         motion.append(animation);
-        const playback = section('When to play');
-        playback.append(checkboxList('play-on', ['join', 'teleport', 'world-change'], { join: 'Join', teleport: 'Teleport', 'world-change': 'World change' }), note('Choose where this effect runs automatically. Your selection applies when imported to your server. Leave all unchecked for manual previews only.')); events.append(playback);
+        const playerEvents = section('Player events');
+        playerEvents.append(note('Choose every moment that should play this effect automatically. Leave all unchecked for manual previews only. Most events can be limited to specific worlds and situations.'));
+        const basicEvents = [{ id: 'join', name: 'Join', note: 'A player joins the server.' }, { id: 'teleport', name: 'Teleport', note: 'A player teleports within a world. Limit it under In-game, Where it can play.' }, { id: 'world-change', name: 'World change', note: 'A player moves to another world or dimension. Limit it under In-game, Where it can play.' }];
+        for (const definition of [...basicEvents.map(event => ({ ...event, options: [], basic: true })), ...core.playerEvents]) playerEvents.append(eventCard(definition));
+        events.append(playerEvents);
         const integrations = section('Plugin events');
         integrations.querySelector('h3').append(helpButton('plugin-events', 'Plugin events', ['Connect your server to see which addons are installed.']));
         integrations.append(note('Choose an installed plugin and its events. One effect plays per teleport.'));
@@ -807,7 +832,6 @@
             const seconds = catalogDuration(item) / 20;
             const copy = element('span', 'template-copy'); copy.append(element('b', '', displayName(item.name), true), element('small', '', secondsLabel(seconds)));
             if (saved?.remote) copy.append(element('span', 'server-effect-badge', saved.dirty ? 'Unsaved changes' : 'Server'));
-            button.dataset.tooltip = displayName(item.name);
             button.append(thumb, copy); button.addEventListener('click', () => openLibraryItem(item, saved));
             if (own) {
                 const entry = element('div', 'template-row'), remove = element('button', 'icon-button effect-delete');
@@ -1072,7 +1096,35 @@
             if (!failed && pendingThumbnails().length && !document.hidden) setTimeout(generateThumbnails,100);
         }
     }
-    function download(bytes, filename, type) { const url = URL.createObjectURL(new Blob([bytes], { type })), anchor = element('a'); anchor.href = url; anchor.download = filename; document.body.append(anchor); anchor.click(); anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000); }
+    async function download(bytes, filename, type) {
+        const mime = type.split(';')[0];
+        if (window.showSaveFilePicker) {
+            try {
+                const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ description: filename, accept: { [mime]: [filename.slice(filename.lastIndexOf('.'))] } }] });
+                const writable = await handle.createWritable();
+                await writable.write(new Blob([bytes], { type: mime })); await writable.close();
+                return true;
+            } catch (error) {
+                if (error?.name === 'AbortError') return false;
+                // The picker can be unavailable in embedded views; fall back to a normal download.
+            }
+        }
+        const url = URL.createObjectURL(new Blob([bytes], { type })), anchor = element('a');
+        anchor.href = url; anchor.download = filename; anchor.hidden = true; document.body.append(anchor); anchor.click(); anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        return true;
+    }
+    // Stock effects stay unchanged: exporting or importing one works on an independent copy with its own ID.
+    function ensureOwnCopy() {
+        if (effect.category === core.categories[2]) return false;
+        const before = snapshot();
+        effect = core.userCopy(effect, usedIds(), usedNames());
+        if (imageBytes) effect.appearance.image = `images/${effect.id}.png`;
+        activeCategory = core.categories[2]; undo.push(before); redo.length = 0;
+        savedEffects.set(effect.id, { id: effect.id, effect: core.clone(effect), image: imageBytes, assets: {...objectAssets} });
+        renderSettings(); renderCatalog(); sync(); scheduleSave();
+        return true;
+    }
     function effectArchive() {
         core.validate(effect);
         if (effect.appearance.image && !imageBytes) throw new Error('Choose the referenced image, or remove it in Design.');
@@ -1084,9 +1136,12 @@
         }
         const archive=core.zip(entries); if(archive.length>9*1024*1024) throw new Error('The complete effect ZIP must fit within 9 MB. Use smaller images.'); return archive;
     }
-    function exportEffect() {
-        try { download(effectArchive(), `${effect.id}-frameui.zip`, 'application/zip'); toast('Effect ZIP downloaded.'); }
-        catch (error) { toast(error.message, true); }
+    async function exportEffect() {
+        try {
+            effectArchive();
+            ensureOwnCopy();
+            if (await download(effectArchive(), `${effect.id}-frameui.zip`, 'application/zip')) toast('Effect ZIP downloaded.');
+        } catch (error) { toast(error.message, true); }
     }
     function serverStatus(message, error = false) {
         const status = $('server-connection'); status.hidden = false; status.textContent = t(message);
@@ -1120,13 +1175,7 @@
         serverBusy = true; serverStatus(updating ? 'Saving changes to your server…' : 'Importing your effect…'); sync();
         try {
             // Stock effects remain unchanged. Importing one creates the same independent copy as editing it.
-            if (effect.category !== core.categories[2]) {
-                const before = snapshot();
-                effect = core.userCopy(effect, usedIds(), usedNames());
-                if (imageBytes) effect.appearance.image = `images/${effect.id}.png`;
-                activeCategory = core.categories[2]; undo.push(before); redo.length = 0;
-                await save(); renderSettings(); renderCatalog(); sync();
-            }
+            if (ensureOwnCopy()) await save();
             const id = effect.id, sent = snapshot(), archive = effectArchive();
             const result = await server.importEffect(archive, updating ? serverEffects.get(id).revision : null);
             const changed = effect.id === id && !snapshotMatches(sent, snapshot());
@@ -1216,7 +1265,7 @@
     $('import-button').addEventListener('click', () => $('import-file').click()); $('import-file').addEventListener('change', () => importFile($('import-file').files[0])); $('image-file').addEventListener('change', () => uploadImage($('image-file').files[0]));
     $('server-import-button').addEventListener('click', importToServer);
     $('close-connect').addEventListener('click', () => $('connect-dialog').close());
-    $('export-button').addEventListener('click', exportEffect); $('guide-export').addEventListener('click', exportEffect); $('yaml-download').addEventListener('click', () => { try { download(core.toYaml(effect), effect.id + '.yml', 'text/yaml;charset=utf-8'); toast('YAML downloaded. Images must be supplied separately; use Export effect for a complete ZIP.'); } catch (error) { toast(error.message, true); } });
+    $('export-button').addEventListener('click', exportEffect); $('guide-export').addEventListener('click', exportEffect); $('yaml-download').addEventListener('click', async () => { try { core.validate(effect); ensureOwnCopy(); if (await download(core.toYaml(effect), effect.id + '.yml', 'text/yaml;charset=utf-8')) toast('YAML downloaded. Images must be supplied separately; use Export effect for a complete ZIP.'); } catch (error) { toast(error.message, true); } });
     $('guide-button').addEventListener('click', () => $('guide-dialog').showModal()); $('close-guide').addEventListener('click', () => $('guide-dialog').close()); $('guide-dialog').addEventListener('click', event => { if (event.target === $('guide-dialog')) { const rect = $('guide-dialog').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('guide-dialog').close(); } });
     $('reset-button').addEventListener('click', async () => { if (selectedComponent) { resetComponent(); return; } remember(); objectAssets={};objectPictures.clear(); const preset = core.catalog.find(item => item.id === effect.id) || core.catalog.find(item => item.id === effect.template); effect = core.createEffect(preset.id); await setImage(preset.image ? new Uint8Array(await (await fetch(preset.image)).arrayBuffer()) : null); activeCategory = effect.category; renderSettings(); renderCatalog(); replayPreview(); scheduleSave(); toast('Template defaults restored. Undo restores your previous draft.'); });
     window.addEventListener('frameui:language', () => {
