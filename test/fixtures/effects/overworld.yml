@@ -1,4 +1,19 @@
-# GreenLauncher's original Overworld artwork, revealed like a page from top-left to bottom-right.
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                                                             #
+#                              Overworld Panorama                             #
+#                                                                             #
+#           https://docs.despical.dev/frameui/configuration/effects/          #
+#                                                                             #
+#    Original Overworld artwork by GreenLauncher.                             #
+#                                                                             #
+#    Customize this design in Studio or edit the settings below. To create    #
+#    a copy, use a new filename and matching id.                              #
+#                                                                             #
+#    IDs use lowercase letters, numbers and single hyphens (up to 48          #
+#    characters). Apply changes with /frameui reload.                         #
+#                                                                             #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 id: 'overworld'
 name: 'Overworld Panorama'
 category: "Presets"
