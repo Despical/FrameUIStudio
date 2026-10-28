@@ -26,7 +26,7 @@
         return catalog.some(item => item.id === id && !item.definition) ? categories[0] : categories[2];
     }
     function copyId(id, used) {
-        const base = ('custom-' + id.replace(/^custom-/, '')).slice(0, 43).replace(/-$/, '');
+        const base = id.replace(/^custom-/, '').replace(/-copy(?:-\d+)?$/, '').slice(0, 42).replace(/-$/, '') + '-copy';
         let candidate = base, suffix = 2;
         while (used.includes(candidate)) candidate = base + '-' + suffix++;
         return candidate;
@@ -139,7 +139,51 @@
         { id: 'lands', name: 'Lands', events: { 'lands-spawn': 'Land spawn' } },
         { id: 'superiorskyblock2', name: 'SuperiorSkyblock2', events: { 'superiorskyblock-create': 'Create island', 'superiorskyblock-home': 'Island home', 'superiorskyblock-visit': 'Visit island', 'superiorskyblock-warp': 'Island warp' } }
     ];
-    const automaticTriggers = ['join', 'teleport', 'world-change', ...addons.flatMap(addon => Object.keys(addon.events))];
+    const eventChoices = {
+        reasons: { death: 'After dying', 'end-portal': 'Returning from the End', plugin: 'Plugin respawn' },
+        'spawn-points': { bed: 'Bed', anchor: 'Respawn anchor', world: 'World spawn' },
+        causes: { fall: 'Fall damage', fire: 'Fire', 'fire-tick': 'Burning', lava: 'Lava', drowning: 'Drowning', void: 'Void', starvation: 'Starvation', suffocation: 'Suffocation', 'entity-attack': 'Melee attack', projectile: 'Projectile', 'entity-explosion': 'Creeper & TNT', 'block-explosion': 'Block explosion', lightning: 'Lightning', magic: 'Magic', poison: 'Poison', wither: 'Wither', freeze: 'Freezing', thorns: 'Thorns', 'falling-block': 'Falling block', 'hot-floor': 'Magma block', contact: 'Cactus & berry bush', cramming: 'Entity cramming', 'fly-into-wall': 'Elytra crash', suicide: 'Suicide', 'dragon-breath': 'Dragon breath', 'sonic-boom': 'Sonic boom', 'world-border': 'World border', campfire: 'Campfire', kill: 'Kill command', custom: 'Other plugins' },
+        sources: { player: 'A player', mob: 'A mob', environment: 'The environment' },
+        wake: { morning: 'Slept until morning', interrupted: 'Left the bed early' },
+        kinds: { task: 'Task', goal: 'Goal', challenge: 'Challenge' },
+        vehicles: { boat: 'Boats & rafts', minecart: 'Minecarts', horse: 'Horses, donkeys & mules', camel: 'Camels', pig: 'Pigs', strider: 'Striders', 'happy-ghast': 'Happy Ghasts' },
+        seats: { driver: 'Driver seat', passenger: 'Passenger seat' }
+    };
+    const vehicleOptions = [
+        { type: 'checks', key: 'vehicles', label: 'Vehicle types', note: 'Leave all unchecked to allow every vehicle.' },
+        { type: 'list', key: 'types', label: 'More entity types', placeholder: 'pig, *_boat', note: 'Extra Minecraft entity IDs. * and ? are wildcards.' },
+        { type: 'list', key: 'exclude-types', label: 'Ignore entity types', placeholder: 'bamboo_*' },
+        { type: 'checks', key: 'seats', label: 'Seat', note: 'The first rider of a vehicle is its driver.' }
+    ];
+    const playerEvents = [
+        { id: 'first-join', name: 'First join', note: 'A player joins the server for the very first time.', options: [] },
+        { id: 'respawn', name: 'Respawn', note: 'A player respawns after dying or leaving the End.', options: [
+            { type: 'checks', key: 'reasons', label: 'Respawn reason', note: 'Leave all unchecked to allow every reason.' },
+            { type: 'checks', key: 'spawn-points', label: 'Respawn point' }] },
+        { id: 'death', name: 'Death', note: 'A player dies. Plays over the death screen without hiding the HUD.', options: [
+            { type: 'checks', key: 'causes', label: 'Cause of death', note: 'Leave all unchecked to allow every cause.' },
+            { type: 'checks', key: 'sources', label: 'Killed by' }] },
+        { id: 'bed-enter', name: 'Fall asleep', note: 'A player lies down in a bed.', options: [] },
+        { id: 'bed-leave', name: 'Wake up', note: 'A player gets out of bed.', options: [
+            { type: 'checks', key: 'wake', label: 'How they woke up' }] },
+        { id: 'level-up', name: 'Level up', note: 'A player reaches a higher experience level. Supports {level} in captions.', options: [
+            { type: 'number', key: 'min-level', label: 'Minimum level', max: 100000 },
+            { type: 'number', key: 'max-level', label: 'Maximum level · 0 = no limit', max: 100000 },
+            { type: 'number', key: 'every', label: 'Every Nth level · 0 = every level', max: 1000 }] },
+        { id: 'advancement', name: 'Advancement', note: 'A player completes an advancement. Supports {advancement} in captions.', options: [
+            { type: 'checks', key: 'kinds', label: 'Advancement type' },
+            { type: 'list', key: 'include', label: 'Only these advancements', placeholder: 'minecraft:story/*, minecraft:nether/*', note: 'Full advancement IDs. * and ? are wildcards.' },
+            { type: 'list', key: 'exclude', label: 'Ignore these advancements', placeholder: '*adventure/root' }] },
+        { id: 'vehicle-enter', name: 'Enter vehicle', note: 'A player boards a boat, minecart or rideable mob. Supports {vehicle} in captions.', options: vehicleOptions },
+        { id: 'vehicle-exit', name: 'Leave vehicle', note: 'A player gets off a boat, minecart or rideable mob. Supports {vehicle} in captions.', options: vehicleOptions }
+    ];
+    function eventDefaults() {
+        return Object.fromEntries(playerEvents.map(event => [event.id, {
+            worlds: { include: [], exclude: [] },
+            ...Object.fromEntries(event.options.map(option => [option.key, option.type === 'number' ? 0 : []]))
+        }]));
+    }
+    const automaticTriggers = ['join', 'teleport', 'world-change', ...playerEvents.map(event => event.id), ...addons.flatMap(addon => Object.keys(addon.events))];
     const causes = ['ENDER_PEARL', 'COMMAND', 'PLUGIN', 'NETHER_PORTAL', 'END_PORTAL', 'SPECTATE', 'END_GATEWAY', 'CONSUMABLE_EFFECT', 'CHORUS_FRUIT', 'DISMOUNT', 'EXIT_BED', 'UNKNOWN'];
     function configureCatalog(templates) { catalog.splice(0, catalog.length, ...templates); }
     function createEffect(templateId = 'aurora') {
@@ -154,7 +198,7 @@
             presentation: { 'show-hands': false, 'hide-hud': true, 'block-movement': true, 'block-interactions': true },
             appearance: { palette: 'original', background: '#081221', primary: '#7faeff', secondary: '#c2d6ff', speed: 1, intensity: 1, image: '', 'image-fit': 'cover', 'image-opacity': 1, 'image-motion': 'still', 'title-motion': 'still' },
             elements: { objects: {}, 'progress-priority':15, 'progress-opacity':1, 'progress-background':'#081221', 'progress-background-opacity':0, 'progress-padding':6, 'image-background':'#081221', 'image-background-opacity':0, 'image-priority':10, 'title-priority':20, 'subtitle-priority':20, 'detail-priority':20, 'title-animation':'still', 'subtitle-animation':'still', 'detail-animation':'still', 'title-offset-x': 0, 'title-offset-y': 0, 'title-scale': 1, 'title-stretch-x': 1, 'title-stretch-y': 1, 'subtitle-offset-x': 0, 'subtitle-offset-y': 0, 'subtitle-scale': 1, 'subtitle-stretch-x': 1, 'subtitle-stretch-y': 1, 'detail-offset-x': 0, 'detail-offset-y': 0, 'detail-scale': 1, 'detail-stretch-x': 1, 'detail-stretch-y': 1, background: 'template', 'image-animation': 'inherit', 'image-scale': 1, 'image-x': 0.5, 'image-y': 0.5, 'image-delay': 0, 'text-animation': 'still', 'text-y': 0.64, 'text-scale': 1, progress: 'none', 'progress-x': 0.5, 'progress-y': 0.8, 'progress-width': 0.34, decoration: 'none', 'text-x': 0.5, 'progress-scale': 1, 'image-stretch-x': 1, 'image-stretch-y': 1, 'text-stretch-x': 1, 'text-stretch-y': 1 },
-            filters: { permission: '', 'deny-permissions': [], worlds: { include: [], exclude: [] }, 'source-worlds': { include: [], exclude: [] }, 'addon-targets': { include: [], exclude: [] }, 'game-modes': { include: [], exclude: [] }, 'teleport-causes': [], triggers: [...triggers], distance: { min: 0, max: -1 }, height: { min: -30000000, max: 30000000 }, time: { min: 0, max: 23999 }, weather: [], 'cooldown-ticks': 0 }
+            filters: { permission: '', 'deny-permissions': [], worlds: { include: [], exclude: [] }, 'source-worlds': { include: [], exclude: [] }, 'addon-targets': { include: [], exclude: [] }, 'game-modes': { include: [], exclude: [] }, 'teleport-causes': [], triggers: [...triggers], distance: { min: 0, max: -1 }, height: { min: -30000000, max: 30000000 }, time: { min: 0, max: 23999 }, weather: [], events: eventDefaults(), 'cooldown-ticks': 0 }
         };
     }
     function merge(defaults, input, path = '') {
@@ -187,6 +231,13 @@
         for (const key of ['include', 'exclude']) {
             if (!Array.isArray(result.filters['game-modes'][key])) throw new Error(`Game modes ${key} must be a list.`);
             result.filters['game-modes'][key] = result.filters['game-modes'][key].map(value => typeof value === 'string' ? value.toUpperCase() : value);
+        }
+        for (const event of playerEvents) for (const option of event.options) {
+            const value = result.filters.events[event.id][option.key];
+            if (option.type === 'checks') {
+                if (!Array.isArray(value)) throw new Error(`${event.name} ${option.key} must be a list.`);
+                result.filters.events[event.id][option.key] = value.map(entry => typeof entry === 'string' ? entry.toLowerCase().replaceAll('_', '-') : entry);
+            }
         }
         for (const key of ['teleport-causes', 'triggers', 'weather']) {
             if (!Array.isArray(result.filters[key])) throw new Error(`${key} must be a list.`);
@@ -262,6 +313,16 @@
         for (const group of ['worlds', 'source-worlds']) { list(f[group].include, `${group} include`); list(f[group].exclude, `${group} exclude`); }
         list(f['addon-targets'].include, 'Included addon destinations'); list(f['addon-targets'].exclude, 'Excluded addon destinations');
         list(f['game-modes'].include, 'Included game modes', modes); list(f['game-modes'].exclude, 'Excluded game modes', modes); list(f['teleport-causes'], 'Teleport causes', causes); list(f.triggers, 'Triggers', [...triggers, ...automaticTriggers]); list(f.weather, 'Weather', ['clear', 'rain', 'thunder']);
+        for (const event of playerEvents) {
+            const o = f.events[event.id];
+            list(o.worlds.include, `${event.name} included worlds`); list(o.worlds.exclude, `${event.name} excluded worlds`);
+            for (const option of event.options) {
+                if (option.type === 'checks') list(o[option.key], `${event.name} ${option.label}`, Object.keys(eventChoices[option.key]));
+                else if (option.type === 'list') list(o[option.key], `${event.name} ${option.label}`);
+                else number(o[option.key], `${event.name} ${option.label}`, 0, option.max);
+            }
+            if (o['max-level'] !== undefined && o['max-level'] !== 0 && o['max-level'] < o['min-level']) fail('Maximum level must be 0 or at least the minimum level.');
+        }
         number(f.distance.min, 'Minimum distance', 0, 100000000, false); number(f.distance.max, 'Maximum distance', -1, 100000000, false);
         if (f.distance.max < 0 && f.distance.max !== -1) fail('Maximum distance uses -1 for no upper limit.');
         if (f.distance.max !== -1 && f.distance.max < f.distance.min) fail('Maximum distance must be -1 or at least the minimum distance.');
@@ -617,6 +678,6 @@
         if (!width || !height || width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) throw new Error('PNG dimensions must be 1-2048 pixels.');
         return { width, height };
     }
-    const api = { textDefaults, captionStyle, textRect, VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, automaticTriggers, causes, configureCatalog, objectDefaults, layerOrder, layerIndex, validateObjects, nextObjectId, objectRect, clone, createEffect, normalize, validate, captionLines, coverageAt, captionFrame, resetComponent, elementAnchor, translateElement, transformElement, snapElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
+    const api = { textDefaults, captionStyle, textRect, VERSION, MAX_IMAGE_BYTES, MAX_IMAGE_SIZE, catalog, categories, categoryFor, copyId, uniqueName, userCopy, durationTiming, timingSeconds, phaseTiming, disabledSettings, modes, triggers, addons, playerEvents, eventChoices, automaticTriggers, causes, configureCatalog, objectDefaults, layerOrder, layerIndex, validateObjects, nextObjectId, objectRect, clone, createEffect, normalize, validate, captionLines, coverageAt, captionFrame, resetComponent, elementAnchor, translateElement, transformElement, snapElement, toYaml, fromYaml, crc32, zip, unzip, validatePng, utf8, decoder };
     if (typeof module !== 'undefined' && module.exports) module.exports = api; else scope.FrameStudioCore = api;
 })(typeof window !== 'undefined' ? window : globalThis);
