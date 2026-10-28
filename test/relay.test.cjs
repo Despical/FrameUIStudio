@@ -62,12 +62,14 @@ test('relay preserves binary ZIP, bearer and revision headers without persisting
     assert.deepEqual(body, zip);
     const result = await f.channel('/result/' + poll.headers.get('X-Relay-Request'), {
         method: 'POST',
-        body: encode(['200', 'application/json; charset=utf-8', ''], Buffer.from('{"id":"test"}'))
+        body: encode(['200', 'application/zip', '"' + 'c'.repeat(64) + '"'], zip)
     });
     assert.equal(result.status, 204);
     const response = await pending;
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), { id: 'test' });
+    assert.equal(response.headers.get('Content-Type'), 'application/zip');
+    assert.equal(response.headers.get('ETag'), '"' + 'c'.repeat(64) + '"');
+    assert.deepEqual(Buffer.from(await response.arrayBuffer()), zip);
     assert.equal(
         response.headers.get('Access-Control-Allow-Origin'),
         'https://frameui.despical.dev'
