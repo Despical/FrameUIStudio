@@ -14,7 +14,7 @@ const path = require('node:path');
 const site = path.resolve(__dirname, '..');
 const plugin = path.resolve(process.argv[2] || path.join(site, '../FrameUI'));
 const source = fs.readFileSync(path.join(plugin, 'src/main/resources/pack/assets/minecraft/shaders/core/text.fsh'), 'utf8');
-const java = fs.readFileSync(path.join(plugin, 'src/main/java/dev/despical/frameui/loading/LoadingEffect.java'), 'utf8');
+const java = fs.readFileSync(path.join(plugin, 'src/main/java/dev/despical/frameui/loading/config/LoadingEffect.java'), 'utf8');
 const catalog = [...java.matchAll(/\w+\("([^"]+)", "([^"]+)", "([^"]+)", (\d+), (\d+), (\d+), (\d+), (true|false)\)/g)].map(match => ({ id: match[1], name: match[2], category: match[3], shaderId: Number(match[4]), fadeIn: Number(match[5]), minimum: Number(match[6]), fadeOut: Number(match[7]), captions: match[8] === 'true' }));
 if (catalog.length !== 50) throw new Error('Expected 50 stable effect templates.');
 // Detect whether each template actually consumes the speed-scaled clock. Transition-only
