@@ -196,7 +196,8 @@ code{font-family:"Cascadia Code",Consolas,monospace;color:#9bb1c9;font-size:.95e
 .image-info img{width:37px;height:29px;object-fit:cover;border-radius:3px}
 .image-info>span{flex:1;min-width:0;font-size:12px;color:#b0c0d0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .image-info small{display:block;font-size:11px;color:var(--subtle);margin-top:4px}
-.image-info button{color:var(--muted);font-size:20px}
+.image-info button{flex:0 0 36px;color:var(--muted)}
+.image-info button svg{width:18px;height:18px}
 .segmented{display:flex;border:1px solid var(--border);border-radius:5px;padding:3px;background:#0d141f;margin:0 0 13px}
 .segmented button{min-height:34px;flex:1;border:0;border-radius:3px;background:none;padding:6px;color:var(--subtle);font-size:12px}
 .segmented button.active{background:#233334;color:#b8e5df}
